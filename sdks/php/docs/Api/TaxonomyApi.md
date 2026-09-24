@@ -1,0 +1,281 @@
+# Dona\Api\TaxonomyApi
+
+Platform-owned categories, brands, IKPU (T4).
+
+All URIs are relative to https://api.dona.im/seller-api/v1, except if the operation defines another base path.
+
+| Method | HTTP request | Description |
+| ------------- | ------------- | ------------- |
+| [**getCategoryRequirements()**](TaxonomyApi.md#getCategoryRequirements) | **GET** /categories/{id}/requirements | What a product in this leaf needs |
+| [**listCategories()**](TaxonomyApi.md#listCategories) | **GET** /categories | Category tree (platform-owned) |
+| [**searchBrands()**](TaxonomyApi.md#searchBrands) | **GET** /brands | Brand search |
+| [**searchIkpu()**](TaxonomyApi.md#searchIkpu) | **GET** /ikpu | IKPU (tax classifier) search |
+
+
+## `getCategoryRequirements()`
+
+```php
+getCategoryRequirements($id, $accept_language, $x_dona_integration): \Dona\Api\Model\CategoryRequirements
+```
+
+What a product in this leaf needs
+
+Per-category requirements + listing policy.
+
+### Example
+
+```php
+<?php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+// Configure Bearer (dona_<sk|ak|it>_live_<43 base62><6 base62 CRC32>) authorization: bearerKey
+$config = Dona\Api\Configuration::getDefaultConfiguration()->setAccessToken('YOUR_ACCESS_TOKEN');
+
+
+$apiInstance = new Dona\Api\Api\TaxonomyApi(
+    // If you want use custom http client, pass your client which implements `GuzzleHttp\ClientInterface`.
+    // This is optional, `GuzzleHttp\Client` will be used as default.
+    new GuzzleHttp\Client(),
+    $config
+);
+$id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is always `404 not_found`.
+$accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
+
+try {
+    $result = $apiInstance->getCategoryRequirements($id, $accept_language, $x_dona_integration);
+    print_r($result);
+} catch (Exception $e) {
+    echo 'Exception when calling TaxonomyApi->getCategoryRequirements: ', $e->getMessage(), PHP_EOL;
+}
+```
+
+### Parameters
+
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **id** | **string**| Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. | |
+| **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
+
+### Return type
+
+[**\Dona\Api\Model\CategoryRequirements**](../Model/CategoryRequirements.md)
+
+### Authorization
+
+[bearerKey](../../README.md#bearerKey)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+[[Back to top]](#) [[Back to API list]](../../README.md#endpoints)
+[[Back to Model list]](../../README.md#models)
+[[Back to README]](../../README.md)
+
+## `listCategories()`
+
+```php
+listCategories($parent_id, $cursor, $limit, $accept_language, $x_dona_integration): \Dona\Api\Model\CategoryPage
+```
+
+Category tree (platform-owned)
+
+Walk the 5-level tree by `parent_id` (omit it for the roots).
+
+### Example
+
+```php
+<?php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+// Configure Bearer (dona_<sk|ak|it>_live_<43 base62><6 base62 CRC32>) authorization: bearerKey
+$config = Dona\Api\Configuration::getDefaultConfiguration()->setAccessToken('YOUR_ACCESS_TOKEN');
+
+
+$apiInstance = new Dona\Api\Api\TaxonomyApi(
+    // If you want use custom http client, pass your client which implements `GuzzleHttp\ClientInterface`.
+    // This is optional, `GuzzleHttp\Client` will be used as default.
+    new GuzzleHttp\Client(),
+    $config
+);
+$parent_id = 'parent_id_example'; // string | Children of this category.
+$cursor = 'cursor_example'; // string | Opaque keyset cursor from `next_cursor`.
+$limit = 50; // int | Page size, default 50, max 100 (clamped, with `Dona-API-Warn`). `limit > 50` costs `1 + ceil(limit/50)`.
+$accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
+
+try {
+    $result = $apiInstance->listCategories($parent_id, $cursor, $limit, $accept_language, $x_dona_integration);
+    print_r($result);
+} catch (Exception $e) {
+    echo 'Exception when calling TaxonomyApi->listCategories: ', $e->getMessage(), PHP_EOL;
+}
+```
+
+### Parameters
+
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **parent_id** | **string**| Children of this category. | [optional] |
+| **cursor** | **string**| Opaque keyset cursor from &#x60;next_cursor&#x60;. | [optional] |
+| **limit** | **int**| Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. | [optional] [default to 50] |
+| **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
+
+### Return type
+
+[**\Dona\Api\Model\CategoryPage**](../Model/CategoryPage.md)
+
+### Authorization
+
+[bearerKey](../../README.md#bearerKey)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+[[Back to top]](#) [[Back to API list]](../../README.md#endpoints)
+[[Back to Model list]](../../README.md#models)
+[[Back to README]](../../README.md)
+
+## `searchBrands()`
+
+```php
+searchBrands($q, $cursor, $limit, $accept_language, $x_dona_integration): \Dona\Api\Model\BrandPage
+```
+
+Brand search
+
+Prefix search.
+
+### Example
+
+```php
+<?php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+// Configure Bearer (dona_<sk|ak|it>_live_<43 base62><6 base62 CRC32>) authorization: bearerKey
+$config = Dona\Api\Configuration::getDefaultConfiguration()->setAccessToken('YOUR_ACCESS_TOKEN');
+
+
+$apiInstance = new Dona\Api\Api\TaxonomyApi(
+    // If you want use custom http client, pass your client which implements `GuzzleHttp\ClientInterface`.
+    // This is optional, `GuzzleHttp\Client` will be used as default.
+    new GuzzleHttp\Client(),
+    $config
+);
+$q = 'q_example'; // string | Prefix.
+$cursor = 'cursor_example'; // string | Opaque keyset cursor from `next_cursor`.
+$limit = 50; // int | Page size, default 50, max 100 (clamped, with `Dona-API-Warn`). `limit > 50` costs `1 + ceil(limit/50)`.
+$accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
+
+try {
+    $result = $apiInstance->searchBrands($q, $cursor, $limit, $accept_language, $x_dona_integration);
+    print_r($result);
+} catch (Exception $e) {
+    echo 'Exception when calling TaxonomyApi->searchBrands: ', $e->getMessage(), PHP_EOL;
+}
+```
+
+### Parameters
+
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **q** | **string**| Prefix. | [optional] |
+| **cursor** | **string**| Opaque keyset cursor from &#x60;next_cursor&#x60;. | [optional] |
+| **limit** | **int**| Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. | [optional] [default to 50] |
+| **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
+
+### Return type
+
+[**\Dona\Api\Model\BrandPage**](../Model/BrandPage.md)
+
+### Authorization
+
+[bearerKey](../../README.md#bearerKey)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+[[Back to top]](#) [[Back to API list]](../../README.md#endpoints)
+[[Back to Model list]](../../README.md#models)
+[[Back to README]](../../README.md)
+
+## `searchIkpu()`
+
+```php
+searchIkpu($q, $cursor, $limit, $accept_language, $x_dona_integration): \Dona\Api\Model\IkpuPage
+```
+
+IKPU (tax classifier) search
+
+From the local `tasnif` copy.
+
+### Example
+
+```php
+<?php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+// Configure Bearer (dona_<sk|ak|it>_live_<43 base62><6 base62 CRC32>) authorization: bearerKey
+$config = Dona\Api\Configuration::getDefaultConfiguration()->setAccessToken('YOUR_ACCESS_TOKEN');
+
+
+$apiInstance = new Dona\Api\Api\TaxonomyApi(
+    // If you want use custom http client, pass your client which implements `GuzzleHttp\ClientInterface`.
+    // This is optional, `GuzzleHttp\Client` will be used as default.
+    new GuzzleHttp\Client(),
+    $config
+);
+$q = futbolka; // string | Code prefix or name words.
+$cursor = 'cursor_example'; // string | Opaque keyset cursor from `next_cursor`.
+$limit = 50; // int | Page size, default 50, max 100 (clamped, with `Dona-API-Warn`). `limit > 50` costs `1 + ceil(limit/50)`.
+$accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
+
+try {
+    $result = $apiInstance->searchIkpu($q, $cursor, $limit, $accept_language, $x_dona_integration);
+    print_r($result);
+} catch (Exception $e) {
+    echo 'Exception when calling TaxonomyApi->searchIkpu: ', $e->getMessage(), PHP_EOL;
+}
+```
+
+### Parameters
+
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **q** | **string**| Code prefix or name words. | |
+| **cursor** | **string**| Opaque keyset cursor from &#x60;next_cursor&#x60;. | [optional] |
+| **limit** | **int**| Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. | [optional] [default to 50] |
+| **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
+
+### Return type
+
+[**\Dona\Api\Model\IkpuPage**](../Model/IkpuPage.md)
+
+### Authorization
+
+[bearerKey](../../README.md#bearerKey)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+[[Back to top]](#) [[Back to API list]](../../README.md#endpoints)
+[[Back to Model list]](../../README.md#models)
+[[Back to README]](../../README.md)

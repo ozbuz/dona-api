@@ -1,0 +1,12 @@
+# openapi-python-client config — see generators/python/generate.sh
+project_name_override: dona-api
+package_name_override: dona_api
+package_version_override: "@SDK_VERSION@"
+# label.pdf / invoice.pdf / orders/labels answer application/pdf, which the generator would otherwise
+# DROP (the operation keeps only its error types). As octet-stream they return a File with the bytes.
+content_type_overrides:
+  application/pdf: application/octet-stream
+# Formatter pinned (versions.env RUFF_VERSION) so the output cannot drift between machines.
+post_hooks:
+  - "uvx ruff@@RUFF_VERSION@ check . --fix-only --extend-select=I --quiet"
+  - "uvx ruff@@RUFF_VERSION@ format . --quiet"

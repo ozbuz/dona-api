@@ -1,0 +1,14 @@
+{
+    "name": "dona/api-examples",
+    "description": "Runnable Dona API examples (PHP).",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.1",
+        "ozbuz/dona-api": "*@dev"
+    },
+    "repositories": [
+        { "type": "path", "url": "../../sdks/php", "options": { "symlink": true } }
+    ],
+    "config": { "sort-packages": true }
+}

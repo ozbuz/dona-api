@@ -1,0 +1,10 @@
+# oapi-codegen config — see generators/go/generate.sh
+package: dona
+output: dona.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  # The webhook payload types are referenced only from the top-level `webhooks` object; pruning would
+  # drop them while the generated webhook code still names them (does not compile).
+  skip-prune: true

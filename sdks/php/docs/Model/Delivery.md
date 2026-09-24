@@ -1,0 +1,20 @@
+# Delivery
+
+## Properties
+
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**id** | **string** |  |
+**webhook_id** | **string** |  |
+**event_id** | **string** |  |
+**event_type** | **string** | The glossary event catalogue. New types are additive. Known values (open set — tolerate new ones): &#x60;order.created&#x60;, &#x60;order.paid&#x60;, &#x60;order.accepted&#x60;, &#x60;order.declined&#x60;, &#x60;order.ready&#x60;, &#x60;order.shipped&#x60;, &#x60;order.delivered&#x60;, &#x60;order.cancelled&#x60;, &#x60;order.line_cancelled&#x60;, &#x60;order.accept_due_soon&#x60;, &#x60;order.ship_overdue&#x60;, &#x60;return.requested&#x60;, &#x60;return.status_changed&#x60;, &#x60;product.published&#x60;, &#x60;product.held&#x60;, &#x60;product.rejected&#x60;, &#x60;product.demoted&#x60;, &#x60;product.violation&#x60;, &#x60;product.deleted&#x60;, &#x60;stock.low&#x60;, &#x60;stock.out&#x60;, &#x60;write.held&#x60;, &#x60;write.approved&#x60;, &#x60;write.rejected&#x60;, &#x60;write.expired&#x60;, &#x60;account.status_changed&#x60;, &#x60;account.documents_decided&#x60;, &#x60;account.kyc_reopened&#x60;, &#x60;account.suppressed&#x60;, &#x60;account.health_changed&#x60;, &#x60;account.agreement_owed&#x60;, &#x60;live.access_changed&#x60;, &#x60;live.strike&#x60;, &#x60;attention.opened&#x60;, &#x60;attention.resolved&#x60;, &#x60;key.expiring&#x60;, &#x60;key.suspended&#x60;, &#x60;key.unsuspended&#x60;, &#x60;webhook.failing&#x60;, &#x60;webhook.disabled&#x60;, &#x60;ping&#x60;. |
+**attempt** | **int** |  |
+**status** | **string** | Known values (open set — tolerate new ones): &#x60;queued&#x60;, &#x60;delivered&#x60;, &#x60;failed&#x60;, &#x60;dead&#x60;. |
+**next_attempt_at** | **\DateTime** |  |
+**delivered_at** | **\DateTime** |  |
+**response_status** | **int** |  |
+**response_ms** | **int** |  |
+**error** | **string** |  |
+**occurred_at** | **\DateTime** | ISO 8601 with offset (Tashkent &#x60;+05:00&#x60; on output). |
+
+[[Back to Model list]](../../README.md#models) [[Back to API list]](../../README.md#endpoints) [[Back to README]](../../README.md)

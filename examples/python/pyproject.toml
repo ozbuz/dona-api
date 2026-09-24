@@ -1,0 +1,10 @@
+# Lint/type settings for the examples only (the SDK has its own, generated).
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+strict = true

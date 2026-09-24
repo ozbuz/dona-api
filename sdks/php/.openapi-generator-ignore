@@ -1,0 +1,6 @@
+git_push.sh
+.travis.yml
+.gitlab-ci.yml
+appveyor.yml
+.github/**
+test/**

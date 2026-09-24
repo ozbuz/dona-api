@@ -1,0 +1,18 @@
+{
+  "name": "dona-api-examples-typescript",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "quickstart": "node src/quickstart.ts",
+    "webhook-selftest": "node src/webhook-selftest.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@dona/api": "file:../../sdks/typescript"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.6",
+    "typescript": "7.0.2"
+  }
+}

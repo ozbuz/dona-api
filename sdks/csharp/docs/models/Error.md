@@ -1,0 +1,21 @@
+# Dona.Api.Model.Error
+The estate `{\"error\":\"<code>\"}` envelope (`internal/platform/web/respond.go` `WriteErrorWith`) plus the Dona API fields. Provider/DB detail never leaves; it goes to the redacted error copy.
+
+## Properties
+
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**VarError** | **string** | Stable code (glossary / docs/error-codes.md). Clients branch on this, never on &#x60;message&#x60;. | 
+**Message** | **string** | Localised by &#x60;Accept-Language&#x60; (uz default). | 
+**RequestId** | **string** |  | 
+**Details** | [**List&lt;ErrorDetail&gt;**](ErrorDetail.md) | Always present; &#x60;[]&#x60; when there is nothing field-level. | 
+**DocUrl** | **string** | Anchor into the docs for this code. | 
+**RetryAfterSeconds** | **int** | Mirrors &#x60;Retry-After&#x60; on 429/503/&#x60;key_suspended&#x60;. | [optional] 
+**RequiredScope** | **string** | The 14 issuable scopes (glossary). &#x60;returns:write&#x60; is reserved and unissued. Known values (open set — tolerate new ones): &#x60;catalog:read&#x60;, &#x60;catalog:stock&#x60;, &#x60;catalog:write&#x60;, &#x60;orders:read&#x60;, &#x60;orders:write&#x60;, &#x60;orders:cancel&#x60;, &#x60;orders:pii&#x60;, &#x60;returns:read&#x60;, &#x60;health:read&#x60;, &#x60;attention:read&#x60;, &#x60;events:read&#x60;, &#x60;webhooks:manage&#x60;, &#x60;finance:read&#x60;, &#x60;mcp&#x60;. | [optional] 
+**RotateUrl** | **string** | On &#x60;401 api_key_expired&#x60;: the portal page to mint a successor. | [optional] 
+**SuspendedUntil** | **DateTimeOffset** | On &#x60;403 key_suspended&#x60;. | [optional] 
+**Reason** | **string** | On &#x60;403 key_suspended&#x60; / &#x60;403 api_blocked&#x60;: why (&#x60;error_storm&#x60;, &#x60;unauthorized_storm&#x60;, &#x60;ip_blocked&#x60;, &#x60;credential_stuffing&#x60;, &#x60;leak_reported&#x60;, &#x60;staff&#x60;). | [optional] 
+**Meta** | [**ErrorMeta**](ErrorMeta.md) |  | [optional] 
+
+[[Back to Model list]](../../README.md#documentation-for-models) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to README]](../../README.md)
+

@@ -1,0 +1,125 @@
+{
+  "tolerance_seconds": 300,
+  "cases": [
+    {
+      "name": "standard-webhooks reference vector",
+      "secret": "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+      "id": "msg_p5jXN8AQM9LWM0D4loKWxJek",
+      "timestamp": 1614265330,
+      "body": "{\"test\": 2432232314}",
+      "signature": "v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=",
+      "now": 1614265330,
+      "valid": true
+    },
+    {
+      "name": "dona event",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "v1,+K0AvI+kxWXuHQfZyc/h9xEmTPJDCdkObka55HZ29Kc=",
+      "now": 1758704705,
+      "valid": true
+    },
+    {
+      "name": "rotation: old secret listed first, new second",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "v1,+am/3beqZGbO00OTaabwmAwdKUrktWDzWxoGOB15mNE= v1,+K0AvI+kxWXuHQfZyc/h9xEmTPJDCdkObka55HZ29Kc=",
+      "now": 1758704700,
+      "valid": true
+    },
+    {
+      "name": "utf-8 body signed as raw bytes",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"product.published\",\"data\":{\"title\":{\"uz\":\"Oʻyinchoq ayiq\",\"ru\":\"Плюшевый мишка\"}}}",
+      "signature": "v1,3038yUWzsgHgjrF4IWDH+FRKroLofuqjowtHMU+MOvg=",
+      "now": 1758704700,
+      "valid": true
+    },
+    {
+      "name": "exactly at the 300 s tolerance",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "v1,+K0AvI+kxWXuHQfZyc/h9xEmTPJDCdkObka55HZ29Kc=",
+      "now": 1758705000,
+      "valid": true
+    },
+    {
+      "name": "tampered body",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"cancelled\"}}",
+      "signature": "v1,+K0AvI+kxWXuHQfZyc/h9xEmTPJDCdkObka55HZ29Kc=",
+      "now": 1758704700,
+      "valid": false
+    },
+    {
+      "name": "signed with another secret",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "v1,+am/3beqZGbO00OTaabwmAwdKUrktWDzWxoGOB15mNE=",
+      "now": 1758704700,
+      "valid": false
+    },
+    {
+      "name": "different webhook-id",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-000000000000",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "v1,+K0AvI+kxWXuHQfZyc/h9xEmTPJDCdkObka55HZ29Kc=",
+      "now": 1758704700,
+      "valid": false
+    },
+    {
+      "name": "timestamp too old (301 s)",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "v1,+K0AvI+kxWXuHQfZyc/h9xEmTPJDCdkObka55HZ29Kc=",
+      "now": 1758705001,
+      "valid": false
+    },
+    {
+      "name": "timestamp in the future (301 s)",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "v1,+K0AvI+kxWXuHQfZyc/h9xEmTPJDCdkObka55HZ29Kc=",
+      "now": 1758704399,
+      "valid": false
+    },
+    {
+      "name": "unknown signature version only",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "v1a,+K0AvI+kxWXuHQfZyc/h9xEmTPJDCdkObka55HZ29Kc=",
+      "now": 1758704700,
+      "valid": false
+    },
+    {
+      "name": "empty signature header",
+      "secret": "whsec_MfKQ9r2ysWbG2xZt8k1r5sFh3Dq0Vv7L",
+      "id": "01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b",
+      "timestamp": 1758704700,
+      "body": "{\"id\":\"01997b31-2c4d-7e5f-8a9b-0c1d2e3f4a5b\",\"type\":\"order.created\",\"occurred_at\":\"2026-09-24T14:05:00+05:00\",\"data\":{\"order_id\":\"01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b\",\"status\":\"paid\"}}",
+      "signature": "",
+      "now": 1758704700,
+      "valid": false
+    }
+  ]
+}
