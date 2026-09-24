@@ -26,3 +26,4 @@ func NewDonaClient(apiKey string, opts ...ClientOption) (*ClientWithResponses, e
 	})
 	return NewClientWithResponses(BaseURL, append([]ClientOption{auth}, opts...)...)
 }
+// hand edit — this PR exists to prove CI rejects it
