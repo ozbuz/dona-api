@@ -1,6 +1,6 @@
 module github.com/ozbuz/dona-api/sdks/go
 
-go 1.27.1
+go 1.26.4
 
 require github.com/oapi-codegen/runtime v1.7.0
 

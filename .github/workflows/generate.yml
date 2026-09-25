@@ -27,10 +27,16 @@ env:
 
 jobs:
   generate:
-    # Self-hosted: hosted minutes spend the org quota (hosted-runners-spend-the-quota).
-    runs-on: [self-hosted, dona-ci]
-    # Ceiling for a WEDGED runner, not a slow build (a silent self-hosted runner is never cancelled
-    # by GitHub). A cold run pulls ~2 GB of images (generator, php, composer, dotnet).
+    # GitHub-hosted, not the org's self-hosted `dona-ci` fleet: since this repo went public
+    # (2026-09-26) the org's runner group has `allows_public_repositories: false` (correctly — those
+    # runners carry `dona-deploy` and sit near production credentials; a public repo's PRs must never
+    # be able to run code on them), so a self-hosted job here queues forever and never starts. Hosted
+    # minutes are free and unlimited for public repos (hosted-runners-spend-the-quota's $40-cap
+    # concern is about PRIVATE-repo minutes only), so this costs nothing and is the more isolated
+    # choice besides — see security/incidents/2026-09-26-public-repo-cannot-use-self-hosted-runners.md.
+    runs-on: ubuntu-latest
+    # Ceiling for a wedged run, not a slow build. A cold run pulls ~2 GB of images (generator, php,
+    # composer, dotnet) with no warm cache (hosted runners are ephemeral, unlike the old self-hosted box).
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -42,7 +48,6 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache: false # self-hosted: the local cache persists; restoring a tarball into it is the corruption
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:

@@ -2,7 +2,7 @@
 
 Dona API v1 (https://api.dona.im/seller-api/v1) — client generated from the OpenAPI contract. Conventions (auth, errors, idempotency, dry_run, rate limits, 202 held_for_review): https://github.com/ozbuz/dona-api#readme · contract: https://api.dona.im/seller-api/v1/openapi.json
 
-For more information, please visit [https://dona.uz/developers](https://dona.uz/developers).
+For more information, please visit [https://dona.uz/uz/developers](https://dona.uz/uz/developers).
 
 ## Installation & Usage
 

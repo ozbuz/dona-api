@@ -11,6 +11,6 @@ Name | Type | Description | Notes
 **writes_enabled** | **bool** | &#x60;app_config.seller_api.writes_enabled&#x60; (seeded false until D5). |
 **limits** | [**\Dona\Api\Model\Limits**](Limits.md) |  |
 **attention** | [**\Dona\Api\Model\MeAttention**](MeAttention.md) |  |
-**docs_url** | **string** |  |
+**docs_url** | **string** | The developer docs home in the key owner&#39;s language (&#x60;https://dona.uz/&lt;uz|ru|en&gt;/developers&#x60;; the owner&#39;s &#x60;users.language&#x60;, else &#x60;Accept-Language&#x60;, else uz). |
 
 [[Back to Model list]](../../README.md#models) [[Back to API list]](../../README.md#endpoints) [[Back to README]](../../README.md)

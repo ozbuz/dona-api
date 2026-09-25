@@ -505,7 +505,7 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets doc_url
      *
-     * @param string $doc_url Anchor into the docs for this code.
+     * @param string $doc_url Anchor into the docs for this code: `https://dona.uz/<lang>/developers/errors#<code>` — `<lang>` is the key owner's language (uz | ru | en) when a key authenticated the request, else `Accept-Language`, else `uz`. The docs site is per language; there is no language-less `/developers` page.
      *
      * @return self
      */
