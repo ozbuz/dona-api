@@ -17,3 +17,4 @@ cp "$here/template/client.go" "$out/client.go"
   -config "$here/oapi-codegen.yaml" "$spec")
 (cd "$out" && go mod tidy)
 cp "$here/../SDK_README.md" "$out/README.md"
+cp "$here/../../LICENSE" "$out/LICENSE"

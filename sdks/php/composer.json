@@ -12,7 +12,7 @@
         "api"
     ],
     "homepage": "https://github.com/ozbuz/dona-api",
-    "license": "proprietary",
+    "license": "Apache-2.0",
     "authors": [
         {
             "name": "Dona",

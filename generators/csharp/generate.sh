@@ -14,5 +14,20 @@ DESCRIPTION="Dona API client (C#) — generated from the OpenAPI contract. Do no
 # The empty test-project stub and the copy of the spec under api/ are not part of the library.
 export OPENAPI_GENERATOR_EXTRA_IGNORE="src/Dona.Api.Test/** api/**"
 openapi_generator csharp "$spec" "$out" \
-  "library=generichost,packageName=Dona.Api,packageVersion=${version},targetFramework=net10.0,nullableReferenceTypes=true,useDateTimeOffset=true,packageCompany=Dona,packageAuthors=Dona,packageTitle=Dona API,sourceFolder=src,equatable=false,validatable=false,packageDescription=${DESCRIPTION},packageCopyright=Dona,packageGuid={6B1D0A5E-3C2F-4E8B-9D7A-D0A0A91C5D01}"
+  "library=generichost,packageName=Dona.Api,packageVersion=${version},targetFramework=net10.0,nullableReferenceTypes=true,useDateTimeOffset=true,packageCompany=Dona,packageAuthors=Dona,packageTitle=Dona API,sourceFolder=src,equatable=false,validatable=false,packageDescription=${DESCRIPTION},packageCopyright=Dona,packageGuid={6B1D0A5E-3C2F-4E8B-9D7A-D0A0A91C5D01},licenseId=Apache-2.0"
 cp "$here/../SDK_README.md" "$out/SDK.md"
+cp "$here/../../LICENSE" "$out/LICENSE"
+
+# `licenseId` sets <PackageLicenseExpression> but NuGet packs only what the csproj lists — add the
+# LICENSE file explicitly so `dotnet pack` ships it inside the .nupkg too. Anchor on the closing
+# PropertyGroup tag; fail loudly if a generator upgrade changes the csproj shape.
+csproj="$out/src/Dona.Api/Dona.Api.csproj"
+grep -qF '<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>' "$csproj" || {
+  echo "csharp generate: Dona.Api.csproj has no <PackageLicenseExpression> — check the csharp generator's licenseId option" >&2
+  exit 1
+}
+anchor='  </PropertyGroup>'
+grep -qF "$anchor" "$csproj" || { echo "csharp generate: Dona.Api.csproj no longer has the expected PropertyGroup close — re-check where to add the LICENSE ItemGroup" >&2; exit 1; }
+awk -v a="$anchor" '{print} $0==a && !done {print "\n  <ItemGroup>\n    <None Include=\"../../LICENSE\" Pack=\"true\" PackagePath=\"\" />\n  </ItemGroup>"; done=1}' "$csproj" >"$csproj.tmp"
+mv "$csproj.tmp" "$csproj"
+grep -qF '<None Include="../../LICENSE" Pack="true" PackagePath="" />' "$csproj"
