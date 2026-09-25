@@ -16,3 +16,14 @@ uvx --python "$PYTHON_VERSION" --from "openapi-python-client==${OPENAPI_PYTHON_C
   openapi-python-client generate --path "$spec" --config "$cfg" --meta uv --output-path "$out" >/dev/null
 rm -rf "$out/.ruff_cache"
 cp "$here/../SDK_README.md" "$out/SDK.md"
+cp "$here/../../LICENSE" "$out/LICENSE"
+
+# openapi-python-client's uv template has no license field of its own (PEP 639 — the pinned uv_build
+# backend supports both `license` and `license-files`, proved by a local `uv build`). Insert
+# deterministically right after `readme = ` so a generator upgrade that removes the anchor fails
+# loudly instead of silently dropping the license from the built wheel/sdist.
+anchor='readme = "README.md"'
+grep -qF "$anchor" "$out/pyproject.toml" || { echo "python generate: pyproject.toml no longer has '$anchor' — re-check where to insert the license field" >&2; exit 1; }
+sed -i.bak "s/^readme = \"README.md\"\$/readme = \"README.md\"\nlicense = \"Apache-2.0\"\nlicense-files = [\"LICENSE\"]/" "$out/pyproject.toml"
+rm -f "$out/pyproject.toml.bak"
+grep -qF 'license = "Apache-2.0"' "$out/pyproject.toml"

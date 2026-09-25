@@ -5,6 +5,8 @@ description = "A client library for accessing Dona API"
 authors = []
 requires-python = ">=3.11"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 dependencies = [
     "httpx>=0.23.1,<0.29.0",
     "attrs>=22.2.0",

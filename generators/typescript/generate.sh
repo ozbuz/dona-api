@@ -22,3 +22,4 @@ sed -e "s/@SDK_VERSION@/${version}/" \
     -e "s/@TYPESCRIPT_VERSION@/${TYPESCRIPT_VERSION}/" \
     "$here/template/package.json" >"$out/package.json"
 cp "$here/../SDK_README.md" "$out/README.md"
+cp "$here/../../LICENSE" "$out/LICENSE"

@@ -275,3 +275,15 @@ Go needs no registry or token — once the repo is public, tagging **is** publis
 # the module lives in a subdirectory, so the tag carries its path; proxy.golang.org needs the repo public (done)
 git tag sdks/go/v0.1.0 && git push origin sdks/go/v0.1.0
 ```
+
+## License
+
+This repository's code — the generators, `spec/`, every generated SDK under `sdks/` and every example
+under `examples/` — is licensed under the **Apache License, Version 2.0**. See [`LICENSE`](LICENSE)
+for the full text and [`NOTICE`](NOTICE) for attribution. Each published package (`sdks/<lang>/`)
+carries its own copy of `LICENSE` — that is what npm, PyPI, NuGet, Packagist and `pkg.go.dev` ship and
+detect, since none of them publish the repository root.
+
+This is the license for the **SDK code**, not the Dona API itself. The API's terms of use are
+**Annex 2 ("annex-api")** of the Dona seller agreement:
+[dona.uz/en/legal/annex-api](https://dona.uz/en/legal/annex-api/).
