@@ -1703,6 +1703,9 @@ type DeliveryPage struct {
 
 // Error The estate `{"error":"<code>"}` envelope (`internal/platform/web/respond.go` `WriteErrorWith`) plus the Dona API fields. Provider/DB detail never leaves; it goes to the redacted error copy.
 type Error struct {
+	// AcceptUrl On `403 agreement_required`: the portal page where the shop owner accepts Annex 2.
+	AcceptUrl *string `json:"accept_url,omitempty"`
+
 	// Details Always present; `[]` when there is nothing field-level.
 	Details []ErrorDetail `json:"details"`
 

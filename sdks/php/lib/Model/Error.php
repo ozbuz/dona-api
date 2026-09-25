@@ -66,6 +66,7 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'retry_after_seconds' => 'int',
         'required_scope' => 'string',
         'rotate_url' => 'string',
+        'accept_url' => 'string',
         'suspended_until' => '\DateTime',
         'reason' => 'string',
         'meta' => '\Dona\Api\Model\ErrorMeta'
@@ -87,6 +88,7 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'retry_after_seconds' => null,
         'required_scope' => null,
         'rotate_url' => 'uri',
+        'accept_url' => 'uri',
         'suspended_until' => 'date-time',
         'reason' => null,
         'meta' => null
@@ -106,6 +108,7 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'retry_after_seconds' => false,
         'required_scope' => false,
         'rotate_url' => false,
+        'accept_url' => false,
         'suspended_until' => false,
         'reason' => false,
         'meta' => false
@@ -205,6 +208,7 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'retry_after_seconds' => 'retry_after_seconds',
         'required_scope' => 'required_scope',
         'rotate_url' => 'rotate_url',
+        'accept_url' => 'accept_url',
         'suspended_until' => 'suspended_until',
         'reason' => 'reason',
         'meta' => 'meta'
@@ -224,6 +228,7 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'retry_after_seconds' => 'setRetryAfterSeconds',
         'required_scope' => 'setRequiredScope',
         'rotate_url' => 'setRotateUrl',
+        'accept_url' => 'setAcceptUrl',
         'suspended_until' => 'setSuspendedUntil',
         'reason' => 'setReason',
         'meta' => 'setMeta'
@@ -243,6 +248,7 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'retry_after_seconds' => 'getRetryAfterSeconds',
         'required_scope' => 'getRequiredScope',
         'rotate_url' => 'getRotateUrl',
+        'accept_url' => 'getAcceptUrl',
         'suspended_until' => 'getSuspendedUntil',
         'reason' => 'getReason',
         'meta' => 'getMeta'
@@ -313,6 +319,7 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         $this->setIfExists('retry_after_seconds', $data ?? [], null);
         $this->setIfExists('required_scope', $data ?? [], null);
         $this->setIfExists('rotate_url', $data ?? [], null);
+        $this->setIfExists('accept_url', $data ?? [], null);
         $this->setIfExists('suspended_until', $data ?? [], null);
         $this->setIfExists('reason', $data ?? [], null);
         $this->setIfExists('meta', $data ?? [], null);
@@ -596,6 +603,33 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
             throw new \InvalidArgumentException('non-nullable rotate_url cannot be null');
         }
         $this->container['rotate_url'] = $rotate_url;
+
+        return $this;
+    }
+
+    /**
+     * Gets accept_url
+     *
+     * @return string|null
+     */
+    public function getAcceptUrl()
+    {
+        return $this->container['accept_url'];
+    }
+
+    /**
+     * Sets accept_url
+     *
+     * @param string|null $accept_url On `403 agreement_required`: the portal page where the shop owner accepts Annex 2.
+     *
+     * @return self
+     */
+    public function setAcceptUrl($accept_url)
+    {
+        if (is_null($accept_url)) {
+            throw new \InvalidArgumentException('non-nullable accept_url cannot be null');
+        }
+        $this->container['accept_url'] = $accept_url;
 
         return $this;
     }

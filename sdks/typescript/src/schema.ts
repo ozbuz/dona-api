@@ -1999,6 +1999,11 @@ export interface components {
              */
             rotate_url?: string;
             /**
+             * Format: uri
+             * @description On `403 agreement_required`: the portal page where the shop owner accepts Annex 2.
+             */
+            accept_url?: string;
+            /**
              * Format: date-time
              * @description On `403 key_suspended`.
              */
@@ -3414,7 +3419,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `insufficient_scope` (+`required_scope`; also a scope in `disabled_scopes`) · `tier_required` (+`scope`; derived on every request; also a key minted for a third-party `orders:pii` recipient — `details[pii_recipient: pii_third_party_pending_counsel]`, D7, C59) · `key_suspended` (+`suspended_until`, `Retry-After`, `Dona-Rate-Limited-Reason: suspended`) · `api_blocked` · `ip_not_allowed` (judged on the trusted client IP only) · `seller_not_approved` (shop closed/blocked/suspended/restricted) · `not_a_seller` (never on this tree; the portal's owner doors) · `app_frozen` (S6: every key of a frozen vendor app, from the next request). */
+        /** @description `insufficient_scope` (+`required_scope`; also a scope in `disabled_scopes`) · `tier_required` (+`scope`; derived on every request; also a key minted for a third-party `orders:pii` recipient — `details[pii_recipient: pii_third_party_pending_counsel]`, D7, C59) · `key_suspended` (+`suspended_until`, `Retry-After`, `Dona-Rate-Limited-Reason: suspended`) · `api_blocked` · `ip_not_allowed` (judged on the trusted client IP only) · `seller_not_approved` (shop closed/blocked/suspended/restricted) · `not_a_seller` (never on this tree; the portal's owner doors) · `app_frozen` (S6: every key of a frozen vendor app, from the next request) · `agreement_required` (+`accept_url`: the shop owner has not accepted the CURRENT Annex 2 «API and automated access» — the version in force or, while none is, the earliest announced; accepted once in Settings › API, then every door admits the key again. Checked after the sanctions, before the scopes). */
         Forbidden: {
             headers: {
                 "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
