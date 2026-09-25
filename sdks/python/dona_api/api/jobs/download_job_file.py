@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote
 from uuid import UUID
 
@@ -47,10 +47,14 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Error | str | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | Error | str | None:
     if response.status_code == 200:
         response_200 = response.text
         return response_200
+
+    if response.status_code == 302:
+        response_302 = cast(Any, None)
+        return response_302
 
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
@@ -88,7 +92,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Error | str]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | Error | str]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -105,16 +109,19 @@ def sync_detailed(
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Response[Error | str]:
+) -> Response[Any | Error | str]:
     """Download an export's file
 
      What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope
     the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404
     not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401
     download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its
-    time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a
-    public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
-    `writes_enabled`.
+    time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in
+    Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks
+    above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the
+    bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own
+    authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after
+    `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 
     Args:
         id (UUID):
@@ -129,7 +136,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | str]
+        Response[Any | Error | str]
     """
 
     kwargs = _get_kwargs(
@@ -155,16 +162,19 @@ def sync(
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Error | str | None:
+) -> Any | Error | str | None:
     """Download an export's file
 
      What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope
     the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404
     not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401
     download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its
-    time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a
-    public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
-    `writes_enabled`.
+    time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in
+    Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks
+    above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the
+    bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own
+    authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after
+    `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 
     Args:
         id (UUID):
@@ -179,7 +189,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | str
+        Any | Error | str
     """
 
     return sync_detailed(
@@ -200,16 +210,19 @@ async def asyncio_detailed(
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Response[Error | str]:
+) -> Response[Any | Error | str]:
     """Download an export's file
 
      What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope
     the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404
     not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401
     download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its
-    time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a
-    public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
-    `writes_enabled`.
+    time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in
+    Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks
+    above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the
+    bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own
+    authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after
+    `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 
     Args:
         id (UUID):
@@ -224,7 +237,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | str]
+        Response[Any | Error | str]
     """
 
     kwargs = _get_kwargs(
@@ -248,16 +261,19 @@ async def asyncio(
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Error | str | None:
+) -> Any | Error | str | None:
     """Download an export's file
 
      What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope
     the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404
     not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401
     download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its
-    time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a
-    public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
-    `writes_enabled`.
+    time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in
+    Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks
+    above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the
+    bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own
+    authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after
+    `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 
     Args:
         id (UUID):
@@ -272,7 +288,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | str
+        Any | Error | str
     """
 
     return (

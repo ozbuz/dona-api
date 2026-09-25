@@ -42,7 +42,7 @@ namespace Dona.Api.Api
         /// Download an export&#39;s file
         /// </summary>
         /// <remarks>
-        /// What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
+        /// What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is never on a public origin — it is in Dona&#39;s private exports bucket (&#x60;302&#x60; to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (&#x60;200&#x60; with the bytes). Follow the redirect WITHOUT the &#x60;Authorization&#x60; header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
@@ -58,7 +58,7 @@ namespace Dona.Api.Api
         /// Download an export&#39;s file
         /// </summary>
         /// <remarks>
-        /// What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
+        /// What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is never on a public origin — it is in Dona&#39;s private exports bucket (&#x60;302&#x60; to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (&#x60;200&#x60; with the bytes). Follow the redirect WITHOUT the &#x60;Authorization&#x60; header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="token">The download token &#x60;file_url&#x60; carries (&#x60;v1.&lt;unix expiry&gt;.&lt;mac&gt;&#x60;), bound to this job and this shop.</param>
@@ -171,6 +171,12 @@ namespace Dona.Api.Api
         /// </summary>
         /// <returns></returns>
         bool IsOk { get; }
+
+        /// <summary>
+        /// Returns true if the response is 302 Found
+        /// </summary>
+        /// <returns></returns>
+        bool IsFound { get; }
 
         /// <summary>
         /// Returns true if the response is 401 Unauthorized
@@ -576,7 +582,7 @@ namespace Dona.Api.Api
         partial void OnErrorDownloadJobFile(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string token, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Download an export&#39;s file What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
+        /// Download an export&#39;s file What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is never on a public origin — it is in Dona&#39;s private exports bucket (&#x60;302&#x60; to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (&#x60;200&#x60; with the bytes). Follow the redirect WITHOUT the &#x60;Authorization&#x60; header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="token">The download token &#x60;file_url&#x60; carries (&#x60;v1.&lt;unix expiry&gt;.&lt;mac&gt;&#x60;), bound to this job and this shop.</param>
@@ -598,7 +604,7 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Download an export&#39;s file What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
+        /// Download an export&#39;s file What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is never on a public origin — it is in Dona&#39;s private exports bucket (&#x60;302&#x60; to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (&#x60;200&#x60; with the bytes). Follow the redirect WITHOUT the &#x60;Authorization&#x60; header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
@@ -823,6 +829,12 @@ namespace Dona.Api.Api
 
                 return result != null;
             }
+
+            /// <summary>
+            /// Returns true if the response is 302 Found
+            /// </summary>
+            /// <returns></returns>
+            public bool IsFound => 302 == (int)StatusCode;
 
             /// <summary>
             /// Returns true if the response is 401 Unauthorized

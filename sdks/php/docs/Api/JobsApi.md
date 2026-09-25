@@ -20,7 +20,7 @@ downloadJobFile($id, $token, $accept_language, $dona_seller, $x_dona_integration
 
 Download an export's file
 
-What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 
 ### Example
 

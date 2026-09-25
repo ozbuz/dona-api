@@ -27,7 +27,9 @@ class Error:
             message (str): Localised by `Accept-Language` (uz default).
             request_id (str):
             details (list[ErrorDetail]): Always present; `[]` when there is nothing field-level.
-            doc_url (str): Anchor into the docs for this code.
+            doc_url (str): Anchor into the docs for this code: `https://dona.uz/<lang>/developers/errors#<code>` — `<lang>`
+                is the key owner's language (uz | ru | en) when a key authenticated the request, else `Accept-Language`, else
+                `uz`. The docs site is per language; there is no language-less `/developers` page.
             retry_after_seconds (int | Unset): Mirrors `Retry-After` on 429/503/`key_suspended`.
             required_scope (str | Unset): The 14 issuable scopes (glossary). `returns:write` is reserved and unissued. Known
                 values (open set — tolerate new ones): `catalog:read`, `catalog:stock`, `catalog:write`, `orders:read`,

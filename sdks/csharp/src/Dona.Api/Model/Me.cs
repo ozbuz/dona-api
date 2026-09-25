@@ -39,7 +39,7 @@ namespace Dona.Api.Model
         /// <param name="writesEnabled">&#x60;app_config.seller_api.writes_enabled&#x60; (seeded false until D5).</param>
         /// <param name="limits">limits</param>
         /// <param name="attention">attention</param>
-        /// <param name="docsUrl">docsUrl</param>
+        /// <param name="docsUrl">The developer docs home in the key owner&#39;s language (&#x60;https://dona.uz/&lt;uz|ru|en&gt;/developers&#x60;; the owner&#39;s &#x60;users.language&#x60;, else &#x60;Accept-Language&#x60;, else uz).</param>
         [JsonConstructor]
         public Me(MeKey key, MeShop shop, string tier, MeApiAccess apiAccess, bool writesEnabled, Limits limits, MeAttention attention, string docsUrl)
         {
@@ -101,8 +101,9 @@ namespace Dona.Api.Model
         public MeAttention Attention { get; set; }
 
         /// <summary>
-        /// Gets or Sets DocsUrl
+        /// The developer docs home in the key owner&#39;s language (&#x60;https://dona.uz/&lt;uz|ru|en&gt;/developers&#x60;; the owner&#39;s &#x60;users.language&#x60;, else &#x60;Accept-Language&#x60;, else uz).
         /// </summary>
+        /// <value>The developer docs home in the key owner&#39;s language (&#x60;https://dona.uz/&lt;uz|ru|en&gt;/developers&#x60;; the owner&#39;s &#x60;users.language&#x60;, else &#x60;Accept-Language&#x60;, else uz).</value>
         [JsonPropertyName("docs_url")]
         public string DocsUrl { get; set; }
 

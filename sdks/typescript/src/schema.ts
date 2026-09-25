@@ -978,7 +978,7 @@ export interface paths {
         };
         /**
          * Download an export's file
-         * @description What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+         * @description What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
          */
         get: operations["downloadJobFile"];
         put?: never;
@@ -1987,7 +1987,7 @@ export interface components {
             details: components["schemas"]["ErrorDetail"][];
             /**
              * Format: uri
-             * @description Anchor into the docs for this code.
+             * @description Anchor into the docs for this code: `https://dona.uz/<lang>/developers/errors#<code>` — `<lang>` is the key owner's language (uz | ru | en) when a key authenticated the request, else `Accept-Language`, else `uz`. The docs site is per language; there is no language-less `/developers` page.
              */
             doc_url: string;
             /** @description Mirrors `Retry-After` on 429/503/`key_suspended`. */
@@ -2104,7 +2104,10 @@ export interface components {
                 open: number;
                 action_required: number;
             };
-            /** Format: uri */
+            /**
+             * Format: uri
+             * @description The developer docs home in the key owner's language (`https://dona.uz/<uz|ru|en>/developers`; the owner's `users.language`, else `Accept-Language`, else uz).
+             */
             docs_url: string;
         };
         Ping: {
@@ -3742,7 +3745,7 @@ export interface operations {
                      *         "open": 3,
                      *         "action_required": 2
                      *       },
-                     *       "docs_url": "https://dona.uz/developers"
+                     *       "docs_url": "https://dona.uz/uz/developers"
                      *     }
                      */
                     "application/json": components["schemas"]["Me"];
@@ -7970,6 +7973,17 @@ export interface operations {
                     "application/x-ndjson": string;
                     "text/csv": string;
                 };
+            };
+            /** @description The file is in Dona's private exports bucket — `Location` is a presigned GET of exactly this job's object, valid 15 minutes, that downloads it as an attachment (`dona-<products|orders>-<job id>.<jsonl|csv>`). Issued only after the key and token checks; never cacheable. */
+            302: {
+                headers: {
+                    /** @description The presigned object URL (`https://…amazonaws.com/…?X-Amz-Signature=…&X-Amz-Expires=900…`). Opaque — do not parse, store or share it; request a new one through `GET /jobs/{id}` once it lapses. */
+                    Location?: string;
+                    "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];

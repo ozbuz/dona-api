@@ -30,7 +30,8 @@ class Me:
         writes_enabled (bool): `app_config.seller_api.writes_enabled` (seeded false until D5).
         limits (Limits):
         attention (MeAttention):
-        docs_url (str):
+        docs_url (str): The developer docs home in the key owner's language (`https://dona.uz/<uz|ru|en>/developers`;
+            the owner's `users.language`, else `Accept-Language`, else uz).
     """
 
     key: MeKey

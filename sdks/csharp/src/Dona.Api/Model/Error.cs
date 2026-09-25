@@ -36,7 +36,7 @@ namespace Dona.Api.Model
         /// <param name="message">Localised by &#x60;Accept-Language&#x60; (uz default).</param>
         /// <param name="requestId">requestId</param>
         /// <param name="details">Always present; &#x60;[]&#x60; when there is nothing field-level.</param>
-        /// <param name="docUrl">Anchor into the docs for this code.</param>
+        /// <param name="docUrl">Anchor into the docs for this code: &#x60;https://dona.uz/&lt;lang&gt;/developers/errors#&lt;code&gt;&#x60; — &#x60;&lt;lang&gt;&#x60; is the key owner&#39;s language (uz | ru | en) when a key authenticated the request, else &#x60;Accept-Language&#x60;, else &#x60;uz&#x60;. The docs site is per language; there is no language-less &#x60;/developers&#x60; page.</param>
         /// <param name="retryAfterSeconds">Mirrors &#x60;Retry-After&#x60; on 429/503/&#x60;key_suspended&#x60;.</param>
         /// <param name="requiredScope">The 14 issuable scopes (glossary). &#x60;returns:write&#x60; is reserved and unissued. Known values (open set — tolerate new ones): &#x60;catalog:read&#x60;, &#x60;catalog:stock&#x60;, &#x60;catalog:write&#x60;, &#x60;orders:read&#x60;, &#x60;orders:write&#x60;, &#x60;orders:cancel&#x60;, &#x60;orders:pii&#x60;, &#x60;returns:read&#x60;, &#x60;health:read&#x60;, &#x60;attention:read&#x60;, &#x60;events:read&#x60;, &#x60;webhooks:manage&#x60;, &#x60;finance:read&#x60;, &#x60;mcp&#x60;.</param>
         /// <param name="rotateUrl">On &#x60;401 api_key_expired&#x60;: the portal page to mint a successor.</param>
@@ -90,9 +90,9 @@ namespace Dona.Api.Model
         public List<ErrorDetail> Details { get; set; }
 
         /// <summary>
-        /// Anchor into the docs for this code.
+        /// Anchor into the docs for this code: &#x60;https://dona.uz/&lt;lang&gt;/developers/errors#&lt;code&gt;&#x60; — &#x60;&lt;lang&gt;&#x60; is the key owner&#39;s language (uz | ru | en) when a key authenticated the request, else &#x60;Accept-Language&#x60;, else &#x60;uz&#x60;. The docs site is per language; there is no language-less &#x60;/developers&#x60; page.
         /// </summary>
-        /// <value>Anchor into the docs for this code.</value>
+        /// <value>Anchor into the docs for this code: &#x60;https://dona.uz/&lt;lang&gt;/developers/errors#&lt;code&gt;&#x60; — &#x60;&lt;lang&gt;&#x60; is the key owner&#39;s language (uz | ru | en) when a key authenticated the request, else &#x60;Accept-Language&#x60;, else &#x60;uz&#x60;. The docs site is per language; there is no language-less &#x60;/developers&#x60; page.</value>
         [JsonPropertyName("doc_url")]
         public string DocUrl { get; set; }
 

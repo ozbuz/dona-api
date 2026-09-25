@@ -75,10 +75,10 @@ info:
     door is `401 invalid_token`.
   contact:
     name: Dona API
-    url: https://dona.uz/developers
+    url: https://dona.uz/uz/developers
   license:
     name: Proprietary — Dona
-    url: https://dona.uz/developers/terms
+    url: https://dona.uz/uz/developers/terms
 servers:
 - url: https://api.dona.im/seller-api/v1
   description: Production (the only environment; `dry_run` is the rehearsal).
@@ -198,7 +198,7 @@ paths:
                 attention:
                   open: 3
                   action_required: 2
-                docs_url: https://dona.uz/developers
+                docs_url: https://dona.uz/uz/developers
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -4863,9 +4863,12 @@ paths:
       description: What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's
         kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it
         carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or
-        another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept
-        in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not
-        gated by `writes_enabled`.
+        another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is never
+        on a public origin — it is in Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both
+        checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the bytes). Follow
+        the redirect WITHOUT the `Authorization` header (the signed URL carries its own authority; most HTTP clients drop the
+        header on a cross-host redirect). Swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
+        `writes_enabled`.
       parameters:
       - $ref: '#/components/parameters/IdPath'
       - name: token
@@ -4917,6 +4920,21 @@ paths:
               schema:
                 type: string
                 contentMediaType: text/csv
+        '302':
+          description: The file is in Dona's private exports bucket — `Location` is a presigned GET of exactly this job's object,
+            valid 15 minutes, that downloads it as an attachment (`dona-<products|orders>-<job id>.<jsonl|csv>`). Issued only
+            after the key and token checks; never cacheable.
+          headers:
+            Location:
+              description: The presigned object URL (`https://…amazonaws.com/…?X-Amz-Signature=…&X-Amz-Expires=900…`). Opaque —
+                do not parse, store or share it; request a new one through `GET /jobs/{id}` once it lapses.
+              schema:
+                type: string
+                format: uri
+            Dona-Request-Id:
+              $ref: '#/components/headers/Dona-Request-Id'
+            Cache-Control:
+              $ref: '#/components/headers/Cache-Control'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -7844,7 +7862,7 @@ components:
                 - field: ikpu
                   code: ikpu_required
                   message: IKPU kodi majburiy.
-                doc_url: https://dona.uz/developers/errors#invalid_body
+                doc_url: https://dona.uz/uz/developers/errors#invalid_body
             cursor_expired:
               value:
                 error: invalid_body
@@ -7854,7 +7872,7 @@ components:
                 - field: cursor
                   code: cursor_expired
                   message: Kursor eskirgan — toʻliq solishtiring.
-                doc_url: https://dona.uz/developers/errors#invalid_body
+                doc_url: https://dona.uz/uz/developers/errors#invalid_body
                 meta:
                   oldest_event_id: 01997b2f-0102-7345-9678-9abcdef01234
     Unauthorized:
@@ -7877,14 +7895,14 @@ components:
                 message: Bu kalit bekor qilingan.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#api_key_revoked
+                doc_url: https://dona.uz/uz/developers/errors#api_key_revoked
             expired:
               value:
                 error: api_key_expired
                 message: Kalit muddati tugagan.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#api_key_expired
+                doc_url: https://dona.uz/uz/developers/errors#api_key_expired
                 rotate_url: https://seller.dona.im/settings/api
     Forbidden:
       description: '`insufficient_scope` (+`required_scope`; also a scope in `disabled_scopes`) · `tier_required` (+`scope`; derived on every request; also a key minted for a third-party
@@ -7912,7 +7930,7 @@ components:
                 message: Bu amal uchun ruxsat yetarli emas.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#insufficient_scope
+                doc_url: https://dona.uz/uz/developers/errors#insufficient_scope
                 required_scope: orders:write
             suspended:
               value:
@@ -7920,7 +7938,7 @@ components:
                 message: Kalit vaqtincha toʻxtatilgan.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#key_suspended
+                doc_url: https://dona.uz/uz/developers/errors#key_suspended
                 suspended_until: '2026-09-24T14:20:12+05:00'
                 retry_after_seconds: 900
                 reason: error_storm
@@ -7942,7 +7960,7 @@ components:
                 message: Topilmadi.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#not_found
+                doc_url: https://dona.uz/uz/developers/errors#not_found
     Conflict:
       description: '`idempotency_in_progress` (+`Retry-After: 2`) · `idempotency_mismatch` · `version_conflict` · `ai_review_open` (publish of a product whose Dona AI review case is open — the review decides its status) · order codes `order_not_acceptable`,
         `no_pickup_address`, `order_not_shippable`, `order_awaiting_courier`, `order_not_cancellable`, `order_has_active_return` ·
@@ -7966,14 +7984,14 @@ components:
                 message: Bu Idempotency-Key boshqa soʻrov bilan ishlatilgan.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#idempotency_mismatch
+                doc_url: https://dona.uz/uz/developers/errors#idempotency_mismatch
             order:
               value:
                 error: order_not_shippable
                 message: Buyurtmani joʻnatib boʻlmaydi.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#order_not_shippable
+                doc_url: https://dona.uz/uz/developers/errors#order_not_shippable
     PayloadTooLarge:
       description: '`payload_too_large` — body > 256 KiB (4 MiB on bulk stock/prices/batch), or > 1 000 lines.'
       headers:
@@ -7992,7 +8010,7 @@ components:
                 message: Soʻrov hajmi juda katta.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#payload_too_large
+                doc_url: https://dona.uz/uz/developers/errors#payload_too_large
     Unprocessable:
       description: '`webhook_url_invalid` (+`details[].code` ∈ `timeout`, `status_<n>`, `tls`, `dns`, `private_address`, `scheme`) ·
         `warehouse_unsupported`.'
@@ -8015,7 +8033,7 @@ components:
                 - field: url
                   code: timeout
                   message: PING 1 soniyada javob bermadi.
-                doc_url: https://dona.uz/developers/errors#webhook_url_invalid
+                doc_url: https://dona.uz/uz/developers/errors#webhook_url_invalid
     TooManyRequests:
       description: '`rate_limited` (with `Dona-Rate-Limited-Reason: app-rate`: a vendor app''s bucket, shared by all its installs — S6) · `write_rate_limited` · `concurrency_limited` · `seller_rate_limited` · `object_cooldown` · `api_busy`.
         Always a JSON body + `Retry-After` from the origin (an edge 429 from Cloudflare has NO body — treat it as `Retry-After: 60`).
@@ -8053,7 +8071,7 @@ components:
                 message: Bu kalit uchun daqiqasiga 300 soʻrov; 17 soniyadan keyin qayta urining.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#rate_limited
+                doc_url: https://dona.uz/uz/developers/errors#rate_limited
                 retry_after_seconds: 17
     InternalError:
       description: '`internal_error` — details are in the redacted error copy, never here. Costs 0.'
@@ -8073,7 +8091,7 @@ components:
                 message: Nimadir notoʻgʻri ketdi.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#internal_error
+                doc_url: https://dona.uz/uz/developers/errors#internal_error
     ServiceUnavailable:
       description: '`auth_unavailable` (key lookup failed — fail closed) · `limits_unavailable` (limiter blind on a write/MCP call,
         or a kill switch is off: `enabled`, `writes_enabled`, `webhooks_enabled`; `Retry-After: 30`) · `attention_busy` (an
@@ -8102,7 +8120,7 @@ components:
                 message: Hozircha yozish imkoni yoʻq.
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
-                doc_url: https://dona.uz/developers/errors#limits_unavailable
+                doc_url: https://dona.uz/uz/developers/errors#limits_unavailable
                 retry_after_seconds: 30
     EdgeTooManyRequests:
       description: 'Cloudflare edge, per-IP 60/min on public routes. **No JSON body** (the edge eats it) — treat as `Retry-After: 60`.'
@@ -8200,7 +8218,9 @@ components:
         doc_url:
           type: string
           format: uri
-          description: Anchor into the docs for this code.
+          description: 'Anchor into the docs for this code: `https://dona.uz/<lang>/developers/errors#<code>` — `<lang>` is the
+            key owner''s language (uz | ru | en) when a key authenticated the request, else `Accept-Language`, else `uz`. The
+            docs site is per language; there is no language-less `/developers` page.' 
         retry_after_seconds:
           type: integer
           description: Mirrors `Retry-After` on 429/503/`key_suspended`.
@@ -8455,6 +8475,8 @@ components:
         docs_url:
           type: string
           format: uri
+          description: The developer docs home in the key owner's language (`https://dona.uz/<uz|ru|en>/developers`; the
+            owner's `users.language`, else `Accept-Language`, else uz).
       required:
       - key
       - shop

@@ -1706,7 +1706,7 @@ type Error struct {
 	// Details Always present; `[]` when there is nothing field-level.
 	Details []ErrorDetail `json:"details"`
 
-	// DocUrl Anchor into the docs for this code.
+	// DocUrl Anchor into the docs for this code: `https://dona.uz/<lang>/developers/errors#<code>` — `<lang>` is the key owner's language (uz | ru | en) when a key authenticated the request, else `Accept-Language`, else `uz`. The docs site is per language; there is no language-less `/developers` page.
 	DocUrl string `json:"doc_url"`
 
 	// Error Stable code (glossary / docs/error-codes.md). Clients branch on this, never on `message`.
@@ -2093,6 +2093,8 @@ type Me struct {
 		ActionRequired int `json:"action_required"`
 		Open           int `json:"open"`
 	} `json:"attention"`
+
+	// DocsUrl The developer docs home in the key owner's language (`https://dona.uz/<uz|ru|en>/developers`; the owner's `users.language`, else `Accept-Language`, else uz).
 	DocsUrl string `json:"docs_url"`
 	Key     struct {
 		// ExpiresAt ISO 8601 with offset (Tashkent `+05:00` on output).
@@ -6259,7 +6261,7 @@ type ClientInterface interface {
 
 	// DownloadJobFile Download an export's file
 	//
-	// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+	// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 	//
 	// Corresponds with GET /jobs/{id}/download (the `DownloadJobFile` operationId).
 	DownloadJobFile(ctx context.Context, id IdPath, params *DownloadJobFileParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -7031,7 +7033,7 @@ func (c *Client) GetJob(ctx context.Context, id IdPath, params *GetJobParams, re
 
 // DownloadJobFile Download an export's file
 //
-// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 //
 // Corresponds with GET /jobs/{id}/download (the `DownloadJobFile` operationId).
 func (c *Client) DownloadJobFile(ctx context.Context, id IdPath, params *DownloadJobFileParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -14204,7 +14206,7 @@ type ClientWithResponsesInterface interface {
 
 	// DownloadJobFileWithResponse Download an export's file
 	//
-	// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+	// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -17344,6 +17346,13 @@ type DownloadJobFileResponse200Headers struct {
 	XRateLimitReset     *int
 }
 
+// DownloadJobFileResponse302Headers the declared response headers of an HTTP 302 response for DownloadJobFile
+type DownloadJobFileResponse302Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+	Location      *string
+}
+
 // DownloadJobFileResponse401Headers the declared response headers of an HTTP 401 response for DownloadJobFile
 type DownloadJobFileResponse401Headers struct {
 	CacheControl  *string
@@ -17408,6 +17417,8 @@ type DownloadJobFileResponse struct {
 	JSON503 *ServiceUnavailable
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *DownloadJobFileResponse200Headers
+	// Headers302 the parsed response headers for an HTTP 302 response
+	Headers302 *DownloadJobFileResponse302Headers
 	// Headers401 the parsed response headers for an HTTP 401 response
 	Headers401 *DownloadJobFileResponse401Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
@@ -24990,7 +25001,7 @@ func (c *ClientWithResponses) GetJobWithResponse(ctx context.Context, id IdPath,
 
 // DownloadJobFileWithResponse Download an export's file
 //
-// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is never on a public origin — it is in Dona's private exports bucket (`302` to a presigned GET valid 15 min, issued only after both checks above — D24, 2026-09-26) or, where the bucket is not configured, in the database (`200` with the bytes). Follow the redirect WITHOUT the `Authorization` header (the signed URL carries its own authority; most HTTP clients drop the header on a cross-host redirect). Swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -31298,6 +31309,9 @@ func ParseDownloadJobFileResponse(rsp *http.Response) (*DownloadJobFileResponse,
 	}
 
 	switch {
+	case rsp.StatusCode == 302:
+		break // No content-type
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -31430,6 +31444,30 @@ func ParseDownloadJobFileResponse(rsp *http.Response) (*DownloadJobFileResponse,
 			headers.XRateLimitReset = &value
 		}
 		response.Headers200 = &headers
+	case rsp.StatusCode == 302:
+		var headers DownloadJobFileResponse302Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "uri"}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		response.Headers302 = &headers
 	case rsp.StatusCode == 401:
 		var headers DownloadJobFileResponse401Headers
 		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {

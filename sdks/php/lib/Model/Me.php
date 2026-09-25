@@ -564,7 +564,7 @@ class Me implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets docs_url
      *
-     * @param string $docs_url docs_url
+     * @param string $docs_url The developer docs home in the key owner's language (`https://dona.uz/<uz|ru|en>/developers`; the owner's `users.language`, else `Accept-Language`, else uz).
      *
      * @return self
      */
