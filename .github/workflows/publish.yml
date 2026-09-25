@@ -1,0 +1,167 @@
+name: publish
+
+# Publishes the generated SDKs to their language registries. Approved by Bek 2026-09-26 (repo made
+# public, publishing unblocked) — see README › Publishing and OZB architecture/DB/seller-api/.
+#
+# Each job publishes ONE registry and is entirely gated on that registry's token secret existing on
+# this repo. No secret ⇒ the job's steps are skipped and it prints a clear notice instead of failing —
+# so an empty registry roster is visible in the run, not a wall of red. Nothing here creates a
+# registry account; Bek adds the secret once one exists, and the job goes live with no code change.
+# (The `secrets` context cannot be read directly in an `if:` — GitHub only allows env/github/inputs/
+# job/... there — so each job first copies its secret into a job-level `env:` and gates on that.)
+#
+# Go is not a job here: once the repo is public, `git tag sdks/go/vX.Y.Z && git push origin
+# sdks/go/vX.Y.Z` is the entire "publish" (proxy.golang.org resolves it directly) — see README.
+# Packagist has no subdirectory support, so it is published from a SEPARATE repo (`ozbuz/dona-api-php`)
+# that this workflow mirrors sdks/php into; the actual `composer require` for users needs that repo to
+# exist and be submitted to packagist.org, both of which are Bek's action, not this workflow's.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  # One publish attempt per ref at a time; never cancel one already pushing bytes to a registry.
+  group: publish-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GOTOOLCHAIN: local
+
+jobs:
+  npm:
+    name: npm — @dona/api
+    runs-on: [self-hosted, dona-ci]
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # npm provenance (OIDC) — no effect unless NPM_TOKEN is also set
+    env:
+      HAS_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
+    steps:
+      - name: Skip — NPM_TOKEN not set
+        if: ${{ env.HAS_TOKEN != 'true' }}
+        run: |
+          echo "::notice title=npm publish skipped::NPM_TOKEN secret is not set on ozbuz/dona-api. Add it (Settings > Secrets and variables > Actions, or \`gh secret set NPM_TOKEN --repo ozbuz/dona-api\`) — an npm access token for the \`dona\` org with publish rights to @dona/api — then re-run this workflow."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ env.HAS_TOKEN == 'true' }}
+
+      - name: Load pinned versions
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        run: grep -E '^[A-Z_]+=' generators/versions.env >>"$GITHUB_ENV"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+
+      - name: Build
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        run: cd sdks/typescript && npm ci && npm run build
+
+      - name: Publish
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        run: cd sdks/typescript && npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  pypi:
+    name: PyPI — dona-api
+    runs-on: [self-hosted, dona-ci]
+    timeout-minutes: 15
+    env:
+      HAS_TOKEN: ${{ secrets.PYPI_TOKEN != '' }}
+    steps:
+      - name: Skip — PYPI_TOKEN not set
+        if: ${{ env.HAS_TOKEN != 'true' }}
+        run: |
+          echo "::notice title=PyPI publish skipped::PYPI_TOKEN secret is not set on ozbuz/dona-api. Add it (an API token scoped to the dona-api project, or the pypi-org token if the project does not exist yet) via \`gh secret set PYPI_TOKEN --repo ozbuz/dona-api\`, then re-run this workflow. Alternative: configure PyPI Trusted Publishing for this repo + this workflow filename on the dona-api project page on pypi.org, which needs no secret — ask Bek to set that up if preferred over a token."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ env.HAS_TOKEN == 'true' }}
+
+      - name: Load pinned versions
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        run: grep -E '^[A-Z_]+=' generators/versions.env >>"$GITHUB_ENV"
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+
+      - name: Build + publish
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        run: cd sdks/python && uv build && uv publish
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+  nuget:
+    name: NuGet — Dona.Api
+    runs-on: [self-hosted, dona-ci]
+    timeout-minutes: 15
+    env:
+      HAS_TOKEN: ${{ secrets.NUGET_API_KEY != '' }}
+    steps:
+      - name: Skip — NUGET_API_KEY not set
+        if: ${{ env.HAS_TOKEN != 'true' }}
+        run: |
+          echo "::notice title=NuGet publish skipped::NUGET_API_KEY secret is not set on ozbuz/dona-api. Add it (an API key from nuget.org scoped to Dona.Api, or unscoped if the package does not exist yet) via \`gh secret set NUGET_API_KEY --repo ozbuz/dona-api\`, then re-run this workflow."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ env.HAS_TOKEN == 'true' }}
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pack
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        run: dotnet pack sdks/csharp/src/Dona.Api/Dona.Api.csproj -c Release -o out
+
+      - name: Push
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        run: dotnet nuget push out/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+  packagist-mirror:
+    name: Packagist — mirror sdks/php to ozbuz/dona-api-php
+    runs-on: [self-hosted, dona-ci]
+    timeout-minutes: 15
+    env:
+      HAS_TOKEN: ${{ secrets.PACKAGIST_MIRROR_TOKEN != '' }}
+    steps:
+      # DOCUMENTED STUB: Packagist has no subdirectory support, so ozbuz/dona-api itself can never be
+      # a Packagist package — a composer.json must sit at a repo ROOT. The fix is a split repo
+      # (ozbuz/dona-api-php) that mirrors sdks/php on every publish; that repo is then the one
+      # submitted to packagist.org (a one-time, human action on packagist.org — this job cannot do
+      # it). PACKAGIST_MIRROR_TOKEN is a GitHub PAT (classic, `repo` scope) with push access to
+      # ozbuz/dona-api-php — not a Packagist credential; Packagist tracks the mirror repo via its own
+      # GitHub App/webhook once submitted, so this job never talks to packagist.org directly.
+      - name: Skip — PACKAGIST_MIRROR_TOKEN not set
+        if: ${{ env.HAS_TOKEN != 'true' }}
+        run: |
+          echo "::notice title=Packagist mirror skipped::PACKAGIST_MIRROR_TOKEN secret is not set on ozbuz/dona-api. Packagist needs composer.json at a repo root, which sdks/php/ is not, so publishing goes through a split repo. To enable: (1) Bek creates an empty repo ozbuz/dona-api-php, (2) mints a GitHub PAT with push access to it and adds it here via \`gh secret set PACKAGIST_MIRROR_TOKEN --repo ozbuz/dona-api\`, (3) submits ozbuz/dona-api-php on packagist.org (one-time, human). Then this job mirrors sdks/php into that repo on every tag."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        with:
+          fetch-depth: 0 # git subtree split needs full history
+
+      - name: Split sdks/php and push to the mirror repo
+        if: ${{ env.HAS_TOKEN == 'true' }}
+        run: |
+          set -euo pipefail
+          git config user.name "dona-api-ci"
+          git config user.email "ci@dona.im"
+          git subtree split --prefix sdks/php -b php-release
+          git push "https://x-access-token:${PACKAGIST_MIRROR_TOKEN}@github.com/ozbuz/dona-api-php.git" php-release:main --force
+        env:
+          PACKAGIST_MIRROR_TOKEN: ${{ secrets.PACKAGIST_MIRROR_TOKEN }}

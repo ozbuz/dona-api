@@ -1,8 +1,9 @@
 # dona-api — working guide (AI + humans)
 
-Generated **Dona API SDKs** (TypeScript · Python · Go · PHP · C#) and runnable examples. Private in
-`ozbuz` until Bek makes it public; nothing is published to a registry yet (S6).
-Design: `OZB/architecture/DB/seller-api/docs-portal.md` §5 (internal workspace).
+Generated **Dona API SDKs** (TypeScript · Python · Go · PHP · C#) and runnable examples. **Public**
+since 2026-09-26 (Bek's approval); `.github/workflows/publish.yml` exists but every registry job
+skips until Bek adds that registry's token secret — nothing has been published to a registry yet.
+Design: `OZB/architecture/DB/seller-api/docs-portal.md` §5.
 
 ## The one rule
 
@@ -26,9 +27,14 @@ then `make generate` and commit `spec/` + `sdks/` + the change **together**.
   compiled + smoke-tested in CI against `tools/mockapi`. A new example step needs a `smoke_assert.py` line.
 - Containers run as the calling user (`--user $(id -u):$(id -g)`) — root-owned `bin/ obj/ vendor/`
   would break `git clean` on the persistent self-hosted runner.
-- ⛔ Never publish from here or from CI (npm / PyPI / Packagist / NuGet / Go tags) — S6, Bek decides.
-- ⛔ Never make the repo public — Bek's click.
+- ⛔ `publish.yml` only runs a registry job once ITS token secret exists — adding a secret is Bek's
+  action; don't hand-trigger a publish by working around the skip guard.
 - ⛔ Never put a real `dona_sk_live_…` key or `whsec_…` secret in a file, test or log.
+- The Go module directive (`sdks/go/go.mod`, and `tools/go.mod` / `examples/go/go.mod` which are not
+  templated) tracks the toolchain minimum the code needs, not necessarily the newest release — a
+  directive newer than what `actions/setup-go`/most installs have forces every `go get` (and this
+  repo's own CI, which runs `GOTOOLCHAIN: local`) to fail instead of silently downloading. Bump it only
+  with a reason, and keep `generators/versions.env`'s `GO_VERSION` in sync with both.
 
 ## Git
 

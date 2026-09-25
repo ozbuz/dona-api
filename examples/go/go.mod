@@ -1,6 +1,6 @@
 module github.com/ozbuz/dona-api/examples/go
 
-go 1.27.1
+go 1.26.4
 
 require github.com/ozbuz/dona-api/sdks/go v0.0.0
 

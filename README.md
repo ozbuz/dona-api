@@ -10,20 +10,20 @@ PHP and C#**, generated from one OpenAPI 3.1 contract, plus runnable examples fo
 | Contract | [`spec/openapi.yaml`](spec/openapi.yaml) — the same document the API serves at [`/seller-api/v1/openapi.json`](https://api.dona.im/seller-api/v1/openapi.json) (CI proves it) |
 | SDKs | [`sdks/`](sdks/) — **generated, never edited by hand** (CI regenerates and fails on any difference) |
 | Examples | [`examples/`](examples/) — `GET /me` → `GET /products?limit=5` → `POST /stock` (`dry_run`) + a webhook signature verifier, per language |
-| Status | **Pre-release (0.1.0).** The API is deployed but not yet enabled for sellers (until then a valid key gets `503 limits_unavailable`). The contract now covers S1–S7: reads, writes (`POST /stock` etc., gated on `writes_enabled`), webhooks, an MCP door for AI agents (`dona_ak_live_…`) with write tools + owner confirmation, an OAuth 2.1 door for connectors (read-only), and vendor-app install keys (`dona_it_live_…`, `Dona-Seller` header). Packages are **not yet published** — install from this repository (below). |
+| Status | **Pre-release (0.1.0).** The API is deployed but not yet enabled for sellers (until then a valid key gets `503 limits_unavailable`). The contract now covers S1–S7: reads, writes (`POST /stock` etc., gated on `writes_enabled`), webhooks, an MCP door for AI agents (`dona_ak_live_…`) with write tools + owner confirmation, an OAuth 2.1 door for connectors (read-only), and vendor-app install keys (`dona_it_live_…`, `Dona-Seller` header). **The repository is public** (2026-09-26); registry packages (npm/PyPI/NuGet/Packagist) are **not yet published** — the token for each is still missing, see [`.github/workflows/publish.yml`](.github/workflows/publish.yml). Install from the repo below; it works today, no clone or auth required. |
 
 ## Install · Oʻrnatish · Установка
 
-Until the packages are published (S6), install from a clone of this repository
-(`git clone git@github.com:ozbuz/dona-api.git`):
+The repository is public — no clone, no SSH key, no `GOPRIVATE`. Each command below was verified
+against a public checkout of `main`:
 
-| Language | Now (from the repo) | After publication (S6) |
+| Language | Works today (from this repo) | After a registry token is added |
 |---|---|---|
-| **TypeScript** (Node ≥ 20) | `cd sdks/typescript && npm install && npm run build && npm pack` → `npm install /path/to/dona-api-0.1.0.tgz` | `npm install @dona/api` |
-| **Python** (≥ 3.11) | `pip install "dona-api @ git+ssh://git@github.com/ozbuz/dona-api.git#subdirectory=sdks/python"` | `pip install dona-api` |
-| **Go** (≥ 1.27) | `GOPRIVATE=github.com/ozbuz/* go get github.com/ozbuz/dona-api/sdks/go@main` | `go get github.com/ozbuz/dona-api/sdks/go@v0.1.0` |
-| **PHP** (≥ 8.1, Guzzle 7) | composer `"repositories": [{"type": "path", "url": "/path/to/dona-api/sdks/php"}]` + `"require": {"ozbuz/dona-api": "*@dev"}` | `composer require ozbuz/dona-api` |
-| **C#** (.NET 10) | `dotnet add reference /path/to/dona-api/sdks/csharp/src/Dona.Api/Dona.Api.csproj` | `dotnet add package Dona.Api` |
+| **Go** (≥ 1.26) | `go get github.com/ozbuz/dona-api/sdks/go@main` | `go get github.com/ozbuz/dona-api/sdks/go@v0.1.0` (a `sdks/go/vX.Y.Z` tag) |
+| **Python** (≥ 3.11) | `pip install "dona-api @ git+https://github.com/ozbuz/dona-api.git@main#subdirectory=sdks/python"` | `pip install dona-api` |
+| **TypeScript** (Node ≥ 20) | `npm install github:ozbuz/dona-api#main:sdks/typescript` — installing runs a build automatically (an npm `prepare` hook compiles `dist/` on install; nothing extra to run by hand) | `npm install @dona/api` |
+| **PHP** (≥ 8.1, Guzzle 7) | **Needs a local clone** — composer has no subdirectory support for a git dependency (only Packagist-style repos at their own root), so this monorepo cannot be `composer require`d directly yet: `git clone https://github.com/ozbuz/dona-api.git && cd your-project && composer config repositories.dona-api path ../dona-api/sdks/php && composer require ozbuz/dona-api:*@dev` | `composer require ozbuz/dona-api` (once [`ozbuz/dona-api-php`](https://github.com/ozbuz/dona-api-php) exists and is submitted to Packagist — see the workflow) |
+| **C#** (.NET 10) | `git clone https://github.com/ozbuz/dona-api.git && dotnet add reference path/to/dona-api/sdks/csharp/src/Dona.Api/Dona.Api.csproj` — no registry-free git-reference mechanism in .NET, so a clone (or `git submodule add`) is the only option today | `dotnet add package Dona.Api` |
 
 Each SDK's first call, and the complete runnable version, is in [`examples/`](examples/README.md).
 
@@ -253,22 +253,25 @@ examples/<lang>/         hand-written, runnable; compiled, type-checked and smok
   `tools/mockapi` (asserting the key header, `limit=5`, `Idempotency-Key` and `dry_run=true`).
 - **Locally**: Go, Node ≥ 24, `uv`, Docker. `make all` then `make smoke`.
 
-### Publishing (S6 — not done; nothing in CI publishes)
+### Publishing (repo public 2026-09-26; registry tokens still pending)
 
-Decided at S6, with Bek: the package names (`@dona/api` needs the npm org `dona`; Packagist has no
-subdirectory support), the version, and making this repository **public** (Bek's action:
-`gh repo edit ozbuz/dona-api --visibility public --accept-visibility-change-consequences`).
+The repository is public. `.github/workflows/publish.yml` (manual `workflow_dispatch` or a `v*` tag)
+has one job per registry — npm, PyPI, NuGet, and a Packagist mirror — and each is gated on that
+registry's token secret existing on this repo; missing it, the job prints a clear skip notice instead
+of failing. **No token exists yet for any of the four** (`gh secret list --repo ozbuz/dona-api` is
+empty) — adding one is Bek's action, no code change needed after. Nothing here creates a registry
+account.
+
+| Registry | Secret it needs | What ships |
+|---|---|---|
+| npm | `NPM_TOKEN` (org `dona`, publish rights to `@dona/api`) | `sdks/typescript` — `private: true` already dropped |
+| PyPI | `PYPI_TOKEN`, or Trusted Publishing configured on the `dona-api` project (no secret) | `sdks/python` |
+| NuGet | `NUGET_API_KEY` | `sdks/csharp` (`Dona.Api`) |
+| Packagist | `PACKAGIST_MIRROR_TOKEN` (a GitHub PAT with push to `ozbuz/dona-api-php`, which does not exist yet) | mirrors `sdks/php` into that split repo; submitting it to packagist.org is a separate, one-time, human step |
+
+Go needs no registry or token — once the repo is public, tagging **is** publishing:
 
 ```bash
-# npm — first drop "private": true from generators/typescript/template/package.json and regenerate
-cd sdks/typescript && npm ci && npm run build && npm publish --access public --provenance
-# PyPI (trusted publishing from a release workflow)
-cd sdks/python && uv build && uv publish
-# Go — the module lives in a subdirectory, so the tag carries its path (needs the repo public for proxy.golang.org)
+# the module lives in a subdirectory, so the tag carries its path; proxy.golang.org needs the repo public (done)
 git tag sdks/go/v0.1.0 && git push origin sdks/go/v0.1.0
-# Packagist — needs composer.json at a repository root: split sdks/php into its own repo, then submit it
-git subtree split --prefix sdks/php -b php-release && git push git@github.com:ozbuz/dona-api-php.git php-release:main
-# NuGet
-dotnet pack sdks/csharp/src/Dona.Api/Dona.Api.csproj -c Release -o out
-dotnet nuget push out/Dona.Api.0.1.0.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json
 ```
