@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **RetryAfterSeconds** | **int** | Mirrors &#x60;Retry-After&#x60; on 429/503/&#x60;key_suspended&#x60;. | [optional] 
 **RequiredScope** | **string** | The 14 issuable scopes (glossary). &#x60;returns:write&#x60; is reserved and unissued. Known values (open set — tolerate new ones): &#x60;catalog:read&#x60;, &#x60;catalog:stock&#x60;, &#x60;catalog:write&#x60;, &#x60;orders:read&#x60;, &#x60;orders:write&#x60;, &#x60;orders:cancel&#x60;, &#x60;orders:pii&#x60;, &#x60;returns:read&#x60;, &#x60;health:read&#x60;, &#x60;attention:read&#x60;, &#x60;events:read&#x60;, &#x60;webhooks:manage&#x60;, &#x60;finance:read&#x60;, &#x60;mcp&#x60;. | [optional] 
 **RotateUrl** | **string** | On &#x60;401 api_key_expired&#x60;: the portal page to mint a successor. | [optional] 
+**AcceptUrl** | **string** | On &#x60;403 agreement_required&#x60;: the portal page where the shop owner accepts Annex 2. | [optional] 
 **SuspendedUntil** | **DateTimeOffset** | On &#x60;403 key_suspended&#x60;. | [optional] 
 **Reason** | **string** | On &#x60;403 key_suspended&#x60; / &#x60;403 api_blocked&#x60;: why (&#x60;error_storm&#x60;, &#x60;unauthorized_storm&#x60;, &#x60;ip_blocked&#x60;, &#x60;credential_stuffing&#x60;, &#x60;leak_reported&#x60;, &#x60;staff&#x60;). | [optional] 
 **Meta** | [**ErrorMeta**](ErrorMeta.md) |  | [optional] 

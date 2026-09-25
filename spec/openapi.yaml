@@ -7909,7 +7909,10 @@ components:
         `orders:pii` recipient — `details[pii_recipient: pii_third_party_pending_counsel]`, D7, C59) · `key_suspended`
         (+`suspended_until`, `Retry-After`, `Dona-Rate-Limited-Reason: suspended`) · `api_blocked` · `ip_not_allowed` (judged on the
         trusted client IP only) · `seller_not_approved` (shop closed/blocked/suspended/restricted) · `not_a_seller` (never on this tree;
-        the portal''s owner doors) · `app_frozen` (S6: every key of a frozen vendor app, from the next request).'
+        the portal''s owner doors) · `app_frozen` (S6: every key of a frozen vendor app, from the next request) ·
+        `agreement_required` (+`accept_url`: the shop owner has not accepted the CURRENT Annex 2 «API and automated
+        access» — the version in force or, while none is, the earliest announced; accepted once in Settings › API, then
+        every door admits the key again. Checked after the sanctions, before the scopes).'
       headers:
         Dona-Request-Id:
           $ref: '#/components/headers/Dona-Request-Id'
@@ -7942,6 +7945,15 @@ components:
                 suspended_until: '2026-09-24T14:20:12+05:00'
                 retry_after_seconds: 900
                 reason: error_storm
+            agreement:
+              value:
+                error: agreement_required
+                message: API dan foydalanish uchun doʻkon egasi Sozlamalar › API boʻlimida 2-ilovani (API va avtomatlashtirilgan
+                  kirish) qabul qilishi kerak.
+                request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
+                details: []
+                doc_url: https://dona.uz/uz/developers/errors#agreement_required
+                accept_url: https://seller.dona.im/settings/api
     NotFound:
       description: '`not_found` — every missing OR foreign id (never 403: no existence oracle).'
       headers:
@@ -8230,6 +8242,10 @@ components:
           type: string
           format: uri
           description: 'On `401 api_key_expired`: the portal page to mint a successor.'
+        accept_url:
+          type: string
+          format: uri
+          description: 'On `403 agreement_required`: the portal page where the shop owner accepts Annex 2.'
         suspended_until:
           type: string
           format: date-time

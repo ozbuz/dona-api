@@ -36,6 +36,7 @@ class Error:
                 `orders:write`, `orders:cancel`, `orders:pii`, `returns:read`, `health:read`, `attention:read`, `events:read`,
                 `webhooks:manage`, `finance:read`, `mcp`.
             rotate_url (str | Unset): On `401 api_key_expired`: the portal page to mint a successor.
+            accept_url (str | Unset): On `403 agreement_required`: the portal page where the shop owner accepts Annex 2.
             suspended_until (datetime.datetime | Unset): On `403 key_suspended`.
             reason (str | Unset): On `403 key_suspended` / `403 api_blocked`: why (`error_storm`, `unauthorized_storm`,
                 `ip_blocked`, `credential_stuffing`, `leak_reported`, `staff`).
@@ -50,6 +51,7 @@ class Error:
     retry_after_seconds: int | Unset = UNSET
     required_scope: str | Unset = UNSET
     rotate_url: str | Unset = UNSET
+    accept_url: str | Unset = UNSET
     suspended_until: datetime.datetime | Unset = UNSET
     reason: str | Unset = UNSET
     meta: ErrorMeta | Unset = UNSET
@@ -74,6 +76,8 @@ class Error:
         required_scope = self.required_scope
 
         rotate_url = self.rotate_url
+
+        accept_url = self.accept_url
 
         suspended_until: str | Unset = UNSET
         if not isinstance(self.suspended_until, Unset):
@@ -102,6 +106,8 @@ class Error:
             field_dict["required_scope"] = required_scope
         if rotate_url is not UNSET:
             field_dict["rotate_url"] = rotate_url
+        if accept_url is not UNSET:
+            field_dict["accept_url"] = accept_url
         if suspended_until is not UNSET:
             field_dict["suspended_until"] = suspended_until
         if reason is not UNSET:
@@ -138,6 +144,8 @@ class Error:
 
         rotate_url = d.pop("rotate_url", UNSET)
 
+        accept_url = d.pop("accept_url", UNSET)
+
         _suspended_until = d.pop("suspended_until", UNSET)
         suspended_until: datetime.datetime | Unset
         if isinstance(_suspended_until, Unset):
@@ -163,6 +171,7 @@ class Error:
             retry_after_seconds=retry_after_seconds,
             required_scope=required_scope,
             rotate_url=rotate_url,
+            accept_url=accept_url,
             suspended_until=suspended_until,
             reason=reason,
             meta=meta,

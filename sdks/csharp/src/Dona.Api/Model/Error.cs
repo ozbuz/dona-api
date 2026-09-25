@@ -40,11 +40,12 @@ namespace Dona.Api.Model
         /// <param name="retryAfterSeconds">Mirrors &#x60;Retry-After&#x60; on 429/503/&#x60;key_suspended&#x60;.</param>
         /// <param name="requiredScope">The 14 issuable scopes (glossary). &#x60;returns:write&#x60; is reserved and unissued. Known values (open set — tolerate new ones): &#x60;catalog:read&#x60;, &#x60;catalog:stock&#x60;, &#x60;catalog:write&#x60;, &#x60;orders:read&#x60;, &#x60;orders:write&#x60;, &#x60;orders:cancel&#x60;, &#x60;orders:pii&#x60;, &#x60;returns:read&#x60;, &#x60;health:read&#x60;, &#x60;attention:read&#x60;, &#x60;events:read&#x60;, &#x60;webhooks:manage&#x60;, &#x60;finance:read&#x60;, &#x60;mcp&#x60;.</param>
         /// <param name="rotateUrl">On &#x60;401 api_key_expired&#x60;: the portal page to mint a successor.</param>
+        /// <param name="acceptUrl">On &#x60;403 agreement_required&#x60;: the portal page where the shop owner accepts Annex 2.</param>
         /// <param name="suspendedUntil">On &#x60;403 key_suspended&#x60;.</param>
         /// <param name="reason">On &#x60;403 key_suspended&#x60; / &#x60;403 api_blocked&#x60;: why (&#x60;error_storm&#x60;, &#x60;unauthorized_storm&#x60;, &#x60;ip_blocked&#x60;, &#x60;credential_stuffing&#x60;, &#x60;leak_reported&#x60;, &#x60;staff&#x60;).</param>
         /// <param name="meta">meta</param>
         [JsonConstructor]
-        public Error(string varError, string message, string requestId, List<ErrorDetail> details, string docUrl, Option<int?> retryAfterSeconds = default, Option<string?> requiredScope = default, Option<string?> rotateUrl = default, Option<DateTimeOffset?> suspendedUntil = default, Option<string?> reason = default, Option<ErrorMeta?> meta = default)
+        public Error(string varError, string message, string requestId, List<ErrorDetail> details, string docUrl, Option<int?> retryAfterSeconds = default, Option<string?> requiredScope = default, Option<string?> rotateUrl = default, Option<string?> acceptUrl = default, Option<DateTimeOffset?> suspendedUntil = default, Option<string?> reason = default, Option<ErrorMeta?> meta = default)
         {
             VarError = varError;
             Message = message;
@@ -54,6 +55,7 @@ namespace Dona.Api.Model
             RetryAfterSecondsOption = retryAfterSeconds;
             RequiredScopeOption = requiredScope;
             RotateUrlOption = rotateUrl;
+            AcceptUrlOption = acceptUrl;
             SuspendedUntilOption = suspendedUntil;
             ReasonOption = reason;
             MetaOption = meta;
@@ -139,6 +141,20 @@ namespace Dona.Api.Model
         public string? RotateUrl { get { return this.RotateUrlOption.Value; } set { this.RotateUrlOption = new(value); } }
 
         /// <summary>
+        /// Used to track the state of AcceptUrl
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<string?> AcceptUrlOption { get; private set; }
+
+        /// <summary>
+        /// On &#x60;403 agreement_required&#x60;: the portal page where the shop owner accepts Annex 2.
+        /// </summary>
+        /// <value>On &#x60;403 agreement_required&#x60;: the portal page where the shop owner accepts Annex 2.</value>
+        [JsonPropertyName("accept_url")]
+        public string? AcceptUrl { get { return this.AcceptUrlOption.Value; } set { this.AcceptUrlOption = new(value); } }
+
+        /// <summary>
         /// Used to track the state of SuspendedUntil
         /// </summary>
         [JsonIgnore]
@@ -195,6 +211,7 @@ namespace Dona.Api.Model
             sb.Append("  RetryAfterSeconds: ").Append(RetryAfterSeconds).Append("\n");
             sb.Append("  RequiredScope: ").Append(RequiredScope).Append("\n");
             sb.Append("  RotateUrl: ").Append(RotateUrl).Append("\n");
+            sb.Append("  AcceptUrl: ").Append(AcceptUrl).Append("\n");
             sb.Append("  SuspendedUntil: ").Append(SuspendedUntil).Append("\n");
             sb.Append("  Reason: ").Append(Reason).Append("\n");
             sb.Append("  Meta: ").Append(Meta).Append("\n");
@@ -248,6 +265,7 @@ namespace Dona.Api.Model
             Option<int?> retryAfterSeconds = default;
             Option<string?> requiredScope = default;
             Option<string?> rotateUrl = default;
+            Option<string?> acceptUrl = default;
             Option<DateTimeOffset?> suspendedUntil = default;
             Option<string?> reason = default;
             Option<ErrorMeta?> meta = default;
@@ -290,6 +308,9 @@ namespace Dona.Api.Model
                             break;
                         case "rotate_url":
                             rotateUrl = new Option<string?>(utf8JsonReader.GetString()!);
+                            break;
+                        case "accept_url":
+                            acceptUrl = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
                         case "suspended_until":
                             suspendedUntil = new Option<DateTimeOffset?>(JsonSerializer.Deserialize<DateTimeOffset>(ref utf8JsonReader, jsonSerializerOptions));
@@ -345,6 +366,9 @@ namespace Dona.Api.Model
             if (rotateUrl.IsSet && rotateUrl.Value == null)
                 throw new ArgumentNullException(nameof(rotateUrl), "Property is not nullable for class Error.");
 
+            if (acceptUrl.IsSet && acceptUrl.Value == null)
+                throw new ArgumentNullException(nameof(acceptUrl), "Property is not nullable for class Error.");
+
             if (suspendedUntil.IsSet && suspendedUntil.Value == null)
                 throw new ArgumentNullException(nameof(suspendedUntil), "Property is not nullable for class Error.");
 
@@ -354,7 +378,7 @@ namespace Dona.Api.Model
             if (meta.IsSet && meta.Value == null)
                 throw new ArgumentNullException(nameof(meta), "Property is not nullable for class Error.");
 
-            return new Error(varError.Value!, message.Value!, requestId.Value!, details.Value!, docUrl.Value!, retryAfterSeconds, requiredScope, rotateUrl, suspendedUntil, reason, meta);
+            return new Error(varError.Value!, message.Value!, requestId.Value!, details.Value!, docUrl.Value!, retryAfterSeconds, requiredScope, rotateUrl, acceptUrl, suspendedUntil, reason, meta);
         }
 
         /// <summary>
@@ -402,6 +426,9 @@ namespace Dona.Api.Model
             if (error.RotateUrlOption.IsSet && error.RotateUrl == null)
                 throw new ArgumentNullException(nameof(error.RotateUrl), "Property is required for class Error.");
 
+            if (error.AcceptUrlOption.IsSet && error.AcceptUrl == null)
+                throw new ArgumentNullException(nameof(error.AcceptUrl), "Property is required for class Error.");
+
             if (error.ReasonOption.IsSet && error.Reason == null)
                 throw new ArgumentNullException(nameof(error.Reason), "Property is required for class Error.");
 
@@ -426,6 +453,9 @@ namespace Dona.Api.Model
 
             if (error.RotateUrlOption.IsSet)
                 writer.WriteString("rotate_url", error.RotateUrl);
+
+            if (error.AcceptUrlOption.IsSet)
+                writer.WriteString("accept_url", error.AcceptUrl);
 
             if (error.SuspendedUntilOption.IsSet)
                 writer.WriteString("suspended_until", error.SuspendedUntilOption.Value!.Value.ToString(SuspendedUntilFormat));
