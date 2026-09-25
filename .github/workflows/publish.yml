@@ -15,6 +15,12 @@ name: publish
 # Packagist has no subdirectory support, so it is published from a SEPARATE repo (`ozbuz/dona-api-php`)
 # that this workflow mirrors sdks/php into; the actual `composer require` for users needs that repo to
 # exist and be submitted to packagist.org, both of which are Bek's action, not this workflow's.
+#
+# Runs on GitHub-hosted runners, not the org's self-hosted `dona-ci` fleet: the org's runner group has
+# `allows_public_repositories: false` (deliberately — those runners carry `dona-deploy` and sit near
+# production credentials), so a self-hosted job on this now-public repo would queue forever. Hosted
+# minutes are free and unlimited for public repos — see generate.yml and
+# security/incidents/2026-09-26-public-repo-cannot-use-self-hosted-runners.md.
 on:
   push:
     tags: ['v*']
@@ -34,7 +40,7 @@ env:
 jobs:
   npm:
     name: npm — @dona/api
-    runs-on: [self-hosted, dona-ci]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
@@ -72,7 +78,7 @@ jobs:
 
   pypi:
     name: PyPI — dona-api
-    runs-on: [self-hosted, dona-ci]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       HAS_TOKEN: ${{ secrets.PYPI_TOKEN != '' }}
@@ -103,7 +109,7 @@ jobs:
 
   nuget:
     name: NuGet — Dona.Api
-    runs-on: [self-hosted, dona-ci]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       HAS_TOKEN: ${{ secrets.NUGET_API_KEY != '' }}
@@ -133,7 +139,7 @@ jobs:
 
   packagist-mirror:
     name: Packagist — mirror sdks/php to ozbuz/dona-api-php
-    runs-on: [self-hosted, dona-ci]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       HAS_TOKEN: ${{ secrets.PACKAGIST_MIRROR_TOKEN != '' }}
