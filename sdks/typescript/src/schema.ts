@@ -144,7 +144,7 @@ export interface paths {
         put?: never;
         /**
          * Publish
-         * @description `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). Kill switch: `writes_enabled`.
+         * @description `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits for an approver). Kill switch: `writes_enabled`.
          */
         post: operations["publishProduct"];
         delete?: never;
@@ -164,7 +164,7 @@ export interface paths {
         put?: never;
         /**
          * Delist (hide) — never a hard delete
-         * @description Sets the product `hidden`. There is no hard delete on this API. Kill switch: `writes_enabled`.
+         * @description Sets the product `delisted` (the portal's delist). Delisting more than 30 % of the shop's live products at once ⇒ `202 held_for_review` (`delist_30pct`). There is no hard delete on this API. Kill switch: `writes_enabled`.
          */
         post: operations["delistProduct"];
         delete?: never;
@@ -286,7 +286,7 @@ export interface paths {
         };
         /**
          * Get an order (PII only with orders:pii)
-         * @description `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+         * @description `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7) the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld: <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
          */
         get: operations["getOrder"];
         put?: never;
@@ -428,7 +428,7 @@ export interface paths {
         put?: never;
         /**
          * Decline (before acceptance) — money-reversing
-         * @description `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+         * @description An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
          */
         post: operations["declineOrder"];
         delete?: never;
@@ -448,7 +448,7 @@ export interface paths {
         put?: never;
         /**
          * Cancel (after acceptance) — money-reversing
-         * @description Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+         * @description An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
          */
         post: operations["cancelOrder"];
         delete?: never;
@@ -466,7 +466,7 @@ export interface paths {
         };
         /**
          * Shipping label (PDF, contains PII)
-         * @description Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤ 30/min.
+         * @description The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not charged.
          */
         get: operations["getOrderLabel"];
         put?: never;
@@ -486,7 +486,7 @@ export interface paths {
         };
         /**
          * Invoice (PDF, contains PII)
-         * @description As the label. ≤ 30/min.
+         * @description The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block name (Form A Q12 states both).
          */
         get: operations["getOrderInvoice"];
         put?: never;
@@ -508,7 +508,7 @@ export interface paths {
         put?: never;
         /**
          * Labels for ≤ 100 orders (one PDF)
-         * @description A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+         * @description A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
          */
         post: operations["batchOrderLabels"];
         delete?: never;
@@ -969,6 +969,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/jobs/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download an export's file
+         * @description What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+         */
+        get: operations["downloadJobFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/finance/balance": {
         parameters: {
             query?: never;
@@ -978,7 +998,7 @@ export interface paths {
         };
         /**
          * Balance
-         * @description Never error-copied. No requisites, PAN or statement URLs.
+         * @description The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`), never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` before any read (D3).
          */
         get: operations["getBalance"];
         put?: never;
@@ -998,7 +1018,7 @@ export interface paths {
         };
         /**
          * Settlement lines
-         * @description Ledger lines of the shop's payable account, newest first.
+         * @description The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo` is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`, `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`, `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`, `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
          */
         get: operations["listSettlements"];
         put?: never;
@@ -1058,7 +1078,7 @@ export interface paths {
         };
         /**
          * Changelog (JSON, or RSS with Accept)
-         * @description Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an empty list until then.
+         * @description Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487, S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300` with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-None-Match` with it answers `304` and no body.
          */
         get: operations["getChangelog"];
         put?: never;
@@ -3105,7 +3125,7 @@ export interface components {
             };
             /**
              * Format: uri
-             * @description Signed, valid 60 min from this response; re-read the job for a fresh one.
+             * @description `GET /jobs/{id}/download?token=…` — the token is valid 15 min from this response and only for a key of this shop (never a public or pre-signed object URL); re-read the job for a fresh one.
              */
             file_url: string | null;
             /** Format: date-time */
@@ -3127,7 +3147,7 @@ export interface components {
              */
             expires_at: string;
         };
-        /** @description From the double-entry ledger (the portal `/sellers/me/balance` numbers). No requisites, PAN or statement URLs. */
+        /** @description The wallet's figures for the shop (the portal's `/sellers/me/finance/wallet`). No lifetime totals — the wallet has none, and the portal's balance drops them for the same reason (C57). No requisites, PAN or statement URLs. */
         Balance: {
             /**
              * Format: int64
@@ -3136,14 +3156,14 @@ export interface components {
             available_uzs: number;
             /**
              * Format: int64
-             * @description Integer soʻm (no decimals).
+             * @description Integer soʻm — earned, still inside the admin hold (not yet withdrawable).
              */
-            lifetime_earned_uzs: number;
+            held_uzs: number;
             /**
              * Format: int64
-             * @description Integer soʻm (no decimals).
+             * @description Integer soʻm — orders in flight, not yet earned.
              */
-            lifetime_refunded_uzs: number;
+            expected_uzs: number;
             /** @constant */
             currency: "UZS";
             /**
@@ -3369,7 +3389,7 @@ export interface components {
         };
     };
     responses: {
-        /** @description `invalid_body` — malformed JSON, a missing `Idempotency-Key`, validation (`details[]` carries field codes such as `ikpu_required`, `cursor_expired`), or an op-specific 400 (`invalid_decline_reason`). */
+        /** @description `invalid_body` — malformed JSON, a missing `Idempotency-Key`, validation (`details[]` carries field codes such as `ikpu_required`, `cursor_expired`), a `dry_run` / `Dona-Dry-Run` that is not the literal `true`/`false` (`details[{field, code:"invalid"}]`, C51), a vendor-app install key without `Dona-Seller` (`details[{field:"Dona-Seller", code:"required"}]`, S6) or with a repeated / non-canonical one (`code:"invalid"`), or an op-specific 400 (`invalid_decline_reason`). */
         BadRequest: {
             headers: {
                 "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
@@ -3380,7 +3400,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `api_key_malformed` (checksum fails — refused before any DB read) · `api_key_expired` (+`rotate_url`, no grace) · `api_key_revoked` · `use_authorization_header` (`X-Api-Key` or a query-string key) · a seller/app/staff JWT on this tree. */
+        /** @description `api_key_malformed` (checksum fails — refused before any DB read) · `api_key_expired` (+`rotate_url`, no grace) · `api_key_revoked` (also a vendor-app key whose install was uninstalled — S6) · `key_kind_not_accepted` (an agent key `ak` on this tree) · `use_authorization_header` (`X-Api-Key` or a query-string key) · a seller/app/staff JWT on this tree. */
         Unauthorized: {
             headers: {
                 "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
@@ -3391,7 +3411,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `insufficient_scope` (+`required_scope`; also a scope in `disabled_scopes`) · `tier_required` · `key_suspended` (+`suspended_until`, `Retry-After`, `Dona-Rate-Limited-Reason: suspended`) · `api_blocked` · `ip_not_allowed` (judged on the trusted client IP only) · `seller_not_approved` (shop closed/blocked/suspended/restricted) · `not_a_seller` (never on this tree; the portal's owner doors). */
+        /** @description `insufficient_scope` (+`required_scope`; also a scope in `disabled_scopes`) · `tier_required` (+`scope`; derived on every request; also a key minted for a third-party `orders:pii` recipient — `details[pii_recipient: pii_third_party_pending_counsel]`, D7, C59) · `key_suspended` (+`suspended_until`, `Retry-After`, `Dona-Rate-Limited-Reason: suspended`) · `api_blocked` · `ip_not_allowed` (judged on the trusted client IP only) · `seller_not_approved` (shop closed/blocked/suspended/restricted) · `not_a_seller` (never on this tree; the portal's owner doors) · `app_frozen` (S6: every key of a frozen vendor app, from the next request). */
         Forbidden: {
             headers: {
                 "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
@@ -3415,7 +3435,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `idempotency_in_progress` (+`Retry-After: 2`) · `idempotency_mismatch` · `version_conflict` · order codes `order_not_acceptable`, `no_pickup_address`, `order_not_shippable`, `order_awaiting_courier` · a replay of a rejected held write. */
+        /** @description `idempotency_in_progress` (+`Retry-After: 2`) · `idempotency_mismatch` · `version_conflict` · `ai_review_open` (publish of a product whose Dona AI review case is open — the review decides its status) · order codes `order_not_acceptable`, `no_pickup_address`, `order_not_shippable`, `order_awaiting_courier`, `order_not_cancellable`, `order_has_active_return` · document codes `no_tracking_number` (+`orders`), `no_items_selected`, `all_items_delayed` (S4, C53) · a replay of a rejected held write. */
         Conflict: {
             headers: {
                 "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
@@ -3449,7 +3469,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `rate_limited` · `write_rate_limited` · `concurrency_limited` · `seller_rate_limited` · `object_cooldown` · `api_busy`. Always a JSON body + `Retry-After` from the origin (an edge 429 from Cloudflare has NO body — treat it as `Retry-After: 60`). Costs 0 and never counts toward the breaker. `rate_limited` is also the pre-auth ADDRESS guard, answered before the key is read: an address over 1 200 requests a minute that were not admitted (no key, a public route, a malformed, unknown or refused key — admitted requests never count), or one tarpitted at 60/min for 15 min after ≥ 20 unknown keys in a minute. No key is ever suspended by traffic that did not prove it. */
+        /** @description `rate_limited` (with `Dona-Rate-Limited-Reason: app-rate`: a vendor app's bucket, shared by all its installs — S6) · `write_rate_limited` · `concurrency_limited` · `seller_rate_limited` · `object_cooldown` · `api_busy`. Always a JSON body + `Retry-After` from the origin (an edge 429 from Cloudflare has NO body — treat it as `Retry-After: 60`). Costs 0 and never counts toward the breaker. `rate_limited` is also the pre-auth ADDRESS guard, answered before the key is read: an address over 1 200 requests a minute that were not admitted (no key, a public route, a malformed, unknown or refused key — admitted requests never count), or one tarpitted at 60/min for 15 min after ≥ 20 unknown keys in a minute. No key is ever suspended by traffic that did not prove it. */
         TooManyRequests: {
             headers: {
                 "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
@@ -3478,7 +3498,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `auth_unavailable` (key lookup failed — fail closed) · `limits_unavailable` (limiter blind on a write/MCP call, or a kill switch is off: `enabled`, `writes_enabled`, `webhooks_enabled`; `Retry-After: 30`) · `attention_busy` (an acknowledgement that resolves an item could not take the attention writer lock within 2 s — nothing was written; retry after `Retry-After: 2`). Costs 0. */
+        /** @description `auth_unavailable` (key lookup failed — fail closed) · `limits_unavailable` (limiter blind on a write/MCP call, or a kill switch is off: `enabled`, `writes_enabled`, `webhooks_enabled`; `Retry-After: 30`) · `attention_busy` (an acknowledgement that resolves an item could not take the attention writer lock within 2 s — nothing was written; retry after `Retry-After: 2`) · `wallet_unavailable` (`/finance/*`: the wallet could not answer for the shop; `Retry-After: 30`; its body is never relayed or error-copied — S4, C57) · `role_unavailable` (+ `served_by: "marketplace"`: a SERVER_ROLE=seller-api server does not serve decline / cancel or `/finance/*`; answered before any read or write, nothing changed; no `Retry-After` — D3). Costs 0. */
         ServiceUnavailable: {
             headers: {
                 "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
@@ -3523,10 +3543,12 @@ export interface components {
          * @example billz-connector/2.4.1
          */
         XDonaIntegration: string;
-        /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+        /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
         DonaDryRun: string;
-        /** @description Alias of the `Dona-Dry-Run` header. */
-        DryRunQuery: boolean;
+        /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
+        DryRunQuery: string;
+        /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+        DonaSeller: string;
         /** @description An `ETag` from a previous identical request ⇒ `304` with rate headers (cost 0.5). */
         IfNoneMatch: string;
         /** @description Opaque keyset cursor from `next_cursor`. */
@@ -3587,7 +3609,12 @@ export interface components {
          */
         "X-RateLimit-Reset": number;
         /**
-         * @description Seconds. On every 429 and 503, and on `403 key_suspended`.
+         * @description On a job's `202` (`POST /exports/*`, `/products/batch`): the job's status route, the same value as `links.self` — poll it with `GET` no sooner than `Retry-After`. The idempotent replay of the `202` carries it too.
+         * @example /seller-api/v1/jobs/01997b34-4e5f-7a6b-9c7d-8e9f0a1b2c3d
+         */
+        Location: string;
+        /**
+         * @description Seconds. On every 429 and 503, on `403 key_suspended`, on `409 idempotency_in_progress` (2) and on a job's `202` (5, and while `GET /jobs/{id}` is pending or running).
          * @example 17
          */
         "Retry-After": number;
@@ -3637,6 +3664,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -3732,6 +3761,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
             };
             path?: never;
             cookie?: never;
@@ -3787,6 +3818,8 @@ export interface operations {
                 "If-None-Match"?: components["parameters"]["IfNoneMatch"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -3890,7 +3923,7 @@ export interface operations {
     createProduct: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -3899,10 +3932,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -3984,6 +4019,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4082,7 +4119,7 @@ export interface operations {
     updateProduct: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -4091,10 +4128,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4239,6 +4278,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4313,6 +4354,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4369,7 +4412,7 @@ export interface operations {
     publishProduct: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -4378,10 +4421,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4424,6 +4469,43 @@ export interface operations {
                     "application/json": components["schemas"]["ProductState"];
                 };
             };
+            /** @description Held for review — nothing written. */
+            202: {
+                headers: {
+                    "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    RateLimit: components["headers"]["RateLimit"];
+                    "X-RateLimit-Limit": components["headers"]["X-RateLimit-Limit"];
+                    "X-RateLimit-Remaining": components["headers"]["X-RateLimit-Remaining"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "X-Dona-Key-Expires": components["headers"]["X-Dona-Key-Expires"];
+                    "Dona-API-Warn": components["headers"]["Dona-API-Warn"];
+                    Deprecation: components["headers"]["Deprecation"];
+                    Sunset: components["headers"]["Sunset"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "held_for_review",
+                     *       "status": "held",
+                     *       "approval_id": "01997b31-1b2c-7d3e-8f4a-5b6c7d8e9f0a",
+                     *       "rule": "price_floor",
+                     *       "kind": "product",
+                     *       "subject": {
+                     *         "type": "product",
+                     *         "id": "0199612e-8a0b-7c4d-b1e2-3f4a5b6c7d8e"
+                     *       },
+                     *       "approver": "owner",
+                     *       "expires_at": "2026-10-08T14:05:12+05:00",
+                     *       "message": "Narx juda past — faollashtirish tasdiqlashni kutadi.",
+                     *       "request_id": "req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HeldForReview"];
+                };
+            };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
@@ -4437,7 +4519,7 @@ export interface operations {
     delistProduct: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -4446,10 +4528,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4484,12 +4568,49 @@ export interface operations {
                     /**
                      * @example {
                      *       "id": "0199612e-8a0b-7c4d-b1e2-3f4a5b6c7d8e",
-                     *       "status": "hidden",
+                     *       "status": "delisted",
                      *       "hold": null,
                      *       "updated_at": "2026-09-24T14:05:12+05:00"
                      *     }
                      */
                     "application/json": components["schemas"]["ProductState"];
+                };
+            };
+            /** @description Held for review — nothing written. */
+            202: {
+                headers: {
+                    "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    RateLimit: components["headers"]["RateLimit"];
+                    "X-RateLimit-Limit": components["headers"]["X-RateLimit-Limit"];
+                    "X-RateLimit-Remaining": components["headers"]["X-RateLimit-Remaining"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "X-Dona-Key-Expires": components["headers"]["X-Dona-Key-Expires"];
+                    "Dona-API-Warn": components["headers"]["Dona-API-Warn"];
+                    Deprecation: components["headers"]["Deprecation"];
+                    Sunset: components["headers"]["Sunset"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "held_for_review",
+                     *       "status": "held",
+                     *       "approval_id": "01997b31-1b2c-7d3e-8f4a-5b6c7d8e9f0a",
+                     *       "rule": "delist_30pct",
+                     *       "kind": "delist",
+                     *       "subject": {
+                     *         "type": "product",
+                     *         "id": "0199612e-8a0b-7c4d-b1e2-3f4a5b6c7d8e"
+                     *       },
+                     *       "approver": "owner",
+                     *       "expires_at": "2026-10-08T14:05:12+05:00",
+                     *       "message": "Koʻp mahsulot birdan yashirilmoqda — tasdiqlash kerak.",
+                     *       "request_id": "req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HeldForReview"];
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -4505,7 +4626,7 @@ export interface operations {
     batchProducts: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -4514,10 +4635,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4536,6 +4659,8 @@ export interface operations {
             /** @description Accepted */
             202: {
                 headers: {
+                    Location: components["headers"]["Location"];
+                    "Retry-After": components["headers"]["Retry-After"];
                     "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
                     "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
                     RateLimit: components["headers"]["RateLimit"];
@@ -4578,6 +4703,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4651,6 +4778,8 @@ export interface operations {
                 "If-None-Match"?: components["parameters"]["IfNoneMatch"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4715,7 +4844,7 @@ export interface operations {
             query?: {
                 /** @description All-or-nothing (Yandex default). */
                 atomic?: boolean;
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -4724,10 +4853,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4833,7 +4964,7 @@ export interface operations {
             query?: {
                 /** @description All-or-nothing. */
                 atomic?: boolean;
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -4842,10 +4973,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -4965,6 +5098,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5055,6 +5190,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5147,6 +5284,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5213,7 +5352,7 @@ export interface operations {
     acceptOrder: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -5222,10 +5361,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5285,7 +5426,7 @@ export interface operations {
     markOrderReady: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -5294,10 +5435,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5357,7 +5500,7 @@ export interface operations {
     shipOrder: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -5366,10 +5509,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5429,7 +5574,7 @@ export interface operations {
     handoverOrder: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -5438,10 +5583,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5501,7 +5648,7 @@ export interface operations {
     addOrderNote: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -5510,10 +5657,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5572,7 +5721,7 @@ export interface operations {
     declineOrder: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -5581,10 +5730,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5648,7 +5799,7 @@ export interface operations {
     cancelOrder: {
         parameters: {
             query?: {
-                /** @description Alias of the `Dona-Dry-Run` header. */
+                /** @description Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`. */
                 dry_run?: components["parameters"]["DryRunQuery"];
             };
             header: {
@@ -5657,10 +5808,12 @@ export interface operations {
                  * @example sync-2026-09-24T09:05
                  */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
-                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. */
+                /** @description `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51). */
                 "Dona-Dry-Run"?: components["parameters"]["DonaDryRun"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5704,7 +5857,7 @@ export interface operations {
                      *       "accepted_at": "2026-09-24T14:05:12+05:00",
                      *       "shipped_at": null,
                      *       "cancelled_by": "seller",
-                     *       "decline_reason_code": "cannot_fulfill_in_time",
+                     *       "decline_reason_code": null,
                      *       "updated_at": "2026-09-24T14:05:12+05:00"
                      *     }
                      */
@@ -5727,6 +5880,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5764,6 +5919,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -5775,6 +5931,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5812,6 +5970,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -5823,6 +5982,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5862,6 +6023,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -5885,6 +6047,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -5956,6 +6120,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6024,6 +6190,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6094,6 +6262,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6165,6 +6335,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6245,6 +6417,8 @@ export interface operations {
                 "If-None-Match"?: components["parameters"]["IfNoneMatch"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6339,6 +6513,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6418,6 +6594,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6508,6 +6686,8 @@ export interface operations {
                 "If-None-Match"?: components["parameters"]["IfNoneMatch"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6584,6 +6764,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6658,6 +6840,8 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6729,6 +6913,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6796,6 +6982,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6847,6 +7035,8 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6921,6 +7111,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -6999,6 +7191,8 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7078,6 +7272,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7154,6 +7350,8 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7229,6 +7427,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7293,6 +7493,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7386,6 +7588,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7454,6 +7658,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7523,6 +7729,8 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7541,6 +7749,8 @@ export interface operations {
             /** @description Accepted */
             202: {
                 headers: {
+                    Location: components["headers"]["Location"];
+                    "Retry-After": components["headers"]["Retry-After"];
                     "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
                     "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
                     RateLimit: components["headers"]["RateLimit"];
@@ -7587,6 +7797,8 @@ export interface operations {
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7605,6 +7817,8 @@ export interface operations {
             /** @description Accepted */
             202: {
                 headers: {
+                    Location: components["headers"]["Location"];
+                    "Retry-After": components["headers"]["Retry-After"];
                     "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
                     "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
                     RateLimit: components["headers"]["RateLimit"];
@@ -7646,6 +7860,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7687,8 +7903,8 @@ export interface operations {
                      *         "done": 1240,
                      *         "total": 1240
                      *       },
-                     *       "file_url": "https://exports.dona.im/j/01997b34.jsonl?X-Amz-Expires=3600&X-Amz-Signature=8b21de",
-                     *       "file_expires_at": "2026-09-24T15:05:12+05:00",
+                     *       "file_url": "https://api.dona.im/seller-api/v1/jobs/01997b34-4e5f-7a6b-9c7d-8e9f0a1b2c3d/download?token=v1.1790327512.3q2-7wAAAAB3j5E1c0x9fQ",
+                     *       "file_expires_at": "2026-09-24T14:17:10+05:00",
                      *       "results": null,
                      *       "error": null,
                      *       "created_at": "2026-09-24T14:01:00+05:00",
@@ -7707,12 +7923,70 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    downloadJobFile: {
+        parameters: {
+            query: {
+                /** @description The download token `file_url` carries (`v1.<unix expiry>.<mac>`), bound to this job and this shop. */
+                token: string;
+            };
+            header?: {
+                /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
+                /**
+                 * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
+                 * @example billz-connector/2.4.1
+                 */
+                "X-Dona-Integration"?: components["parameters"]["XDonaIntegration"];
+            };
+            path: {
+                /** @description Resource id (UUIDv7). A foreign or missing id is always `404 not_found`. */
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file, as an attachment (`Content-Disposition`, `X-Content-Type-Options: nosniff`). */
+            200: {
+                headers: {
+                    "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    RateLimit: components["headers"]["RateLimit"];
+                    "X-RateLimit-Limit": components["headers"]["X-RateLimit-Limit"];
+                    "X-RateLimit-Remaining": components["headers"]["X-RateLimit-Remaining"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "X-Dona-Key-Expires": components["headers"]["X-Dona-Key-Expires"];
+                    "Dona-API-Warn": components["headers"]["Dona-API-Warn"];
+                    Deprecation: components["headers"]["Deprecation"];
+                    Sunset: components["headers"]["Sunset"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    /** @description `attachment; filename="dona-<products|orders>-<job id>.<jsonl|csv>"` */
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-ndjson": string;
+                    "text/csv": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getBalance: {
         parameters: {
             query?: never;
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7744,8 +8018,8 @@ export interface operations {
                     /**
                      * @example {
                      *       "available_uzs": 12450000,
-                     *       "lifetime_earned_uzs": 98200000,
-                     *       "lifetime_refunded_uzs": 1350000,
+                     *       "held_uzs": 3100000,
+                     *       "expected_uzs": 5400000,
                      *       "currency": "UZS",
                      *       "as_of": "2026-09-24T14:05:12+05:00"
                      *     }
@@ -7777,6 +8051,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7815,7 +8091,7 @@ export interface operations {
                      *           "amount_uzs": 233100,
                      *           "signed_amount_uzs": 233100,
                      *           "order_id": "01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b",
-                     *           "memo": "order delivered: net of commission",
+                     *           "memo": "sale_income",
                      *           "created_at": "2026-09-24T14:05:12+05:00"
                      *         }
                      *       ],
@@ -7840,6 +8116,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
                 /**
                  * @description `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
                  * @example billz-connector/2.4.1
@@ -7914,6 +8192,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
             };
             path?: never;
             cookie?: never;
@@ -7958,6 +8238,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
             };
             path?: never;
             cookie?: never;
@@ -7975,24 +8257,22 @@ export interface operations {
                      * @example {
                      *       "items": [
                      *         {
-                     *           "id": "01997e00-5678-7abc-9def-0123456789b1",
-                     *           "version": "2026-10-01",
+                     *           "id": "01997e00-0000-7000-8000-000000000001",
+                     *           "version": "v1",
                      *           "kind": "added",
                      *           "title": {
-                     *             "uz": "Kengaytirilgan daraja",
-                     *             "en": "ADVANCED tier"
+                     *             "uz": "Dona API v1",
+                     *             "ru": "Dona API v1",
+                     *             "en": "Dona API v1"
                      *           },
                      *           "body": {
-                     *             "uz": "orders:cancel, orders:pii, finance:read.",
-                     *             "en": "orders:cancel, orders:pii, finance:read."
+                     *             "uz": "Birinchi versiya: kalitlar, mahsulotlar, qoldiq va narxlar, buyurtmalar, qaytarishlar, hodisalar, eʼtibor talab qiladigan holatlar, webhooklar va MCP.",
+                     *             "ru": "Первая версия: ключи, товары, остатки и цены, заказы, возвраты, события, требующие внимания состояния, вебхуки и MCP.",
+                     *             "en": "The first version: keys, products, stock and prices, orders, returns, events, attention items, webhooks and MCP."
                      *           },
-                     *           "affects_scopes": [
-                     *             "orders:cancel",
-                     *             "orders:pii",
-                     *             "finance:read"
-                     *           ],
+                     *           "affects_scopes": [],
                      *           "sunset_at": null,
-                     *           "published_at": "2026-09-24T14:05:12+05:00"
+                     *           "published_at": "2026-09-24T00:00:00+05:00"
                      *         }
                      *       ],
                      *       "next_cursor": null,
@@ -8013,6 +8293,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
             };
             path?: never;
             cookie?: never;
@@ -8039,6 +8321,8 @@ export interface operations {
             header?: {
                 /** @description Localises `message` in error bodies and single-language renderings. Default `uz`. */
                 "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+                /** @description Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`). */
+                "Dona-Seller"?: components["parameters"]["DonaSeller"];
             };
             path?: never;
             cookie?: never;

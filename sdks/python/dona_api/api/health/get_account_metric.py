@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
@@ -15,11 +16,15 @@ def _get_kwargs(
     metric_id: str,
     *,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -93,6 +98,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | MetricDetail]:
     """One metric with weekly history
@@ -103,6 +109,7 @@ def sync_detailed(
         metric_id (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -116,6 +123,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         metric_id=metric_id,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -131,6 +139,7 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | MetricDetail | None:
     """One metric with weekly history
@@ -141,6 +150,7 @@ def sync(
         metric_id (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -155,6 +165,7 @@ def sync(
         metric_id=metric_id,
         client=client,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -164,6 +175,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | MetricDetail]:
     """One metric with weekly history
@@ -174,6 +186,7 @@ async def asyncio_detailed(
         metric_id (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -187,6 +200,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         metric_id=metric_id,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -200,6 +214,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | MetricDetail | None:
     """One metric with weekly history
@@ -210,6 +225,7 @@ async def asyncio(
         metric_id (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -225,6 +241,7 @@ async def asyncio(
             metric_id=metric_id,
             client=client,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

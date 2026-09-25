@@ -14,7 +14,7 @@ All URIs are relative to https://api.dona.im/seller-api/v1, except if the operat
 ## `ackAttention()`
 
 ```php
-ackAttention($id, $accept_language, $x_dona_integration): \Dona\Api\Model\AttentionItem
+ackAttention($id, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\AttentionItem
 ```
 
 Acknowledge
@@ -40,10 +40,11 @@ $apiInstance = new Dona\Api\Api\AttentionApi(
 );
 $id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is always `404 not_found`.
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->ackAttention($id, $accept_language, $x_dona_integration);
+    $result = $apiInstance->ackAttention($id, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling AttentionApi->ackAttention: ', $e->getMessage(), PHP_EOL;
@@ -56,6 +57,7 @@ try {
 | ------------- | ------------- | ------------- | ------------- |
 | **id** | **string**| Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -78,7 +80,7 @@ try {
 ## `getAttention()`
 
 ```php
-getAttention($id, $accept_language, $x_dona_integration): \Dona\Api\Model\AttentionItem
+getAttention($id, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\AttentionItem
 ```
 
 One attention item
@@ -104,10 +106,11 @@ $apiInstance = new Dona\Api\Api\AttentionApi(
 );
 $id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is always `404 not_found`.
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->getAttention($id, $accept_language, $x_dona_integration);
+    $result = $apiInstance->getAttention($id, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling AttentionApi->getAttention: ', $e->getMessage(), PHP_EOL;
@@ -120,6 +123,7 @@ try {
 | ------------- | ------------- | ------------- | ------------- |
 | **id** | **string**| Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -142,7 +146,7 @@ try {
 ## `listAttention()`
 
 ```php
-listAttention($status, $kind, $severity, $action_required, $subject_type, $updated_since, $cursor, $limit, $if_none_match, $accept_language, $x_dona_integration): \Dona\Api\Model\AttentionPage
+listAttention($status, $kind, $severity, $action_required, $subject_type, $updated_since, $cursor, $limit, $if_none_match, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\AttentionPage
 ```
 
 Errors, warnings, attention required
@@ -176,10 +180,11 @@ $cursor = 'cursor_example'; // string | Opaque keyset cursor from `next_cursor`.
 $limit = 50; // int | Page size, default 50, max 100 (clamped, with `Dona-API-Warn`). `limit > 50` costs `1 + ceil(limit/50)`.
 $if_none_match = 'if_none_match_example'; // string | An `ETag` from a previous identical request ⇒ `304` with rate headers (cost 0.5).
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->listAttention($status, $kind, $severity, $action_required, $subject_type, $updated_since, $cursor, $limit, $if_none_match, $accept_language, $x_dona_integration);
+    $result = $apiInstance->listAttention($status, $kind, $severity, $action_required, $subject_type, $updated_since, $cursor, $limit, $if_none_match, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling AttentionApi->listAttention: ', $e->getMessage(), PHP_EOL;
@@ -200,6 +205,7 @@ try {
 | **limit** | **int**| Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. | [optional] [default to 50] |
 | **if_none_match** | **string**| An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). | [optional] |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type

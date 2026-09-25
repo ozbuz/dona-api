@@ -25,7 +25,7 @@ using Dona.Api.Client;
 namespace Dona.Api.Model
 {
     /// <summary>
-    /// From the double-entry ledger (the portal &#x60;/sellers/me/balance&#x60; numbers). No requisites, PAN or statement URLs.
+    /// The wallet&#39;s figures for the shop (the portal&#39;s &#x60;/sellers/me/finance/wallet&#x60;). No lifetime totals — the wallet has none, and the portal&#39;s balance drops them for the same reason (C57). No requisites, PAN or statement URLs.
     /// </summary>
     public partial class Balance
     {
@@ -33,16 +33,16 @@ namespace Dona.Api.Model
         /// Initializes a new instance of the <see cref="Balance" /> class.
         /// </summary>
         /// <param name="availableUzs">Integer soʻm (no decimals).</param>
-        /// <param name="lifetimeEarnedUzs">Integer soʻm (no decimals).</param>
-        /// <param name="lifetimeRefundedUzs">Integer soʻm (no decimals).</param>
+        /// <param name="heldUzs">Integer soʻm — earned, still inside the admin hold (not yet withdrawable).</param>
+        /// <param name="expectedUzs">Integer soʻm — orders in flight, not yet earned.</param>
         /// <param name="currency">currency</param>
         /// <param name="asOf">ISO 8601 with offset (Tashkent &#x60;+05:00&#x60; on output).</param>
         [JsonConstructor]
-        public Balance(long availableUzs, long lifetimeEarnedUzs, long lifetimeRefundedUzs, CurrencyEnum currency, DateTimeOffset asOf)
+        public Balance(long availableUzs, long heldUzs, long expectedUzs, CurrencyEnum currency, DateTimeOffset asOf)
         {
             AvailableUzs = availableUzs;
-            LifetimeEarnedUzs = lifetimeEarnedUzs;
-            LifetimeRefundedUzs = lifetimeRefundedUzs;
+            HeldUzs = heldUzs;
+            ExpectedUzs = expectedUzs;
             Currency = currency;
             AsOf = asOf;
             OnCreated();
@@ -116,18 +116,18 @@ namespace Dona.Api.Model
         public long AvailableUzs { get; set; }
 
         /// <summary>
-        /// Integer soʻm (no decimals).
+        /// Integer soʻm — earned, still inside the admin hold (not yet withdrawable).
         /// </summary>
-        /// <value>Integer soʻm (no decimals).</value>
-        [JsonPropertyName("lifetime_earned_uzs")]
-        public long LifetimeEarnedUzs { get; set; }
+        /// <value>Integer soʻm — earned, still inside the admin hold (not yet withdrawable).</value>
+        [JsonPropertyName("held_uzs")]
+        public long HeldUzs { get; set; }
 
         /// <summary>
-        /// Integer soʻm (no decimals).
+        /// Integer soʻm — orders in flight, not yet earned.
         /// </summary>
-        /// <value>Integer soʻm (no decimals).</value>
-        [JsonPropertyName("lifetime_refunded_uzs")]
-        public long LifetimeRefundedUzs { get; set; }
+        /// <value>Integer soʻm — orders in flight, not yet earned.</value>
+        [JsonPropertyName("expected_uzs")]
+        public long ExpectedUzs { get; set; }
 
         /// <summary>
         /// ISO 8601 with offset (Tashkent &#x60;+05:00&#x60; on output).
@@ -145,8 +145,8 @@ namespace Dona.Api.Model
             StringBuilder sb = new StringBuilder();
             sb.Append("class Balance {\n");
             sb.Append("  AvailableUzs: ").Append(AvailableUzs).Append("\n");
-            sb.Append("  LifetimeEarnedUzs: ").Append(LifetimeEarnedUzs).Append("\n");
-            sb.Append("  LifetimeRefundedUzs: ").Append(LifetimeRefundedUzs).Append("\n");
+            sb.Append("  HeldUzs: ").Append(HeldUzs).Append("\n");
+            sb.Append("  ExpectedUzs: ").Append(ExpectedUzs).Append("\n");
             sb.Append("  Currency: ").Append(Currency).Append("\n");
             sb.Append("  AsOf: ").Append(AsOf).Append("\n");
             sb.Append("}\n");
@@ -192,8 +192,8 @@ namespace Dona.Api.Model
             JsonTokenType startingTokenType = utf8JsonReader.TokenType;
 
             Option<long?> availableUzs = default;
-            Option<long?> lifetimeEarnedUzs = default;
-            Option<long?> lifetimeRefundedUzs = default;
+            Option<long?> heldUzs = default;
+            Option<long?> expectedUzs = default;
             Option<Balance.CurrencyEnum?> currency = default;
             Option<DateTimeOffset?> asOf = default;
 
@@ -215,11 +215,11 @@ namespace Dona.Api.Model
                         case "available_uzs":
                             availableUzs = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());
                             break;
-                        case "lifetime_earned_uzs":
-                            lifetimeEarnedUzs = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());
+                        case "held_uzs":
+                            heldUzs = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());
                             break;
-                        case "lifetime_refunded_uzs":
-                            lifetimeRefundedUzs = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());
+                        case "expected_uzs":
+                            expectedUzs = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());
                             break;
                         case "currency":
                             string? currencyRawValue = utf8JsonReader.GetString();
@@ -243,11 +243,11 @@ namespace Dona.Api.Model
             if (!availableUzs.IsSet)
                 throw new ArgumentException("Property is required for class Balance.", nameof(availableUzs));
 
-            if (!lifetimeEarnedUzs.IsSet)
-                throw new ArgumentException("Property is required for class Balance.", nameof(lifetimeEarnedUzs));
+            if (!heldUzs.IsSet)
+                throw new ArgumentException("Property is required for class Balance.", nameof(heldUzs));
 
-            if (!lifetimeRefundedUzs.IsSet)
-                throw new ArgumentException("Property is required for class Balance.", nameof(lifetimeRefundedUzs));
+            if (!expectedUzs.IsSet)
+                throw new ArgumentException("Property is required for class Balance.", nameof(expectedUzs));
 
             if (!currency.IsSet)
                 throw new ArgumentException("Property is required for class Balance.", nameof(currency));
@@ -258,11 +258,11 @@ namespace Dona.Api.Model
             if (availableUzs.IsSet && availableUzs.Value == null)
                 throw new ArgumentNullException(nameof(availableUzs), "Property is not nullable for class Balance.");
 
-            if (lifetimeEarnedUzs.IsSet && lifetimeEarnedUzs.Value == null)
-                throw new ArgumentNullException(nameof(lifetimeEarnedUzs), "Property is not nullable for class Balance.");
+            if (heldUzs.IsSet && heldUzs.Value == null)
+                throw new ArgumentNullException(nameof(heldUzs), "Property is not nullable for class Balance.");
 
-            if (lifetimeRefundedUzs.IsSet && lifetimeRefundedUzs.Value == null)
-                throw new ArgumentNullException(nameof(lifetimeRefundedUzs), "Property is not nullable for class Balance.");
+            if (expectedUzs.IsSet && expectedUzs.Value == null)
+                throw new ArgumentNullException(nameof(expectedUzs), "Property is not nullable for class Balance.");
 
             if (currency.IsSet && currency.Value == null)
                 throw new ArgumentNullException(nameof(currency), "Property is not nullable for class Balance.");
@@ -270,7 +270,7 @@ namespace Dona.Api.Model
             if (asOf.IsSet && asOf.Value == null)
                 throw new ArgumentNullException(nameof(asOf), "Property is not nullable for class Balance.");
 
-            return new Balance(availableUzs.Value!.Value!, lifetimeEarnedUzs.Value!.Value!, lifetimeRefundedUzs.Value!.Value!, currency.Value!.Value!, asOf.Value!.Value!);
+            return new Balance(availableUzs.Value!.Value!, heldUzs.Value!.Value!, expectedUzs.Value!.Value!, currency.Value!.Value!, asOf.Value!.Value!);
         }
 
         /// <summary>
@@ -299,9 +299,9 @@ namespace Dona.Api.Model
         {
             writer.WriteNumber("available_uzs", balance.AvailableUzs);
 
-            writer.WriteNumber("lifetime_earned_uzs", balance.LifetimeEarnedUzs);
+            writer.WriteNumber("held_uzs", balance.HeldUzs);
 
-            writer.WriteNumber("lifetime_refunded_uzs", balance.LifetimeRefundedUzs);
+            writer.WriteNumber("expected_uzs", balance.ExpectedUzs);
 
             var currencyRawValue = Balance.CurrencyEnumToJsonValue(balance.Currency);
             writer.WriteString("currency", currencyRawValue);

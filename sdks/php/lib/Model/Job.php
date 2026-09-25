@@ -513,7 +513,7 @@ class Job implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets file_url
      *
-     * @param string|null $file_url Signed, valid 60 min from this response; re-read the job for a fresh one.
+     * @param string|null $file_url `GET /jobs/{id}/download?token=…` — the token is valid 15 min from this response and only for a key of this shop (never a public or pre-signed object URL); re-read the job for a fresh one.
      *
      * @return self
      */

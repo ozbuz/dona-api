@@ -35,7 +35,7 @@ use \Dona\Api\ObjectSerializer;
  * Balance Class Doc Comment
  *
  * @category Class
- * @description From the double-entry ledger (the portal &#x60;/sellers/me/balance&#x60; numbers). No requisites, PAN or statement URLs.
+ * @description The wallet&#39;s figures for the shop (the portal&#39;s &#x60;/sellers/me/finance/wallet&#x60;). No lifetime totals — the wallet has none, and the portal&#39;s balance drops them for the same reason (C57). No requisites, PAN or statement URLs.
  * @package  Dona\Api
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
@@ -59,8 +59,8 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
      */
     protected static $openAPITypes = [
         'available_uzs' => 'int',
-        'lifetime_earned_uzs' => 'int',
-        'lifetime_refunded_uzs' => 'int',
+        'held_uzs' => 'int',
+        'expected_uzs' => 'int',
         'currency' => 'string',
         'as_of' => '\DateTime'
     ];
@@ -74,8 +74,8 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
      */
     protected static $openAPIFormats = [
         'available_uzs' => 'int64',
-        'lifetime_earned_uzs' => 'int64',
-        'lifetime_refunded_uzs' => 'int64',
+        'held_uzs' => 'int64',
+        'expected_uzs' => 'int64',
         'currency' => null,
         'as_of' => 'date-time'
     ];
@@ -87,8 +87,8 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
      */
     protected static array $openAPINullables = [
         'available_uzs' => false,
-        'lifetime_earned_uzs' => false,
-        'lifetime_refunded_uzs' => false,
+        'held_uzs' => false,
+        'expected_uzs' => false,
         'currency' => false,
         'as_of' => false
     ];
@@ -180,8 +180,8 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
      */
     protected static $attributeMap = [
         'available_uzs' => 'available_uzs',
-        'lifetime_earned_uzs' => 'lifetime_earned_uzs',
-        'lifetime_refunded_uzs' => 'lifetime_refunded_uzs',
+        'held_uzs' => 'held_uzs',
+        'expected_uzs' => 'expected_uzs',
         'currency' => 'currency',
         'as_of' => 'as_of'
     ];
@@ -193,8 +193,8 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
      */
     protected static $setters = [
         'available_uzs' => 'setAvailableUzs',
-        'lifetime_earned_uzs' => 'setLifetimeEarnedUzs',
-        'lifetime_refunded_uzs' => 'setLifetimeRefundedUzs',
+        'held_uzs' => 'setHeldUzs',
+        'expected_uzs' => 'setExpectedUzs',
         'currency' => 'setCurrency',
         'as_of' => 'setAsOf'
     ];
@@ -206,8 +206,8 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
      */
     protected static $getters = [
         'available_uzs' => 'getAvailableUzs',
-        'lifetime_earned_uzs' => 'getLifetimeEarnedUzs',
-        'lifetime_refunded_uzs' => 'getLifetimeRefundedUzs',
+        'held_uzs' => 'getHeldUzs',
+        'expected_uzs' => 'getExpectedUzs',
         'currency' => 'getCurrency',
         'as_of' => 'getAsOf'
     ];
@@ -283,8 +283,8 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
     public function __construct(?array $data = null)
     {
         $this->setIfExists('available_uzs', $data ?? [], null);
-        $this->setIfExists('lifetime_earned_uzs', $data ?? [], null);
-        $this->setIfExists('lifetime_refunded_uzs', $data ?? [], null);
+        $this->setIfExists('held_uzs', $data ?? [], null);
+        $this->setIfExists('expected_uzs', $data ?? [], null);
         $this->setIfExists('currency', $data ?? [], null);
         $this->setIfExists('as_of', $data ?? [], null);
     }
@@ -319,11 +319,11 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
         if ($this->container['available_uzs'] === null) {
             $invalidProperties[] = "'available_uzs' can't be null";
         }
-        if ($this->container['lifetime_earned_uzs'] === null) {
-            $invalidProperties[] = "'lifetime_earned_uzs' can't be null";
+        if ($this->container['held_uzs'] === null) {
+            $invalidProperties[] = "'held_uzs' can't be null";
         }
-        if ($this->container['lifetime_refunded_uzs'] === null) {
-            $invalidProperties[] = "'lifetime_refunded_uzs' can't be null";
+        if ($this->container['expected_uzs'] === null) {
+            $invalidProperties[] = "'expected_uzs' can't be null";
         }
         if ($this->container['currency'] === null) {
             $invalidProperties[] = "'currency' can't be null";
@@ -383,55 +383,55 @@ class Balance implements ModelInterface, ArrayAccess, \JsonSerializable
     }
 
     /**
-     * Gets lifetime_earned_uzs
+     * Gets held_uzs
      *
      * @return int
      */
-    public function getLifetimeEarnedUzs()
+    public function getHeldUzs()
     {
-        return $this->container['lifetime_earned_uzs'];
+        return $this->container['held_uzs'];
     }
 
     /**
-     * Sets lifetime_earned_uzs
+     * Sets held_uzs
      *
-     * @param int $lifetime_earned_uzs Integer soʻm (no decimals).
+     * @param int $held_uzs Integer soʻm — earned, still inside the admin hold (not yet withdrawable).
      *
      * @return self
      */
-    public function setLifetimeEarnedUzs($lifetime_earned_uzs)
+    public function setHeldUzs($held_uzs)
     {
-        if (is_null($lifetime_earned_uzs)) {
-            throw new \InvalidArgumentException('non-nullable lifetime_earned_uzs cannot be null');
+        if (is_null($held_uzs)) {
+            throw new \InvalidArgumentException('non-nullable held_uzs cannot be null');
         }
-        $this->container['lifetime_earned_uzs'] = $lifetime_earned_uzs;
+        $this->container['held_uzs'] = $held_uzs;
 
         return $this;
     }
 
     /**
-     * Gets lifetime_refunded_uzs
+     * Gets expected_uzs
      *
      * @return int
      */
-    public function getLifetimeRefundedUzs()
+    public function getExpectedUzs()
     {
-        return $this->container['lifetime_refunded_uzs'];
+        return $this->container['expected_uzs'];
     }
 
     /**
-     * Sets lifetime_refunded_uzs
+     * Sets expected_uzs
      *
-     * @param int $lifetime_refunded_uzs Integer soʻm (no decimals).
+     * @param int $expected_uzs Integer soʻm — orders in flight, not yet earned.
      *
      * @return self
      */
-    public function setLifetimeRefundedUzs($lifetime_refunded_uzs)
+    public function setExpectedUzs($expected_uzs)
     {
-        if (is_null($lifetime_refunded_uzs)) {
-            throw new \InvalidArgumentException('non-nullable lifetime_refunded_uzs cannot be null');
+        if (is_null($expected_uzs)) {
+            throw new \InvalidArgumentException('non-nullable expected_uzs cannot be null');
         }
-        $this->container['lifetime_refunded_uzs'] = $lifetime_refunded_uzs;
+        $this->container['expected_uzs'] = $expected_uzs;
 
         return $this;
     }

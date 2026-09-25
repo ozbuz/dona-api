@@ -20,11 +20,15 @@ def _get_kwargs(
     from_: datetime.datetime | Unset = UNSET,
     to: datetime.datetime | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -124,11 +128,18 @@ def sync_detailed(
     from_: datetime.datetime | Unset = UNSET,
     to: datetime.datetime | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | SettlementPage]:
     """Settlement lines
 
-     Ledger lines of the shop's payable account, newest first.
+     The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo`
+    is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`,
+    `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`,
+    `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`,
+    `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is
+    not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the
+    whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
 
     Args:
         cursor (str | Unset):
@@ -138,6 +149,7 @@ def sync_detailed(
         to (datetime.datetime | Unset):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -155,6 +167,7 @@ def sync_detailed(
         from_=from_,
         to=to,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -174,11 +187,18 @@ def sync(
     from_: datetime.datetime | Unset = UNSET,
     to: datetime.datetime | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | SettlementPage | None:
     """Settlement lines
 
-     Ledger lines of the shop's payable account, newest first.
+     The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo`
+    is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`,
+    `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`,
+    `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`,
+    `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is
+    not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the
+    whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
 
     Args:
         cursor (str | Unset):
@@ -188,6 +208,7 @@ def sync(
         to (datetime.datetime | Unset):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -206,6 +227,7 @@ def sync(
         from_=from_,
         to=to,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -219,11 +241,18 @@ async def asyncio_detailed(
     from_: datetime.datetime | Unset = UNSET,
     to: datetime.datetime | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | SettlementPage]:
     """Settlement lines
 
-     Ledger lines of the shop's payable account, newest first.
+     The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo`
+    is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`,
+    `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`,
+    `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`,
+    `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is
+    not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the
+    whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
 
     Args:
         cursor (str | Unset):
@@ -233,6 +262,7 @@ async def asyncio_detailed(
         to (datetime.datetime | Unset):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -250,6 +280,7 @@ async def asyncio_detailed(
         from_=from_,
         to=to,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -267,11 +298,18 @@ async def asyncio(
     from_: datetime.datetime | Unset = UNSET,
     to: datetime.datetime | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | SettlementPage | None:
     """Settlement lines
 
-     Ledger lines of the shop's payable account, newest first.
+     The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo`
+    is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`,
+    `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`,
+    `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`,
+    `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is
+    not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the
+    whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
 
     Args:
         cursor (str | Unset):
@@ -281,6 +319,7 @@ async def asyncio(
         to (datetime.datetime | Unset):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -300,6 +339,7 @@ async def asyncio(
             from_=from_,
             to=to,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

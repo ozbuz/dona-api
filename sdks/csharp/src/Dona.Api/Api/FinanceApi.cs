@@ -42,32 +42,34 @@ namespace Dona.Api.Api
         /// Balance
         /// </summary>
         /// <remarks>
-        /// Never error-copied. No requisites, PAN or statement URLs.
+        /// The wallet&#39;s answer for the key&#39;s shop, asked as the shop&#39;s CURRENT owner (the portal&#39;s own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ &#x60;503 wallet_unavailable&#x60; (&#x60;Retry-After: 30&#x60;), never its body (C57). Served by the marketplace process only: a SERVER_ROLE&#x3D;seller-api server answers &#x60;503 role_unavailable&#x60; before any read (D3).
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetBalanceApiResponse"/>&gt;</returns>
-        Task<IGetBalanceApiResponse> GetBalanceAsync(Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetBalanceApiResponse> GetBalanceAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Balance
         /// </summary>
         /// <remarks>
-        /// Never error-copied. No requisites, PAN or statement URLs.
+        /// The wallet&#39;s answer for the key&#39;s shop, asked as the shop&#39;s CURRENT owner (the portal&#39;s own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ &#x60;503 wallet_unavailable&#x60; (&#x60;Retry-After: 30&#x60;), never its body (C57). Served by the marketplace process only: a SERVER_ROLE&#x3D;seller-api server answers &#x60;503 role_unavailable&#x60; before any read (D3).
         /// </remarks>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetBalanceApiResponse"/>?&gt;</returns>
-        Task<IGetBalanceApiResponse?> GetBalanceOrDefaultAsync(Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetBalanceApiResponse?> GetBalanceOrDefaultAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Settlement lines
         /// </summary>
         /// <remarks>
-        /// Ledger lines of the shop&#39;s payable account, newest first.
+        /// The wallet statement&#39;s lines for the shop, newest first (asked as the shop&#39;s current owner). &#x60;memo&#x60; is the line&#39;s machine &#x60;kind&#x60; from the wallet&#39;s CLOSED vocabulary (&#x60;sale_income&#x60;, &#x60;escrow_hold&#x60;, &#x60;escrow_release&#x60;, &#x60;refund&#x60;, &#x60;return&#x60;, &#x60;adjustment&#x60;, &#x60;withdrawal&#x60;, &#x60;withdrawal_failed&#x60;, &#x60;fee&#x60;, &#x60;commission&#x60;, &#x60;hold_placed&#x60;, &#x60;hold_captured&#x60;, &#x60;hold_released&#x60;, &#x60;cod_collected&#x60;, &#x60;cod_remitted&#x60;, &#x60;transfer&#x60;) or &#x60;other&#x60; — never the wallet&#39;s free-text title (C57). A line whose &#x60;id&#x60; or &#x60;txn_id&#x60; is not a UUID, or a &#x60;next_cursor&#x60; that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. &#x60;503 wallet_unavailable&#x60; / &#x60;role_unavailable&#x60; as &#x60;/finance/balance&#x60;.
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
@@ -76,16 +78,17 @@ namespace Dona.Api.Api
         /// <param name="from">Inclusive. (optional)</param>
         /// <param name="to">Exclusive. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListSettlementsApiResponse"/>&gt;</returns>
-        Task<IListSettlementsApiResponse> ListSettlementsAsync(Option<string> cursor = default, Option<int> limit = default, Option<Guid> orderId = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListSettlementsApiResponse> ListSettlementsAsync(Option<string> cursor = default, Option<int> limit = default, Option<Guid> orderId = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Settlement lines
         /// </summary>
         /// <remarks>
-        /// Ledger lines of the shop&#39;s payable account, newest first.
+        /// The wallet statement&#39;s lines for the shop, newest first (asked as the shop&#39;s current owner). &#x60;memo&#x60; is the line&#39;s machine &#x60;kind&#x60; from the wallet&#39;s CLOSED vocabulary (&#x60;sale_income&#x60;, &#x60;escrow_hold&#x60;, &#x60;escrow_release&#x60;, &#x60;refund&#x60;, &#x60;return&#x60;, &#x60;adjustment&#x60;, &#x60;withdrawal&#x60;, &#x60;withdrawal_failed&#x60;, &#x60;fee&#x60;, &#x60;commission&#x60;, &#x60;hold_placed&#x60;, &#x60;hold_captured&#x60;, &#x60;hold_released&#x60;, &#x60;cod_collected&#x60;, &#x60;cod_remitted&#x60;, &#x60;transfer&#x60;) or &#x60;other&#x60; — never the wallet&#39;s free-text title (C57). A line whose &#x60;id&#x60; or &#x60;txn_id&#x60; is not a UUID, or a &#x60;next_cursor&#x60; that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. &#x60;503 wallet_unavailable&#x60; / &#x60;role_unavailable&#x60; as &#x60;/finance/balance&#x60;.
         /// </remarks>
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
@@ -93,10 +96,11 @@ namespace Dona.Api.Api
         /// <param name="from">Inclusive. (optional)</param>
         /// <param name="to">Exclusive. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListSettlementsApiResponse"/>?&gt;</returns>
-        Task<IListSettlementsApiResponse?> ListSettlementsOrDefaultAsync(Option<string> cursor = default, Option<int> limit = default, Option<Guid> orderId = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListSettlementsApiResponse?> ListSettlementsOrDefaultAsync(Option<string> cursor = default, Option<int> limit = default, Option<Guid> orderId = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -276,7 +280,7 @@ namespace Dona.Api.Api
             BearerTokenProvider = bearerTokenProvider;
         }
 
-        partial void FormatGetBalance(ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatGetBalance(ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -298,11 +302,12 @@ namespace Dona.Api.Api
         /// </summary>
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterGetBalanceDefaultImplementation(IGetBalanceApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterGetBalanceDefaultImplementation(IGetBalanceApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterGetBalance(ref suppressDefaultLog, apiResponseLocalVar, acceptLanguage, xDonaIntegration);
+            AfterGetBalance(ref suppressDefaultLog, apiResponseLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -313,8 +318,9 @@ namespace Dona.Api.Api
         /// <param name="suppressDefaultLog"></param>
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterGetBalance(ref bool suppressDefaultLog, IGetBalanceApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterGetBalance(ref bool suppressDefaultLog, IGetBalanceApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -323,11 +329,12 @@ namespace Dona.Api.Api
         /// <param name="pathFormatLocalVar"></param>
         /// <param name="pathLocalVar"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorGetBalanceDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorGetBalanceDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorGetBalance(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, acceptLanguage, xDonaIntegration);
+            OnErrorGetBalance(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -340,21 +347,23 @@ namespace Dona.Api.Api
         /// <param name="pathFormatLocalVar"></param>
         /// <param name="pathLocalVar"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorGetBalance(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorGetBalance(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Balance Never error-copied. No requisites, PAN or statement URLs.
+        /// Balance The wallet&#39;s answer for the key&#39;s shop, asked as the shop&#39;s CURRENT owner (the portal&#39;s own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ &#x60;503 wallet_unavailable&#x60; (&#x60;Retry-After: 30&#x60;), never its body (C57). Served by the marketplace process only: a SERVER_ROLE&#x3D;seller-api server answers &#x60;503 role_unavailable&#x60; before any read (D3).
         /// </summary>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetBalanceApiResponse"/>&gt;</returns>
-        public async Task<IGetBalanceApiResponse?> GetBalanceOrDefaultAsync(Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetBalanceApiResponse?> GetBalanceOrDefaultAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await GetBalanceAsync(acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await GetBalanceAsync(acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -363,14 +372,15 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Balance Never error-copied. No requisites, PAN or statement URLs.
+        /// Balance The wallet&#39;s answer for the key&#39;s shop, asked as the shop&#39;s CURRENT owner (the portal&#39;s own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ &#x60;503 wallet_unavailable&#x60; (&#x60;Retry-After: 30&#x60;), never its body (C57). Served by the marketplace process only: a SERVER_ROLE&#x3D;seller-api server answers &#x60;503 role_unavailable&#x60; before any read (D3).
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetBalanceApiResponse"/>&gt;</returns>
-        public async Task<IGetBalanceApiResponse> GetBalanceAsync(Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetBalanceApiResponse> GetBalanceAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -378,7 +388,7 @@ namespace Dona.Api.Api
             {
                 ValidateGetBalance(acceptLanguage, xDonaIntegration);
 
-                FormatGetBalance(ref acceptLanguage, ref xDonaIntegration);
+                FormatGetBalance(ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -399,6 +409,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -450,7 +473,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterGetBalanceDefaultImplementation(apiResponseLocalVar, acceptLanguage, xDonaIntegration);
+                        AfterGetBalanceDefaultImplementation(apiResponseLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnGetBalance(apiResponseLocalVar);
 
@@ -464,7 +487,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorGetBalanceDefaultImplementation(e, "/finance/balance", uriBuilderLocalVar.Path, acceptLanguage, xDonaIntegration);
+                OnErrorGetBalanceDefaultImplementation(e, "/finance/balance", uriBuilderLocalVar.Path, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorGetBalance(e);
                 throw;
             }
@@ -825,7 +848,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatListSettlements(ref Option<string> cursor, ref Option<int> limit, ref Option<Guid> orderId, ref Option<DateTimeOffset> from, ref Option<DateTimeOffset> to, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatListSettlements(ref Option<string> cursor, ref Option<int> limit, ref Option<Guid> orderId, ref Option<DateTimeOffset> from, ref Option<DateTimeOffset> to, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -856,11 +879,12 @@ namespace Dona.Api.Api
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterListSettlementsDefaultImplementation(IListSettlementsApiResponse apiResponseLocalVar, Option<string> cursor, Option<int> limit, Option<Guid> orderId, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterListSettlementsDefaultImplementation(IListSettlementsApiResponse apiResponseLocalVar, Option<string> cursor, Option<int> limit, Option<Guid> orderId, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterListSettlements(ref suppressDefaultLog, apiResponseLocalVar, cursor, limit, orderId, from, to, acceptLanguage, xDonaIntegration);
+            AfterListSettlements(ref suppressDefaultLog, apiResponseLocalVar, cursor, limit, orderId, from, to, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -876,8 +900,9 @@ namespace Dona.Api.Api
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterListSettlements(ref bool suppressDefaultLog, IListSettlementsApiResponse apiResponseLocalVar, Option<string> cursor, Option<int> limit, Option<Guid> orderId, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterListSettlements(ref bool suppressDefaultLog, IListSettlementsApiResponse apiResponseLocalVar, Option<string> cursor, Option<int> limit, Option<Guid> orderId, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -891,11 +916,12 @@ namespace Dona.Api.Api
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorListSettlementsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> limit, Option<Guid> orderId, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorListSettlementsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> limit, Option<Guid> orderId, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorListSettlements(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, cursor, limit, orderId, from, to, acceptLanguage, xDonaIntegration);
+            OnErrorListSettlements(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, cursor, limit, orderId, from, to, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -913,11 +939,12 @@ namespace Dona.Api.Api
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorListSettlements(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> limit, Option<Guid> orderId, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorListSettlements(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> limit, Option<Guid> orderId, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Settlement lines Ledger lines of the shop&#39;s payable account, newest first.
+        /// Settlement lines The wallet statement&#39;s lines for the shop, newest first (asked as the shop&#39;s current owner). &#x60;memo&#x60; is the line&#39;s machine &#x60;kind&#x60; from the wallet&#39;s CLOSED vocabulary (&#x60;sale_income&#x60;, &#x60;escrow_hold&#x60;, &#x60;escrow_release&#x60;, &#x60;refund&#x60;, &#x60;return&#x60;, &#x60;adjustment&#x60;, &#x60;withdrawal&#x60;, &#x60;withdrawal_failed&#x60;, &#x60;fee&#x60;, &#x60;commission&#x60;, &#x60;hold_placed&#x60;, &#x60;hold_captured&#x60;, &#x60;hold_released&#x60;, &#x60;cod_collected&#x60;, &#x60;cod_remitted&#x60;, &#x60;transfer&#x60;) or &#x60;other&#x60; — never the wallet&#39;s free-text title (C57). A line whose &#x60;id&#x60; or &#x60;txn_id&#x60; is not a UUID, or a &#x60;next_cursor&#x60; that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. &#x60;503 wallet_unavailable&#x60; / &#x60;role_unavailable&#x60; as &#x60;/finance/balance&#x60;.
         /// </summary>
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
@@ -925,14 +952,15 @@ namespace Dona.Api.Api
         /// <param name="from">Inclusive. (optional)</param>
         /// <param name="to">Exclusive. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListSettlementsApiResponse"/>&gt;</returns>
-        public async Task<IListSettlementsApiResponse?> ListSettlementsOrDefaultAsync(Option<string> cursor = default, Option<int> limit = default, Option<Guid> orderId = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListSettlementsApiResponse?> ListSettlementsOrDefaultAsync(Option<string> cursor = default, Option<int> limit = default, Option<Guid> orderId = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await ListSettlementsAsync(cursor, limit, orderId, from, to, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await ListSettlementsAsync(cursor, limit, orderId, from, to, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -941,7 +969,7 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Settlement lines Ledger lines of the shop&#39;s payable account, newest first.
+        /// Settlement lines The wallet statement&#39;s lines for the shop, newest first (asked as the shop&#39;s current owner). &#x60;memo&#x60; is the line&#39;s machine &#x60;kind&#x60; from the wallet&#39;s CLOSED vocabulary (&#x60;sale_income&#x60;, &#x60;escrow_hold&#x60;, &#x60;escrow_release&#x60;, &#x60;refund&#x60;, &#x60;return&#x60;, &#x60;adjustment&#x60;, &#x60;withdrawal&#x60;, &#x60;withdrawal_failed&#x60;, &#x60;fee&#x60;, &#x60;commission&#x60;, &#x60;hold_placed&#x60;, &#x60;hold_captured&#x60;, &#x60;hold_released&#x60;, &#x60;cod_collected&#x60;, &#x60;cod_remitted&#x60;, &#x60;transfer&#x60;) or &#x60;other&#x60; — never the wallet&#39;s free-text title (C57). A line whose &#x60;id&#x60; or &#x60;txn_id&#x60; is not a UUID, or a &#x60;next_cursor&#x60; that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. &#x60;503 wallet_unavailable&#x60; / &#x60;role_unavailable&#x60; as &#x60;/finance/balance&#x60;.
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
@@ -950,10 +978,11 @@ namespace Dona.Api.Api
         /// <param name="from">Inclusive. (optional)</param>
         /// <param name="to">Exclusive. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListSettlementsApiResponse"/>&gt;</returns>
-        public async Task<IListSettlementsApiResponse> ListSettlementsAsync(Option<string> cursor = default, Option<int> limit = default, Option<Guid> orderId = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListSettlementsApiResponse> ListSettlementsAsync(Option<string> cursor = default, Option<int> limit = default, Option<Guid> orderId = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -961,7 +990,7 @@ namespace Dona.Api.Api
             {
                 ValidateListSettlements(cursor, acceptLanguage, xDonaIntegration);
 
-                FormatListSettlements(ref cursor, ref limit, ref orderId, ref from, ref to, ref acceptLanguage, ref xDonaIntegration);
+                FormatListSettlements(ref cursor, ref limit, ref orderId, ref from, ref to, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -1001,6 +1030,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -1052,7 +1094,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterListSettlementsDefaultImplementation(apiResponseLocalVar, cursor, limit, orderId, from, to, acceptLanguage, xDonaIntegration);
+                        AfterListSettlementsDefaultImplementation(apiResponseLocalVar, cursor, limit, orderId, from, to, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnListSettlements(apiResponseLocalVar);
 
@@ -1066,7 +1108,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorListSettlementsDefaultImplementation(e, "/finance/settlements", uriBuilderLocalVar.Path, cursor, limit, orderId, from, to, acceptLanguage, xDonaIntegration);
+                OnErrorListSettlementsDefaultImplementation(e, "/finance/settlements", uriBuilderLocalVar.Path, cursor, limit, orderId, from, to, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorListSettlements(e);
                 throw;
             }

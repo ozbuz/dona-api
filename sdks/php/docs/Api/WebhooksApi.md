@@ -20,7 +20,7 @@ All URIs are relative to https://api.dona.im/seller-api/v1, except if the operat
 ## `createWebhook()`
 
 ```php
-createWebhook($idempotency_key, $webhook_create, $accept_language, $x_dona_integration): \Dona\Api\Model\WebhookWithSecret
+createWebhook($idempotency_key, $webhook_create, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\WebhookWithSecret
 ```
 
 Register an endpoint (secret shown once)
@@ -47,10 +47,11 @@ $apiInstance = new Dona\Api\Api\WebhooksApi(
 $idempotency_key = sync-2026-09-24T09:05; // string | 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:\"Idempotency-Key\",code:\"required\"}]`.
 $webhook_create = new \Dona\Api\Model\WebhookCreate(); // \Dona\Api\Model\WebhookCreate
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->createWebhook($idempotency_key, $webhook_create, $accept_language, $x_dona_integration);
+    $result = $apiInstance->createWebhook($idempotency_key, $webhook_create, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->createWebhook: ', $e->getMessage(), PHP_EOL;
@@ -64,6 +65,7 @@ try {
 | **idempotency_key** | **string**| 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. | |
 | **webhook_create** | [**\Dona\Api\Model\WebhookCreate**](../Model/WebhookCreate.md)|  | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -86,7 +88,7 @@ try {
 ## `deleteWebhook()`
 
 ```php
-deleteWebhook($id, $accept_language, $x_dona_integration)
+deleteWebhook($id, $accept_language, $dona_seller, $x_dona_integration)
 ```
 
 Remove an endpoint
@@ -112,10 +114,11 @@ $apiInstance = new Dona\Api\Api\WebhooksApi(
 );
 $id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is always `404 not_found`.
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $apiInstance->deleteWebhook($id, $accept_language, $x_dona_integration);
+    $apiInstance->deleteWebhook($id, $accept_language, $dona_seller, $x_dona_integration);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->deleteWebhook: ', $e->getMessage(), PHP_EOL;
 }
@@ -127,6 +130,7 @@ try {
 | ------------- | ------------- | ------------- | ------------- |
 | **id** | **string**| Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -149,7 +153,7 @@ void (empty response body)
 ## `getWebhook()`
 
 ```php
-getWebhook($id, $accept_language, $x_dona_integration): \Dona\Api\Model\Webhook
+getWebhook($id, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\Webhook
 ```
 
 Get an endpoint
@@ -175,10 +179,11 @@ $apiInstance = new Dona\Api\Api\WebhooksApi(
 );
 $id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is always `404 not_found`.
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->getWebhook($id, $accept_language, $x_dona_integration);
+    $result = $apiInstance->getWebhook($id, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->getWebhook: ', $e->getMessage(), PHP_EOL;
@@ -191,6 +196,7 @@ try {
 | ------------- | ------------- | ------------- | ------------- |
 | **id** | **string**| Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -213,7 +219,7 @@ try {
 ## `listWebhookDeliveries()`
 
 ```php
-listWebhookDeliveries($id, $status, $event_id, $cursor, $limit, $accept_language, $x_dona_integration): \Dona\Api\Model\DeliveryPage
+listWebhookDeliveries($id, $status, $event_id, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\DeliveryPage
 ```
 
 Delivery log (30 d)
@@ -243,10 +249,11 @@ $event_id = 'event_id_example'; // string | Exact.
 $cursor = 'cursor_example'; // string | Opaque keyset cursor from `next_cursor`.
 $limit = 50; // int | Page size, default 50, max 100 (clamped, with `Dona-API-Warn`). `limit > 50` costs `1 + ceil(limit/50)`.
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->listWebhookDeliveries($id, $status, $event_id, $cursor, $limit, $accept_language, $x_dona_integration);
+    $result = $apiInstance->listWebhookDeliveries($id, $status, $event_id, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->listWebhookDeliveries: ', $e->getMessage(), PHP_EOL;
@@ -263,6 +270,7 @@ try {
 | **cursor** | **string**| Opaque keyset cursor from &#x60;next_cursor&#x60;. | [optional] |
 | **limit** | **int**| Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. | [optional] [default to 50] |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -285,7 +293,7 @@ try {
 ## `listWebhooks()`
 
 ```php
-listWebhooks($accept_language, $x_dona_integration): \Dona\Api\Model\WebhookPage
+listWebhooks($accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\WebhookPage
 ```
 
 List endpoints (≤ 5)
@@ -310,10 +318,11 @@ $apiInstance = new Dona\Api\Api\WebhooksApi(
     $config
 );
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->listWebhooks($accept_language, $x_dona_integration);
+    $result = $apiInstance->listWebhooks($accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->listWebhooks: ', $e->getMessage(), PHP_EOL;
@@ -325,6 +334,7 @@ try {
 | Name | Type | Description  | Notes |
 | ------------- | ------------- | ------------- | ------------- |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -347,7 +357,7 @@ try {
 ## `pingWebhook()`
 
 ```php
-pingWebhook($id, $accept_language, $x_dona_integration): \Dona\Api\Model\WebhookPing
+pingWebhook($id, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\WebhookPing
 ```
 
 Re-run the verification ping
@@ -373,10 +383,11 @@ $apiInstance = new Dona\Api\Api\WebhooksApi(
 );
 $id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is always `404 not_found`.
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->pingWebhook($id, $accept_language, $x_dona_integration);
+    $result = $apiInstance->pingWebhook($id, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->pingWebhook: ', $e->getMessage(), PHP_EOL;
@@ -389,6 +400,7 @@ try {
 | ------------- | ------------- | ------------- | ------------- |
 | **id** | **string**| Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -411,7 +423,7 @@ try {
 ## `redeliverWebhookDelivery()`
 
 ```php
-redeliverWebhookDelivery($id, $delivery_id, $idempotency_key, $accept_language, $x_dona_integration): \Dona\Api\Model\Delivery
+redeliverWebhookDelivery($id, $delivery_id, $idempotency_key, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\Delivery
 ```
 
 Redeliver one delivery
@@ -439,10 +451,11 @@ $id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is
 $delivery_id = 'delivery_id_example'; // string | Delivery id.
 $idempotency_key = sync-2026-09-24T09:05; // string | 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:\"Idempotency-Key\",code:\"required\"}]`.
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->redeliverWebhookDelivery($id, $delivery_id, $idempotency_key, $accept_language, $x_dona_integration);
+    $result = $apiInstance->redeliverWebhookDelivery($id, $delivery_id, $idempotency_key, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->redeliverWebhookDelivery: ', $e->getMessage(), PHP_EOL;
@@ -457,6 +470,7 @@ try {
 | **delivery_id** | **string**| Delivery id. | |
 | **idempotency_key** | **string**| 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -479,7 +493,7 @@ try {
 ## `rotateWebhookSecret()`
 
 ```php
-rotateWebhookSecret($id, $idempotency_key, $accept_language, $x_dona_integration): \Dona\Api\Model\WebhookWithSecret
+rotateWebhookSecret($id, $idempotency_key, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\WebhookWithSecret
 ```
 
 Rotate the signing secret (24 h dual signing)
@@ -506,10 +520,11 @@ $apiInstance = new Dona\Api\Api\WebhooksApi(
 $id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is always `404 not_found`.
 $idempotency_key = sync-2026-09-24T09:05; // string | 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:\"Idempotency-Key\",code:\"required\"}]`.
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->rotateWebhookSecret($id, $idempotency_key, $accept_language, $x_dona_integration);
+    $result = $apiInstance->rotateWebhookSecret($id, $idempotency_key, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->rotateWebhookSecret: ', $e->getMessage(), PHP_EOL;
@@ -523,6 +538,7 @@ try {
 | **id** | **string**| Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. | |
 | **idempotency_key** | **string**| 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type
@@ -545,7 +561,7 @@ try {
 ## `updateWebhook()`
 
 ```php
-updateWebhook($id, $idempotency_key, $webhook_update, $accept_language, $x_dona_integration): \Dona\Api\Model\Webhook
+updateWebhook($id, $idempotency_key, $webhook_update, $accept_language, $dona_seller, $x_dona_integration): \Dona\Api\Model\Webhook
 ```
 
 Change url / event types / pause
@@ -573,10 +589,11 @@ $id = 'id_example'; // string | Resource id (UUIDv7). A foreign or missing id is
 $idempotency_key = sync-2026-09-24T09:05; // string | 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:\"Idempotency-Key\",code:\"required\"}]`.
 $webhook_update = new \Dona\Api\Model\WebhookUpdate(); // \Dona\Api\Model\WebhookUpdate
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->updateWebhook($id, $idempotency_key, $webhook_update, $accept_language, $x_dona_integration);
+    $result = $apiInstance->updateWebhook($id, $idempotency_key, $webhook_update, $accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling WebhooksApi->updateWebhook: ', $e->getMessage(), PHP_EOL;
@@ -591,6 +608,7 @@ try {
 | **idempotency_key** | **string**| 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. | |
 | **webhook_update** | [**\Dona\Api\Model\WebhookUpdate**](../Model/WebhookUpdate.md)|  | |
 | **accept_language** | **string**| Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. | [optional] [default to &#39;uz&#39;] |
+| **dona_seller** | **string**| Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). | [optional] |
 | **x_dona_integration** | **string**| &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. | [optional] |
 
 ### Return type

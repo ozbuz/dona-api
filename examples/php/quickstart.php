@@ -55,7 +55,7 @@ function fail(string $step, ApiException $e): never
 
 // 1 ─ who am I
 try {
-    [$me, , $headers] = (new AccountApi($http, $config))->getMeWithHttpInfo('uz', INTEGRATION);
+    [$me, , $headers] = (new AccountApi($http, $config))->getMeWithHttpInfo(accept_language: 'uz', x_dona_integration: INTEGRATION);
     $headers = array_change_key_case($headers, CASE_LOWER); // header names are case-insensitive; PHP keys are not
 } catch (ApiException $e) {
     fail('GET /me', $e);
@@ -92,7 +92,7 @@ try {
         // One key per logical write. Re-send the SAME key on a retry: the answer is replayed for 24 h.
         idempotency_key: bin2hex(random_bytes(16)),
         stock_request: new StockRequest(['items' => [$line]]),
-        dry_run: true,
+        dry_run: 'true',
         x_dona_integration: INTEGRATION,
     );
 } catch (ApiException $e) {

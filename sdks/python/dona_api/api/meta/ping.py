@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from uuid import UUID
 
 import httpx
 
@@ -7,16 +8,20 @@ from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.error import Error
 from ...models.ping import Ping
-from ...types import Response, Unset
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     _kwargs: dict[str, Any] = {
         "method": "get",
@@ -62,6 +67,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> Response[Error | Ping]:
     """Liveness (key optional)
 
@@ -71,6 +77,7 @@ def sync_detailed(
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -82,6 +89,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         accept_language=accept_language,
+        dona_seller=dona_seller,
     )
 
     response = client.get_httpx_client().request(
@@ -95,6 +103,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> Error | Ping | None:
     """Liveness (key optional)
 
@@ -104,6 +113,7 @@ def sync(
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -116,6 +126,7 @@ def sync(
     return sync_detailed(
         client=client,
         accept_language=accept_language,
+        dona_seller=dona_seller,
     ).parsed
 
 
@@ -123,6 +134,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> Response[Error | Ping]:
     """Liveness (key optional)
 
@@ -132,6 +144,7 @@ async def asyncio_detailed(
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -143,6 +156,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         accept_language=accept_language,
+        dona_seller=dona_seller,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -154,6 +168,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> Error | Ping | None:
     """Liveness (key optional)
 
@@ -163,6 +178,7 @@ async def asyncio(
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -176,5 +192,6 @@ async def asyncio(
         await asyncio_detailed(
             client=client,
             accept_language=accept_language,
+            dona_seller=dona_seller,
         )
     ).parsed

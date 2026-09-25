@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from uuid import UUID
 
 import httpx
 
@@ -13,11 +14,15 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     *,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -81,15 +86,21 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Balance | Error]:
     """Balance
 
-     Never error-copied. No requisites, PAN or statement URLs.
+     The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance
+    bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The
+    wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`),
+    never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server
+    answers `503 role_unavailable` before any read (D3).
 
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -102,6 +113,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -116,15 +128,21 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Balance | Error | None:
     """Balance
 
-     Never error-copied. No requisites, PAN or statement URLs.
+     The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance
+    bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The
+    wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`),
+    never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server
+    answers `503 role_unavailable` before any read (D3).
 
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -138,6 +156,7 @@ def sync(
     return sync_detailed(
         client=client,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -146,15 +165,21 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Balance | Error]:
     """Balance
 
-     Never error-copied. No requisites, PAN or statement URLs.
+     The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance
+    bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The
+    wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`),
+    never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server
+    answers `503 role_unavailable` before any read (D3).
 
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -167,6 +192,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -179,15 +205,21 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Balance | Error | None:
     """Balance
 
-     Never error-copied. No requisites, PAN or statement URLs.
+     The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance
+    bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The
+    wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`),
+    never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server
+    answers `503 role_unavailable` before any read (D3).
 
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -202,6 +234,7 @@ async def asyncio(
         await asyncio_detailed(
             client=client,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

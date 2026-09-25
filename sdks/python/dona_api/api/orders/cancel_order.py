@@ -17,10 +17,11 @@ def _get_kwargs(
     id: UUID,
     *,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -31,6 +32,9 @@ def _get_kwargs(
 
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -127,24 +131,31 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | OrderTransition]:
     """Cancel (after acceptance) — money-reversing
 
-     Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing
-    estate code). Kill switch: `writes_enabled`.
+     An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same
+    reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason`
+    (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller`
+    timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
+    — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
+    code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
+    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (DeclineRequest):
 
@@ -163,6 +174,7 @@ def sync_detailed(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -178,24 +190,31 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | OrderTransition | None:
     """Cancel (after acceptance) — money-reversing
 
-     Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing
-    estate code). Kill switch: `writes_enabled`.
+     An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same
+    reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason`
+    (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller`
+    timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
+    — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
+    code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
+    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (DeclineRequest):
 
@@ -215,6 +234,7 @@ def sync(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -224,24 +244,31 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | OrderTransition]:
     """Cancel (after acceptance) — money-reversing
 
-     Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing
-    estate code). Kill switch: `writes_enabled`.
+     An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same
+    reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason`
+    (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller`
+    timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
+    — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
+    code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
+    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (DeclineRequest):
 
@@ -260,6 +287,7 @@ async def asyncio_detailed(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -273,24 +301,31 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | OrderTransition | None:
     """Cancel (after acceptance) — money-reversing
 
-     Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing
-    estate code). Kill switch: `writes_enabled`.
+     An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same
+    reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason`
+    (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller`
+    timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
+    — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
+    code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
+    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (DeclineRequest):
 
@@ -311,6 +346,7 @@ async def asyncio(
             idempotency_key=idempotency_key,
             dona_dry_run=dona_dry_run,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

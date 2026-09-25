@@ -17,10 +17,11 @@ def _get_kwargs(
     id: UUID,
     *,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -31,6 +32,9 @@ def _get_kwargs(
 
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -127,24 +131,35 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | OrderTransition]:
     """Decline (before acceptance) — money-reversing
 
-     `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`.
-    400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+     An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the
+    marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the
+    buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at
+    the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in
+    `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is
+    `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without
+    words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it
+    `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒
+    `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-
+    api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
+    the switch, the body and the idempotency claim — nothing changes; D3).
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (DeclineRequest):
 
@@ -163,6 +178,7 @@ def sync_detailed(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -178,24 +194,35 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | OrderTransition | None:
     """Decline (before acceptance) — money-reversing
 
-     `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`.
-    400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+     An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the
+    marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the
+    buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at
+    the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in
+    `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is
+    `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without
+    words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it
+    `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒
+    `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-
+    api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
+    the switch, the body and the idempotency claim — nothing changes; D3).
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (DeclineRequest):
 
@@ -215,6 +242,7 @@ def sync(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -224,24 +252,35 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | OrderTransition]:
     """Decline (before acceptance) — money-reversing
 
-     `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`.
-    400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+     An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the
+    marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the
+    buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at
+    the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in
+    `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is
+    `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without
+    words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it
+    `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒
+    `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-
+    api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
+    the switch, the body and the idempotency claim — nothing changes; D3).
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (DeclineRequest):
 
@@ -260,6 +299,7 @@ async def asyncio_detailed(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -273,24 +313,35 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     body: DeclineRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | OrderTransition | None:
     """Decline (before acceptance) — money-reversing
 
-     `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`.
-    400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+     An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the
+    marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the
+    buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at
+    the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in
+    `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is
+    `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without
+    words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it
+    `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒
+    `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-
+    api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
+    the switch, the body and the idempotency claim — nothing changes; D3).
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (DeclineRequest):
 
@@ -311,6 +362,7 @@ async def asyncio(
             idempotency_key=idempotency_key,
             dona_dry_run=dona_dry_run,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

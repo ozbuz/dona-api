@@ -60,10 +60,11 @@ $apiInstance = new Dona\Api\Api\AccountApi(
     $config
 );
 $accept_language = 'uz'; // string | Localises `message` in error bodies and single-language renderings. Default `uz`.
+$dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"required\"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:\"Dona-Seller\", code:\"invalid\"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->getMe($accept_language, $x_dona_integration);
+    $result = $apiInstance->getMe($accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling AccountApi->getMe: ', $e->getMessage(), PHP_EOL;
@@ -97,6 +98,7 @@ Class | Method | HTTP request | Description
 *HealthApi* | [**getAccountHealth**](docs/Api/HealthApi.md#getaccounthealth) | **GET** /account/health | Account health summary
 *HealthApi* | [**getAccountMetric**](docs/Api/HealthApi.md#getaccountmetric) | **GET** /account/metrics/{metric_id} | One metric with weekly history
 *HealthApi* | [**getAccountVerification**](docs/Api/HealthApi.md#getaccountverification) | **GET** /account/verification | The three verdicts and what ADVANCED still needs
+*JobsApi* | [**downloadJobFile**](docs/Api/JobsApi.md#downloadjobfile) | **GET** /jobs/{id}/download | Download an export&#39;s file
 *JobsApi* | [**exportOrders**](docs/Api/JobsApi.md#exportorders) | **POST** /exports/orders | Export orders (async, no PII)
 *JobsApi* | [**exportProducts**](docs/Api/JobsApi.md#exportproducts) | **POST** /exports/products | Export products (async)
 *JobsApi* | [**getJob**](docs/Api/JobsApi.md#getjob) | **GET** /jobs/{id} | Poll a job

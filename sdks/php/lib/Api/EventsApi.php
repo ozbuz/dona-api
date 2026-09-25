@@ -136,6 +136,7 @@ class EventsApi
      * @param  int|null $limit Default 100, max 200. (optional, default to 100)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listEvents'] to see the possible values for this operation
      *
@@ -143,9 +144,9 @@ class EventsApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\EventPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function listEvents($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
+    public function listEvents($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
     {
-        list($response) = $this->listEventsWithHttpInfo($cursor, $since, $types, $limit, $if_none_match, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->listEventsWithHttpInfo($cursor, $since, $types, $limit, $if_none_match, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -160,6 +161,7 @@ class EventsApi
      * @param  int|null $limit Default 100, max 200. (optional, default to 100)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listEvents'] to see the possible values for this operation
      *
@@ -167,9 +169,9 @@ class EventsApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\EventPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function listEventsWithHttpInfo($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
+    public function listEventsWithHttpInfo($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
     {
-        $request = $this->listEventsRequest($cursor, $since, $types, $limit, $if_none_match, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->listEventsRequest($cursor, $since, $types, $limit, $if_none_match, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -335,15 +337,16 @@ class EventsApi
      * @param  int|null $limit Default 100, max 200. (optional, default to 100)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listEvents'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function listEventsAsync($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
+    public function listEventsAsync($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
     {
-        return $this->listEventsAsyncWithHttpInfo($cursor, $since, $types, $limit, $if_none_match, $accept_language, $x_dona_integration, $contentType)
+        return $this->listEventsAsyncWithHttpInfo($cursor, $since, $types, $limit, $if_none_match, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -362,16 +365,17 @@ class EventsApi
      * @param  int|null $limit Default 100, max 200. (optional, default to 100)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listEvents'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function listEventsAsyncWithHttpInfo($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
+    public function listEventsAsyncWithHttpInfo($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
     {
         $returnType = '\Dona\Api\Model\EventPage';
-        $request = $this->listEventsRequest($cursor, $since, $types, $limit, $if_none_match, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->listEventsRequest($cursor, $since, $types, $limit, $if_none_match, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -418,13 +422,14 @@ class EventsApi
      * @param  int|null $limit Default 100, max 200. (optional, default to 100)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listEvents'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function listEventsRequest($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
+    public function listEventsRequest($cursor = null, $since = null, $types = null, $limit = 100, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listEvents'][0])
     {
 
 
@@ -437,6 +442,7 @@ class EventsApi
             throw new \InvalidArgumentException('invalid value for "$limit" when calling EventsApi.listEvents, must be bigger than or equal to 1.');
         }
         
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -495,6 +501,10 @@ class EventsApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {

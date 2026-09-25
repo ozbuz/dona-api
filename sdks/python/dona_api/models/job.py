@@ -24,7 +24,8 @@ class Job:
         kind (str): Known values (open set — tolerate new ones): `export_products`, `export_orders`, `products_batch`.
         status (str): Known values (open set — tolerate new ones): `pending`, `running`, `ready`, `failed`.
         progress (JobProgress):
-        file_url (None | str): Signed, valid 60 min from this response; re-read the job for a fresh one.
+        file_url (None | str): `GET /jobs/{id}/download?token=…` — the token is valid 15 min from this response and only
+            for a key of this shop (never a public or pre-signed object URL); re-read the job for a fresh one.
         file_expires_at (datetime.datetime | None):
         results (list[LineResult] | None): `products_batch` only: the per-line shape.
         error (None | str): Our code only.

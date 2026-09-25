@@ -76,7 +76,7 @@ func main() {
 		v := first.Variants[0]
 		line.VariantId, line.Quantity = &v.Id, v.Stock
 	}
-	dryRun := true
+	dryRun := "true"
 	res, err := c.SetStockWithResponse(ctx, &dona.SetStockParams{
 		DryRun: &dryRun,
 		// One key per logical write. Re-send the SAME key on a retry: the answer is replayed for 24 h.

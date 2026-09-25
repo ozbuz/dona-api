@@ -8,6 +8,7 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.error import Error
+from ...models.held_for_review import HeldForReview
 from ...models.product_state import ProductState
 from ...types import UNSET, Response, Unset
 
@@ -15,10 +16,11 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     id: UUID,
     *,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -29,6 +31,9 @@ def _get_kwargs(
 
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -51,11 +56,18 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Error | ProductState | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Error | HeldForReview | ProductState | None:
     if response.status_code == 200:
         response_200 = ProductState.from_dict(response.json())
 
         return response_200
+
+    if response.status_code == 202:
+        response_202 = HeldForReview.from_dict(response.json())
+
+        return response_202
 
     if response.status_code == 400:
         response_400 = Error.from_dict(response.json())
@@ -105,7 +117,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Error | ProductState]:
+) -> Response[Error | HeldForReview | ProductState]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -118,25 +130,28 @@ def sync_detailed(
     id: UUID,
     *,
     client: AuthenticatedClient | Client,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Response[Error | ProductState]:
+) -> Response[Error | HeldForReview | ProductState]:
     """Publish
 
      `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on
     documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues`
-    lists). Kill switch: `writes_enabled`.
+    lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits
+    for an approver). Kill switch: `writes_enabled`.
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -144,7 +159,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | ProductState]
+        Response[Error | HeldForReview | ProductState]
     """
 
     kwargs = _get_kwargs(
@@ -153,6 +168,7 @@ def sync_detailed(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -167,25 +183,28 @@ def sync(
     id: UUID,
     *,
     client: AuthenticatedClient | Client,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Error | ProductState | None:
+) -> Error | HeldForReview | ProductState | None:
     """Publish
 
      `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on
     documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues`
-    lists). Kill switch: `writes_enabled`.
+    lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits
+    for an approver). Kill switch: `writes_enabled`.
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -193,7 +212,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | ProductState
+        Error | HeldForReview | ProductState
     """
 
     return sync_detailed(
@@ -203,6 +222,7 @@ def sync(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -211,25 +231,28 @@ async def asyncio_detailed(
     id: UUID,
     *,
     client: AuthenticatedClient | Client,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Response[Error | ProductState]:
+) -> Response[Error | HeldForReview | ProductState]:
     """Publish
 
      `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on
     documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues`
-    lists). Kill switch: `writes_enabled`.
+    lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits
+    for an approver). Kill switch: `writes_enabled`.
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -237,7 +260,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | ProductState]
+        Response[Error | HeldForReview | ProductState]
     """
 
     kwargs = _get_kwargs(
@@ -246,6 +269,7 @@ async def asyncio_detailed(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -258,25 +282,28 @@ async def asyncio(
     id: UUID,
     *,
     client: AuthenticatedClient | Client,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Error | ProductState | None:
+) -> Error | HeldForReview | ProductState | None:
     """Publish
 
      `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on
     documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues`
-    lists). Kill switch: `writes_enabled`.
+    lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits
+    for an approver). Kill switch: `writes_enabled`.
 
     Args:
         id (UUID):
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -284,7 +311,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | ProductState
+        Error | HeldForReview | ProductState
     """
 
     return (
@@ -295,6 +322,7 @@ async def asyncio(
             idempotency_key=idempotency_key,
             dona_dry_run=dona_dry_run,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

@@ -10,7 +10,7 @@ PHP and C#**, generated from one OpenAPI 3.1 contract, plus runnable examples fo
 | Contract | [`spec/openapi.yaml`](spec/openapi.yaml) — the same document the API serves at [`/seller-api/v1/openapi.json`](https://api.dona.im/seller-api/v1/openapi.json) (CI proves it) |
 | SDKs | [`sdks/`](sdks/) — **generated, never edited by hand** (CI regenerates and fails on any difference) |
 | Examples | [`examples/`](examples/) — `GET /me` → `GET /products?limit=5` → `POST /stock` (`dry_run`) + a webhook signature verifier, per language |
-| Status | **Pre-release (0.1.0).** The API is deployed but not yet enabled for sellers (until then a valid key gets `503 limits_unavailable`); `POST /stock` ships in increment S3. Packages are **not yet published** — install from this repository (below). |
+| Status | **Pre-release (0.1.0).** The API is deployed but not yet enabled for sellers (until then a valid key gets `503 limits_unavailable`). The contract now covers S1–S7: reads, writes (`POST /stock` etc., gated on `writes_enabled`), webhooks, an MCP door for AI agents (`dona_ak_live_…`) with write tools + owner confirmation, an OAuth 2.1 door for connectors (read-only), and vendor-app install keys (`dona_it_live_…`, `Dona-Seller` header). Packages are **not yet published** — install from this repository (below). |
 
 ## Install · Oʻrnatish · Установка
 
@@ -37,7 +37,11 @@ Each SDK's first call, and the complete runnable version, is in [`examples/`](ex
 **Kalit.** Doʻkon **egasi** kalitni seller portalda yaratadi: *Sozlamalar › API*. Kalit
 (`dona_sk_live_…`) faqat **bir marta** koʻrsatiladi. Har bir soʻrovda:
 `Authorization: Bearer dona_sk_live_…`. `X-Api-Key` sarlavhasi yoki URL ichidagi kalit qabul
-qilinmaydi (`401 use_authorization_header`). Kalit — doʻkonning oʻzi: yoʻlda doʻkon ID yoʻq.
+qilinmaydi (`401 use_authorization_header`). Kalit — doʻkonning oʻzi: yoʻlda doʻkon ID yoʻq. Uch xil
+kalit: `sk` sotuvchi (shu REST daraxti) · `ak` agent (faqat MCP eshigi) · `it` vendor-ilova
+oʻrnatmasi — bunday kalit har bir soʻrovda `Dona-Seller: <shop-id>` yuborishi shart (yoʻq/notoʻgʻri
+⇒ `400 invalid_body`; boshqa doʻkon ⇒ `404 not_found`) va hech qachon `orders:pii`, `finance:read`,
+`mcp` yoki `webhooks:manage` ololmaydi.
 
 **Chegaralar.** Har bir javobda `RateLimit-Policy`, `RateLimit`, `X-RateLimit-Limit`,
 `X-RateLimit-Remaining`, `X-RateLimit-Reset` bor. `429`/`503` da `Retry-After` (soniya) va
@@ -51,7 +55,9 @@ birinchi soʻrov hali tugamagan; `409 idempotency_mismatch` — kalit boshqa tan
 
 **`dry_run`.** Istalgan yozuvga `?dry_run=true` (yoki `Dona-Dry-Run: true`) qoʻshing: tekshiruv,
 himoya va natija hisoblanadi, soʻng hammasi bekor qilinadi — **hech narsa yozilmaydi**. Integratsiyani
-shu bilan sinab koʻring.
+shu bilan sinab koʻring. Faqat **`true` / `false` soʻzma-soʻz satrlar** qabul qilinadi — bu string
+enum, boolean emas; `1`, `0`, `yes`, `TRUE`, boʻsh qiymat — barchasi `400 invalid_body`. Shu sababli
+SDK'lar bu parametrni satr sifatida tiplaydi.
 
 **`202 held_for_review`.** Bu xato emas: narx yoki qoldiqdagi keskin oʻzgarishni himoya tizimi
 ushlab qoldi va **hech narsa yozilmadi**. Tanada `error` yoʻq; `code: "held_for_review"`,
@@ -62,6 +68,23 @@ Xatolarda har doim `error` kodiga qarab tarmoqlaning, `message` matniga emas.
 **Webhooklar** Standard Webhooks boʻyicha imzolanadi (`webhook-id`, `webhook-timestamp`,
 `webhook-signature`). Imzoni **xom** tana baytlari boʻyicha tekshiring — har bir tildagi tayyor
 tekshiruvchi: [`examples/`](examples/README.md).
+
+**MCP** (`https://api.dona.im/seller-api/mcp`, Streamable HTTP / JSON-RPC 2.0) — AI agentlar uchun
+alohida eshik, agent kaliti bilan (`dona_ak_live_…`, scope `mcp`); `sk`/`it` kalitlar u yerda rad
+etiladi, `ak` kalit esa REST daraxtida rad etiladi. Oʻqish vositalari doim mavjud; **yozish
+vositalari** (`dona.catalog.update_stock`, `dona.catalog.update_price`, `dona.orders.ship`,
+`dona.orders.cancel`) faqat ADVANCED doʻkon uchun, `writes_enabled` yoqilganda, va birinchi
+chaqiruvda hech qachon bajarilmaydi: form elicitation qoʻllab-quvvatlovchi klient tasdiqlash formasi
+va bir martalik `requestState` oladi; boshqa har qanday klient `approval_required` oladi — yozuv
+doʻkon **egasi** *Sozlamalar › API › Kutilayotgan yozuvlar*da tasdiqlaydigan kutilayotgan niyatga
+aylanadi; agent natijani bilish uchun xuddi shu `request_id` bilan qayta chaqiradi.
+
+**OAuth** (`https://api.dona.im/seller-api/oauth`, RFC 8414/9728 boʻyicha discovery) claude.ai yoki
+ChatGPT kabi konnektorlarga kalitsiz MCP eshigiga kirish imkonini beradi: PKCE `S256`, Dona ruxsat
+roʻyxatidagi Client ID Metadata Document, doʻkon **egasi** seller portalda rozilik beradi
+(*Sozlamalar › API › Ulangan ilovalar*, istalgan vaqtda uzish mumkin). **v1'da faqat oʻqish**: har
+qanday yozish vositasi OAuth tokeniga `403 insufficient_scope` bilan javob beradi — yozish agent
+kalitlarida qoladi.
 
 **Hujjatlar:** [OpenAPI](https://api.dona.im/seller-api/v1/openapi.json) ·
 [llms.txt](https://api.dona.im/seller-api/v1/llms.txt) · seller portal › *Sozlamalar › API* ·
@@ -75,7 +98,11 @@ tekshiruvchi: [`examples/`](examples/README.md).
 **Ключ.** Ключ создаёт **владелец** магазина в кабинете продавца: *Sozlamalar › API*. Ключ
 (`dona_sk_live_…`) показывается **один раз**. В каждом запросе:
 `Authorization: Bearer dona_sk_live_…`. Заголовок `X-Api-Key` или ключ в URL не принимаются
-(`401 use_authorization_header`). Ключ и есть магазин: ID магазина в пути нет.
+(`401 use_authorization_header`). Ключ и есть магазин: ID магазина в пути нет. Три вида ключей: `sk`
+продавец (это REST-дерево) · `ak` агент (только дверь MCP) · `it` установка приложения-вендора —
+такой ключ обязан слать `Dona-Seller: <shop-id>` в каждом запросе (нет/неверен ⇒
+`400 invalid_body`; чужой магазин ⇒ `404 not_found`) и никогда не получает `orders:pii`,
+`finance:read`, `mcp` или `webhooks:manage`.
 
 **Лимиты.** Каждый ответ содержит `RateLimit-Policy`, `RateLimit`, `X-RateLimit-Limit`,
 `X-RateLimit-Remaining`, `X-RateLimit-Reset`. На `429`/`503` добавляются `Retry-After` (секунды) и
@@ -89,7 +116,9 @@ tekshiruvchi: [`examples/`](examples/README.md).
 
 **`dry_run`.** Добавьте к любой записи `?dry_run=true` (или `Dona-Dry-Run: true`): проверка, защита
 и расчёт результата выполняются, затем всё откатывается — **ничего не записывается**. Так проверяют
-интеграцию.
+интеграцию. Принимаются **только буквальные строки `true` / `false`** — это строковый enum, а не
+булево значение; `1`, `0`, `yes`, `TRUE`, пустое значение — везде `400 invalid_body`. Поэтому SDK
+типизируют параметр как строку.
 
 **`202 held_for_review`.** Это не ошибка: защита задержала резкое изменение цены или остатка, и
 **ничего не записано**. В теле нет `error`; есть `code: "held_for_review"`, `approval_id`, `rule`
@@ -100,6 +129,23 @@ tekshiruvchi: [`examples/`](examples/README.md).
 **Вебхуки** подписываются по Standard Webhooks (`webhook-id`, `webhook-timestamp`,
 `webhook-signature`). Проверяйте подпись по **сырым** байтам тела — готовые проверки для каждого
 языка: [`examples/`](examples/README.md).
+
+**MCP** (`https://api.dona.im/seller-api/mcp`, Streamable HTTP / JSON-RPC 2.0) — отдельная дверь для
+AI-агентов, ключ агента (`dona_ak_live_…`, scope `mcp`); ключи `sk`/`it` там отклоняются, а ключ `ak`
+отклоняется на REST-дереве. Инструменты чтения доступны всегда; **инструменты записи**
+(`dona.catalog.update_stock`, `dona.catalog.update_price`, `dona.orders.ship`,
+`dona.orders.cancel`) — только для магазина уровня ADVANCED при включённом `writes_enabled`, и
+никогда не выполняются с первого вызова: клиент с form elicitation получает форму подтверждения и
+одноразовый `requestState`; любой другой клиент получает `approval_required` — запись становится
+ожидающим намерением, которое подтверждает **владелец** магазина в *Sozlamalar › API › Kutilayotgan
+yozuvlar*; агент повторяет вызов с тем же `request_id`, чтобы узнать результат.
+
+**OAuth** (`https://api.dona.im/seller-api/oauth`, discovery по RFC 8414/9728) позволяет коннекторам
+вроде claude.ai или ChatGPT достучаться до двери MCP без вставленного ключа: PKCE `S256`, Client ID
+Metadata Document из списка разрешённых Dona, согласие даёт **владелец** магазина в кабинете
+продавца (*Sozlamalar › API › Ulangan ilovalar*, отключить можно в любой момент). **В v1 — только
+чтение**: любой инструмент записи отвечает токену OAuth `403 insufficient_scope`; запись остаётся за
+ключами агентов.
 
 **Документация:** [OpenAPI](https://api.dona.im/seller-api/v1/openapi.json) ·
 [llms.txt](https://api.dona.im/seller-api/v1/llms.txt) · кабинет продавца › *Sozlamalar › API* ·
@@ -112,7 +158,11 @@ tekshiruvchi: [`examples/`](examples/README.md).
 **Key.** The shop **owner** mints keys in the seller portal (*Sozlamalar › API*); a key
 (`dona_sk_live_…`) is shown **once**. Send it on every request as
 `Authorization: Bearer dona_sk_live_…`. `X-Api-Key` or a key in the query string is refused
-(`401 use_authorization_header`). The key *is* the tenant — no shop id appears in any path.
+(`401 use_authorization_header`). The key *is* the tenant — no shop id appears in any path. Three
+kinds: `sk` seller (this REST tree) · `ak` agent (MCP door only) · `it` vendor-app install, which
+must also send `Dona-Seller: <shop-id>` on every request (missing/invalid ⇒ `400 invalid_body`;
+another shop's id ⇒ `404 not_found`) and can never hold `orders:pii`, `finance:read`, `mcp` or
+`webhooks:manage`.
 
 **Rate limits.** Every response carries `RateLimit-Policy` (every bucket the key is subject to),
 `RateLimit` (the bucket closest to exhaustion: `r` remaining, `t` seconds to reset) and the legacy
@@ -128,7 +178,9 @@ still running. `409 idempotency_mismatch`: the key was used with a different bod
 
 **`dry_run`.** Add `?dry_run=true` (or `Dona-Dry-Run: true`) to any write: validation, the guard and
 the effect are computed, then rolled back — **nothing is written**, no events, no counters. Build and
-test integrations this way.
+test integrations this way. **Only the literal strings `true` / `false`** are accepted, in either
+place — it is a string enum, not a boolean; `1`, `0`, `yes`, `TRUE`, an empty value all get
+`400 invalid_body`. The SDKs type the parameter as a string for this reason.
 
 **`202 held_for_review`.** A *success* envelope, not an error: the plausibility guard held a
 suspicious price/stock change and **nothing was written**. The body has no `error`:
@@ -150,6 +202,22 @@ the SDKs type them as strings for that reason.
 after a secret rotation). Verify the **raw** body bytes and dedupe on `webhook-id`. Each language's
 verifier in [`examples/`](examples/README.md) passes the same 12 vectors, including the Standard
 Webhooks reference vector.
+
+**MCP** (`https://api.dona.im/seller-api/mcp`, Streamable HTTP / JSON-RPC 2.0) is a separate door for
+AI agents, authenticated with an agent key (`dona_ak_live_…`, scope `mcp`) — `sk`/`it` keys are
+refused there, and an `ak` key is refused on the REST tree. Read tools are always available; **write
+tools** (`dona.catalog.update_stock`, `dona.catalog.update_price`, `dona.orders.ship`,
+`dona.orders.cancel`) exist only for an ADVANCED shop while `writes_enabled` is on, and never execute
+on the first call: a client with form elicitation gets a confirmation form and a single-use
+`requestState`; any other client gets `approval_required` and the write becomes a pending intent the
+shop **owner** confirms in *Sozlamalar › API › Kutilayotgan yozuvlar* — the agent re-calls with the
+same `request_id` to learn the outcome.
+
+**OAuth** (`https://api.dona.im/seller-api/oauth`, RFC 8414/9728 discovery) lets connectors such as
+claude.ai or ChatGPT reach the MCP door without a pasted key: PKCE `S256`, a Client ID Metadata
+Document on Dona's allow-list, and the shop **owner** consents in the seller portal (*Sozlamalar ›
+API › Ulangan ilovalar*, disconnect any time). **Reads only in v1** — every write tool answers an
+OAuth token `403 insufficient_scope`; writes stay with agent keys.
 
 **Docs:** [OpenAPI](https://api.dona.im/seller-api/v1/openapi.json) ·
 [llms.txt](https://api.dona.im/seller-api/v1/llms.txt) · seller portal › *Sozlamalar › API* ·

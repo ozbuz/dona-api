@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from uuid import UUID
 
 import httpx
 
@@ -16,6 +17,7 @@ def _get_kwargs(
     body: ExportRequest,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -23,6 +25,9 @@ def _get_kwargs(
 
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -102,6 +107,7 @@ def sync_detailed(
     body: ExportRequest,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | JobAccepted]:
     """Export orders (async, no PII)
@@ -112,6 +118,7 @@ def sync_detailed(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (ExportRequest):
 
@@ -127,6 +134,7 @@ def sync_detailed(
         body=body,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -143,6 +151,7 @@ def sync(
     body: ExportRequest,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | JobAccepted | None:
     """Export orders (async, no PII)
@@ -153,6 +162,7 @@ def sync(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (ExportRequest):
 
@@ -169,6 +179,7 @@ def sync(
         body=body,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -179,6 +190,7 @@ async def asyncio_detailed(
     body: ExportRequest,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | JobAccepted]:
     """Export orders (async, no PII)
@@ -189,6 +201,7 @@ async def asyncio_detailed(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (ExportRequest):
 
@@ -204,6 +217,7 @@ async def asyncio_detailed(
         body=body,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -218,6 +232,7 @@ async def asyncio(
     body: ExportRequest,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | JobAccepted | None:
     """Export orders (async, no PII)
@@ -228,6 +243,7 @@ async def asyncio(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (ExportRequest):
 
@@ -245,6 +261,7 @@ async def asyncio(
             body=body,
             idempotency_key=idempotency_key,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

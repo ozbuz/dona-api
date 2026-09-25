@@ -16,11 +16,15 @@ def _get_kwargs(
     id: UUID,
     *,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -92,6 +96,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | WebhookPing]:
     """Re-run the verification ping
@@ -103,6 +108,7 @@ def sync_detailed(
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -116,6 +122,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         id=id,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -131,6 +138,7 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | WebhookPing | None:
     """Re-run the verification ping
@@ -142,6 +150,7 @@ def sync(
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -156,6 +165,7 @@ def sync(
         id=id,
         client=client,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -165,6 +175,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | WebhookPing]:
     """Re-run the verification ping
@@ -176,6 +187,7 @@ async def asyncio_detailed(
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -189,6 +201,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         id=id,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -202,6 +215,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | WebhookPing | None:
     """Re-run the verification ping
@@ -213,6 +227,7 @@ async def asyncio(
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -228,6 +243,7 @@ async def asyncio(
             id=id,
             client=client,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

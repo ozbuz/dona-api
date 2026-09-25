@@ -15,11 +15,15 @@ def _get_kwargs(
     id: UUID,
     *,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -54,6 +58,11 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         response_404 = Error.from_dict(response.json())
 
         return response_404
+
+    if response.status_code == 409:
+        response_409 = Error.from_dict(response.json())
+
+        return response_409
 
     if response.status_code == 429:
         response_429 = Error.from_dict(response.json())
@@ -90,17 +99,26 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | str]:
     """Shipping label (PDF, contains PII)
 
-     Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤
-    30/min.
+     The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only
+    (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`);
+    ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` +
+    `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled,
+    never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+
+    `orders`: the order codes without a carrier number yet — print later), `no_items_selected`,
+    `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at
+    once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any
+    read, and a batch is not charged.
 
     Args:
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -114,6 +132,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         id=id,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -129,17 +148,26 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | str | None:
     """Shipping label (PDF, contains PII)
 
-     Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤
-    30/min.
+     The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only
+    (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`);
+    ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` +
+    `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled,
+    never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+
+    `orders`: the order codes without a carrier number yet — print later), `no_items_selected`,
+    `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at
+    once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any
+    read, and a batch is not charged.
 
     Args:
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -154,6 +182,7 @@ def sync(
         id=id,
         client=client,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -163,17 +192,26 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | str]:
     """Shipping label (PDF, contains PII)
 
-     Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤
-    30/min.
+     The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only
+    (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`);
+    ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` +
+    `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled,
+    never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+
+    `orders`: the order codes without a carrier number yet — print later), `no_items_selected`,
+    `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at
+    once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any
+    read, and a batch is not charged.
 
     Args:
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -187,6 +225,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         id=id,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -200,17 +239,26 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | str | None:
     """Shipping label (PDF, contains PII)
 
-     Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤
-    30/min.
+     The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only
+    (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`);
+    ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` +
+    `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled,
+    never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+
+    `orders`: the order codes without a carrier number yet — print later), `no_items_selected`,
+    `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at
+    once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any
+    read, and a batch is not charged.
 
     Args:
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -226,6 +274,7 @@ async def asyncio(
             id=id,
             client=client,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed
