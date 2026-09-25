@@ -39,6 +39,37 @@ namespace Dona.Api.Api
         JobsApiEvents Events { get; }
 
         /// <summary>
+        /// Download an export&#39;s file
+        /// </summary>
+        /// <remarks>
+        /// What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
+        /// </remarks>
+        /// <exception cref="ApiException">Thrown when fails to make API call</exception>
+        /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
+        /// <param name="token">The download token &#x60;file_url&#x60; carries (&#x60;v1.&lt;unix expiry&gt;.&lt;mac&gt;&#x60;), bound to this job and this shop.</param>
+        /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
+        /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IDownloadJobFileApiResponse"/>&gt;</returns>
+        Task<IDownloadJobFileApiResponse> DownloadJobFileAsync(Guid id, string token, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Download an export&#39;s file
+        /// </summary>
+        /// <remarks>
+        /// What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
+        /// </remarks>
+        /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
+        /// <param name="token">The download token &#x60;file_url&#x60; carries (&#x60;v1.&lt;unix expiry&gt;.&lt;mac&gt;&#x60;), bound to this job and this shop.</param>
+        /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
+        /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IDownloadJobFileApiResponse"/>?&gt;</returns>
+        Task<IDownloadJobFileApiResponse?> DownloadJobFileOrDefaultAsync(Guid id, string token, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Export orders (async, no PII)
         /// </summary>
         /// <remarks>
@@ -48,10 +79,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IExportOrdersApiResponse"/>&gt;</returns>
-        Task<IExportOrdersApiResponse> ExportOrdersAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IExportOrdersApiResponse> ExportOrdersAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Export orders (async, no PII)
@@ -62,10 +94,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IExportOrdersApiResponse"/>?&gt;</returns>
-        Task<IExportOrdersApiResponse?> ExportOrdersOrDefaultAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IExportOrdersApiResponse?> ExportOrdersOrDefaultAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Export products (async)
@@ -77,10 +110,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IExportProductsApiResponse"/>&gt;</returns>
-        Task<IExportProductsApiResponse> ExportProductsAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IExportProductsApiResponse> ExportProductsAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Export products (async)
@@ -91,10 +125,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IExportProductsApiResponse"/>?&gt;</returns>
-        Task<IExportProductsApiResponse?> ExportProductsOrDefaultAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IExportProductsApiResponse?> ExportProductsOrDefaultAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Poll a job
@@ -105,10 +140,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetJobApiResponse"/>&gt;</returns>
-        Task<IGetJobApiResponse> GetJobAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetJobApiResponse> GetJobAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Poll a job
@@ -118,10 +154,59 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetJobApiResponse"/>?&gt;</returns>
-        Task<IGetJobApiResponse?> GetJobOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetJobApiResponse?> GetJobOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+    }
+
+    /// <summary>
+    /// The <see cref="IDownloadJobFileApiResponse"/>
+    /// </summary>
+    public interface IDownloadJobFileApiResponse : Dona.Api.Client.IApiResponse, IOk<string?>, IUnauthorized<Dona.Api.Model.Error?>, IForbidden<Dona.Api.Model.Error?>, INotFound<Dona.Api.Model.Error?>, ITooManyRequests<Dona.Api.Model.Error?>, IInternalServerError<Dona.Api.Model.Error?>, IServiceUnavailable<Dona.Api.Model.Error?>
+    {
+        /// <summary>
+        /// Returns true if the response is 200 Ok
+        /// </summary>
+        /// <returns></returns>
+        bool IsOk { get; }
+
+        /// <summary>
+        /// Returns true if the response is 401 Unauthorized
+        /// </summary>
+        /// <returns></returns>
+        bool IsUnauthorized { get; }
+
+        /// <summary>
+        /// Returns true if the response is 403 Forbidden
+        /// </summary>
+        /// <returns></returns>
+        bool IsForbidden { get; }
+
+        /// <summary>
+        /// Returns true if the response is 404 NotFound
+        /// </summary>
+        /// <returns></returns>
+        bool IsNotFound { get; }
+
+        /// <summary>
+        /// Returns true if the response is 429 TooManyRequests
+        /// </summary>
+        /// <returns></returns>
+        bool IsTooManyRequests { get; }
+
+        /// <summary>
+        /// Returns true if the response is 500 InternalServerError
+        /// </summary>
+        /// <returns></returns>
+        bool IsInternalServerError { get; }
+
+        /// <summary>
+        /// Returns true if the response is 503 ServiceUnavailable
+        /// </summary>
+        /// <returns></returns>
+        bool IsServiceUnavailable { get; }
     }
 
     /// <summary>
@@ -288,6 +373,26 @@ namespace Dona.Api.Api
         /// <summary>
         /// The event raised after the server response
         /// </summary>
+        public event EventHandler<ApiResponseEventArgs>? OnDownloadJobFile;
+
+        /// <summary>
+        /// The event raised after an error querying the server
+        /// </summary>
+        public event EventHandler<ExceptionEventArgs>? OnErrorDownloadJobFile;
+
+        internal void ExecuteOnDownloadJobFile(JobsApi.DownloadJobFileApiResponse apiResponse)
+        {
+            OnDownloadJobFile?.Invoke(this, new ApiResponseEventArgs(apiResponse));
+        }
+
+        internal void ExecuteOnErrorDownloadJobFile(Exception exception)
+        {
+            OnErrorDownloadJobFile?.Invoke(this, new ExceptionEventArgs(exception));
+        }
+
+        /// <summary>
+        /// The event raised after the server response
+        /// </summary>
         public event EventHandler<ApiResponseEventArgs>? OnExportOrders;
 
         /// <summary>
@@ -387,7 +492,650 @@ namespace Dona.Api.Api
             BearerTokenProvider = bearerTokenProvider;
         }
 
-        partial void FormatExportOrders(ref string idempotencyKey, ExportRequest exportRequest, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatDownloadJobFile(ref Guid id, ref string token, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
+
+        /// <summary>
+        /// Validates the request parameters
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="xDonaIntegration"></param>
+        /// <returns></returns>
+        private void ValidateDownloadJobFile(string token, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        {
+            if (token == null)
+                throw new ArgumentNullException(nameof(token));
+
+            if (acceptLanguage.IsSet && acceptLanguage.Value == null)
+                throw new ArgumentNullException(nameof(acceptLanguage));
+
+            if (xDonaIntegration.IsSet && xDonaIntegration.Value == null)
+                throw new ArgumentNullException(nameof(xDonaIntegration));
+        }
+
+        /// <summary>
+        /// Processes the server response
+        /// </summary>
+        /// <param name="apiResponseLocalVar"></param>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
+        /// <param name="xDonaIntegration"></param>
+        private void AfterDownloadJobFileDefaultImplementation(IDownloadJobFileApiResponse apiResponseLocalVar, Guid id, string token, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
+        {
+            bool suppressDefaultLog = false;
+            AfterDownloadJobFile(ref suppressDefaultLog, apiResponseLocalVar, id, token, acceptLanguage, donaSeller, xDonaIntegration);
+            if (!suppressDefaultLog)
+                Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
+        }
+
+        /// <summary>
+        /// Processes the server response
+        /// </summary>
+        /// <param name="suppressDefaultLog"></param>
+        /// <param name="apiResponseLocalVar"></param>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
+        /// <param name="xDonaIntegration"></param>
+        partial void AfterDownloadJobFile(ref bool suppressDefaultLog, IDownloadJobFileApiResponse apiResponseLocalVar, Guid id, string token, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
+
+        /// <summary>
+        /// Logs exceptions that occur while retrieving the server response
+        /// </summary>
+        /// <param name="exceptionLocalVar"></param>
+        /// <param name="pathFormatLocalVar"></param>
+        /// <param name="pathLocalVar"></param>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
+        /// <param name="xDonaIntegration"></param>
+        private void OnErrorDownloadJobFileDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string token, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
+        {
+            bool suppressDefaultLogLocalVar = false;
+            OnErrorDownloadJobFile(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, token, acceptLanguage, donaSeller, xDonaIntegration);
+            if (!suppressDefaultLogLocalVar)
+                Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
+        }
+
+        /// <summary>
+        /// A partial method that gives developers a way to provide customized exception handling
+        /// </summary>
+        /// <param name="suppressDefaultLogLocalVar"></param>
+        /// <param name="exceptionLocalVar"></param>
+        /// <param name="pathFormatLocalVar"></param>
+        /// <param name="pathLocalVar"></param>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
+        /// <param name="xDonaIntegration"></param>
+        partial void OnErrorDownloadJobFile(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string token, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
+
+        /// <summary>
+        /// Download an export&#39;s file What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
+        /// </summary>
+        /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
+        /// <param name="token">The download token &#x60;file_url&#x60; carries (&#x60;v1.&lt;unix expiry&gt;.&lt;mac&gt;&#x60;), bound to this job and this shop.</param>
+        /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
+        /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IDownloadJobFileApiResponse"/>&gt;</returns>
+        public async Task<IDownloadJobFileApiResponse?> DownloadJobFileOrDefaultAsync(Guid id, string token, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await DownloadJobFileAsync(id, token, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Download an export&#39;s file What a ready export&#39;s &#x60;file_url&#x60; points at. Needs BOTH a key of the job&#39;s shop that holds the scope the job&#39;s kind needs (any key of the shop — the file is the shop&#39;s; a key of another shop is &#x60;404 not_found&#x60; whatever token it carries) AND the job&#39;s own &#x60;token&#x60; from &#x60;file_url&#x60;, valid 15 min (&#x60;401 download_token_invalid&#x60; when absent, forged or another job&#39;s; &#x60;401 download_token_expired&#x60; past its time — re-read &#x60;GET /jobs/{id}&#x60; for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;. Not gated by &#x60;writes_enabled&#x60;.
+        /// </summary>
+        /// <exception cref="ApiException">Thrown when fails to make API call</exception>
+        /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
+        /// <param name="token">The download token &#x60;file_url&#x60; carries (&#x60;v1.&lt;unix expiry&gt;.&lt;mac&gt;&#x60;), bound to this job and this shop.</param>
+        /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
+        /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IDownloadJobFileApiResponse"/>&gt;</returns>
+        public async Task<IDownloadJobFileApiResponse> DownloadJobFileAsync(Guid id, string token, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        {
+            UriBuilder uriBuilderLocalVar = new UriBuilder();
+
+            try
+            {
+                ValidateDownloadJobFile(token, acceptLanguage, xDonaIntegration);
+
+                FormatDownloadJobFile(ref id, ref token, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
+
+                using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
+                {
+                    uriBuilderLocalVar.Host = HttpClient.BaseAddress!.Host;
+                    uriBuilderLocalVar.Port = HttpClient.BaseAddress.Port;
+                    uriBuilderLocalVar.Scheme = HttpClient.BaseAddress.Scheme;
+                    uriBuilderLocalVar.Path = HttpClient.BaseAddress.AbsolutePath == "/"
+                        ? "/jobs/{id}/download"
+                        : string.Concat(HttpClient.BaseAddress.AbsolutePath.TrimEnd('/'), "/jobs/{id}/download");
+                    uriBuilderLocalVar.Path = uriBuilderLocalVar.Path.Replace("%7Bid%7D", Uri.EscapeDataString(id.ToString()));
+
+                    System.Collections.Specialized.NameValueCollection parseQueryStringLocalVar = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+                    parseQueryStringLocalVar["token"] = ClientUtils.ParameterToString(token);
+
+                    uriBuilderLocalVar.Query = parseQueryStringLocalVar.ToString();
+
+                    if (acceptLanguage.IsSet)
+                    {
+                      // Set client side default value of Header Param "Accept-Language".                    
+                      if (ClientUtils.IsContentHeader("Accept-Language"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                    }
+
+                    if (xDonaIntegration.IsSet)
+                    {
+                      // Set client side default value of Header Param "X-Dona-Integration".                    
+                      if (ClientUtils.IsContentHeader("X-Dona-Integration"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("X-Dona-Integration", ClientUtils.ParameterToString(xDonaIntegration.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("X-Dona-Integration", ClientUtils.ParameterToString(xDonaIntegration.Value));
+                      }
+                    }
+
+                    List<TokenBase> tokenBaseLocalVars = new List<TokenBase>();
+                    httpRequestMessageLocalVar.RequestUri = uriBuilderLocalVar.Uri;
+
+                    BearerToken bearerTokenLocalVar1 = (BearerToken) await BearerTokenProvider.GetAsync(cancellation: cancellationToken).ConfigureAwait(false);
+
+                    tokenBaseLocalVars.Add(bearerTokenLocalVar1);
+
+                    bearerTokenLocalVar1.UseInHeader(httpRequestMessageLocalVar, "");
+
+                    string[] acceptLocalVars = new string[] {
+                        "application/x-ndjson",
+                        "text/csv",
+                        "application/json"
+                    };
+
+                    IEnumerable<MediaTypeWithQualityHeaderValue> acceptHeaderValuesLocalVar = ClientUtils.SelectHeaderAcceptArray(acceptLocalVars);
+
+                    foreach (var acceptLocalVar in acceptHeaderValuesLocalVar)
+                        httpRequestMessageLocalVar.Headers.Accept.Add(acceptLocalVar);
+
+                    httpRequestMessageLocalVar.Method = HttpMethod.Get;
+
+                    DateTime requestedAtLocalVar = DateTime.UtcNow;
+
+                    using (HttpResponseMessage httpResponseMessageLocalVar = await HttpClient.SendAsync(httpRequestMessageLocalVar, cancellationToken).ConfigureAwait(false))
+                    {
+                        DownloadJobFileApiResponse apiResponseLocalVar;
+
+                        switch ((int)httpResponseMessageLocalVar.StatusCode) {
+                            default: {
+                                string responseContentLocalVar = await httpResponseMessageLocalVar.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                                apiResponseLocalVar = new(Logger, httpRequestMessageLocalVar, httpResponseMessageLocalVar, responseContentLocalVar, "/jobs/{id}/download", requestedAtLocalVar, _jsonSerializerOptions);
+
+                                break;
+                            }
+                        }
+
+                        AfterDownloadJobFileDefaultImplementation(apiResponseLocalVar, id, token, acceptLanguage, donaSeller, xDonaIntegration);
+
+                        Events.ExecuteOnDownloadJobFile(apiResponseLocalVar);
+
+                        if (apiResponseLocalVar.StatusCode == (HttpStatusCode) 429)
+                            foreach(TokenBase tokenBaseLocalVar in tokenBaseLocalVars)
+                                tokenBaseLocalVar.BeginRateLimit();
+
+                        return apiResponseLocalVar;
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                OnErrorDownloadJobFileDefaultImplementation(e, "/jobs/{id}/download", uriBuilderLocalVar.Path, id, token, acceptLanguage, donaSeller, xDonaIntegration);
+                Events.ExecuteOnErrorDownloadJobFile(e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// The <see cref="DownloadJobFileApiResponse"/>
+        /// </summary>
+        public partial class DownloadJobFileApiResponse : Dona.Api.Client.ApiResponse, IDownloadJobFileApiResponse
+        {
+            /// <summary>
+            /// The logger
+            /// </summary>
+            public ILogger<JobsApi> Logger { get; }
+
+            /// <summary>
+            /// The <see cref="DownloadJobFileApiResponse"/>
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="httpRequestMessage"></param>
+            /// <param name="httpResponseMessage"></param>
+            /// <param name="rawContent"></param>
+            /// <param name="path"></param>
+            /// <param name="requestedAt"></param>
+            /// <param name="jsonSerializerOptions"></param>
+            public DownloadJobFileApiResponse(ILogger<JobsApi> logger, System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage, string rawContent, string path, DateTime requestedAt, System.Text.Json.JsonSerializerOptions jsonSerializerOptions) : base(httpRequestMessage, httpResponseMessage, rawContent, path, requestedAt, jsonSerializerOptions)
+            {
+                Logger = logger;
+                OnCreated(httpRequestMessage, httpResponseMessage);
+            }
+
+            /// <summary>
+            /// The <see cref="DownloadJobFileApiResponse"/>
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="httpRequestMessage"></param>
+            /// <param name="httpResponseMessage"></param>
+            /// <param name="contentStream"></param>
+            /// <param name="path"></param>
+            /// <param name="requestedAt"></param>
+            /// <param name="jsonSerializerOptions"></param>
+            public DownloadJobFileApiResponse(ILogger<JobsApi> logger, System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage, System.IO.Stream contentStream, string path, DateTime requestedAt, System.Text.Json.JsonSerializerOptions jsonSerializerOptions) : base(httpRequestMessage, httpResponseMessage, contentStream, path, requestedAt, jsonSerializerOptions)
+            {
+                Logger = logger;
+                OnCreated(httpRequestMessage, httpResponseMessage);
+            }
+
+            partial void OnCreated(global::System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage);
+
+            /// <summary>
+            /// Returns true if the response is 200 Ok
+            /// </summary>
+            /// <returns></returns>
+            public bool IsOk => 200 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 200 Ok
+            /// </summary>
+            /// <returns></returns>
+            public string? Ok()
+            {
+                bool suppressDefault = false;
+                string? result = null;
+                OnOk(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultOk();
+                return result;
+            }
+
+            private string? DefaultOk()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsOk
+                    ? System.Text.Json.JsonSerializer.Deserialize<string>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnOk(ref bool suppressDefault, ref string? result);
+
+            /// <summary>
+            /// Returns true if the response is 200 Ok and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryOk([NotNullWhen(true)]out string? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Ok();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)200);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 401 Unauthorized
+            /// </summary>
+            /// <returns></returns>
+            public bool IsUnauthorized => 401 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 401 Unauthorized
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? Unauthorized()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnUnauthorized(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultUnauthorized();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultUnauthorized()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsUnauthorized
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnUnauthorized(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 401 Unauthorized and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryUnauthorized([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Unauthorized();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)401);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 403 Forbidden
+            /// </summary>
+            /// <returns></returns>
+            public bool IsForbidden => 403 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 403 Forbidden
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? Forbidden()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnForbidden(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultForbidden();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultForbidden()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsForbidden
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnForbidden(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 403 Forbidden and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryForbidden([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Forbidden();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)403);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 404 NotFound
+            /// </summary>
+            /// <returns></returns>
+            public bool IsNotFound => 404 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 404 NotFound
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? NotFound()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnNotFound(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultNotFound();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultNotFound()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsNotFound
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnNotFound(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 404 NotFound and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryNotFound([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = NotFound();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)404);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 429 TooManyRequests
+            /// </summary>
+            /// <returns></returns>
+            public bool IsTooManyRequests => 429 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 429 TooManyRequests
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? TooManyRequests()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnTooManyRequests(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultTooManyRequests();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultTooManyRequests()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsTooManyRequests
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnTooManyRequests(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 429 TooManyRequests and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryTooManyRequests([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = TooManyRequests();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)429);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 500 InternalServerError
+            /// </summary>
+            /// <returns></returns>
+            public bool IsInternalServerError => 500 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 500 InternalServerError
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? InternalServerError()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnInternalServerError(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultInternalServerError();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultInternalServerError()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsInternalServerError
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnInternalServerError(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 500 InternalServerError and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryInternalServerError([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = InternalServerError();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)500);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 503 ServiceUnavailable
+            /// </summary>
+            /// <returns></returns>
+            public bool IsServiceUnavailable => 503 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 503 ServiceUnavailable
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? ServiceUnavailable()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnServiceUnavailable(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultServiceUnavailable();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultServiceUnavailable()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsServiceUnavailable
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnServiceUnavailable(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 503 ServiceUnavailable and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryServiceUnavailable([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = ServiceUnavailable();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)503);
+                }
+
+                return result != null;
+            }
+
+            private void OnDeserializationErrorDefaultImplementation(Exception exception, HttpStatusCode httpStatusCode)
+            {
+                bool suppressDefaultLog = false;
+                OnDeserializationError(ref suppressDefaultLog, exception, httpStatusCode);
+                if (!suppressDefaultLog)
+                    Logger.LogError(RestLogEvents.ApiDeserializationFailed, exception, "An error occurred while deserializing the {code} response.", httpStatusCode);
+            }
+
+            partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
+        }
+
+        partial void FormatExportOrders(ref string idempotencyKey, ExportRequest exportRequest, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -419,11 +1167,12 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterExportOrdersDefaultImplementation(IExportOrdersApiResponse apiResponseLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterExportOrdersDefaultImplementation(IExportOrdersApiResponse apiResponseLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterExportOrders(ref suppressDefaultLog, apiResponseLocalVar, idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
+            AfterExportOrders(ref suppressDefaultLog, apiResponseLocalVar, idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -436,8 +1185,9 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterExportOrders(ref bool suppressDefaultLog, IExportOrdersApiResponse apiResponseLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterExportOrders(ref bool suppressDefaultLog, IExportOrdersApiResponse apiResponseLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -448,11 +1198,12 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorExportOrdersDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorExportOrdersDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorExportOrders(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
+            OnErrorExportOrders(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -467,8 +1218,9 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorExportOrders(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorExportOrders(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Export orders (async, no PII) The &#x60;orders:read&#x60; projection only — an export never carries &#x60;recipient&#x60;.
@@ -476,14 +1228,15 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IExportOrdersApiResponse"/>&gt;</returns>
-        public async Task<IExportOrdersApiResponse?> ExportOrdersOrDefaultAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IExportOrdersApiResponse?> ExportOrdersOrDefaultAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await ExportOrdersAsync(idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await ExportOrdersAsync(idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -498,10 +1251,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IExportOrdersApiResponse"/>&gt;</returns>
-        public async Task<IExportOrdersApiResponse> ExportOrdersAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IExportOrdersApiResponse> ExportOrdersAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -509,7 +1263,7 @@ namespace Dona.Api.Api
             {
                 ValidateExportOrders(idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
 
-                FormatExportOrders(ref idempotencyKey, exportRequest, ref acceptLanguage, ref xDonaIntegration);
+                FormatExportOrders(ref idempotencyKey, exportRequest, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -544,6 +1298,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -604,7 +1371,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterExportOrdersDefaultImplementation(apiResponseLocalVar, idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
+                        AfterExportOrdersDefaultImplementation(apiResponseLocalVar, idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnExportOrders(apiResponseLocalVar);
 
@@ -618,7 +1385,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorExportOrdersDefaultImplementation(e, "/exports/orders", uriBuilderLocalVar.Path, idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
+                OnErrorExportOrdersDefaultImplementation(e, "/exports/orders", uriBuilderLocalVar.Path, idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorExportOrders(e);
                 throw;
             }
@@ -1079,7 +1846,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatExportProducts(ref string idempotencyKey, ExportRequest exportRequest, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatExportProducts(ref string idempotencyKey, ExportRequest exportRequest, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -1111,11 +1878,12 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterExportProductsDefaultImplementation(IExportProductsApiResponse apiResponseLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterExportProductsDefaultImplementation(IExportProductsApiResponse apiResponseLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterExportProducts(ref suppressDefaultLog, apiResponseLocalVar, idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
+            AfterExportProducts(ref suppressDefaultLog, apiResponseLocalVar, idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -1128,8 +1896,9 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterExportProducts(ref bool suppressDefaultLog, IExportProductsApiResponse apiResponseLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterExportProducts(ref bool suppressDefaultLog, IExportProductsApiResponse apiResponseLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -1140,11 +1909,12 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorExportProductsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorExportProductsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorExportProducts(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
+            OnErrorExportProducts(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -1159,8 +1929,9 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorExportProducts(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorExportProducts(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Export products (async) CSV or JSONL. ≤ 2 running jobs per key, ≤ 20/day per shop. Not gated by &#x60;writes_enabled&#x60;.
@@ -1168,14 +1939,15 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IExportProductsApiResponse"/>&gt;</returns>
-        public async Task<IExportProductsApiResponse?> ExportProductsOrDefaultAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IExportProductsApiResponse?> ExportProductsOrDefaultAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await ExportProductsAsync(idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await ExportProductsAsync(idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -1190,10 +1962,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="exportRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IExportProductsApiResponse"/>&gt;</returns>
-        public async Task<IExportProductsApiResponse> ExportProductsAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IExportProductsApiResponse> ExportProductsAsync(string idempotencyKey, ExportRequest exportRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -1201,7 +1974,7 @@ namespace Dona.Api.Api
             {
                 ValidateExportProducts(idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
 
-                FormatExportProducts(ref idempotencyKey, exportRequest, ref acceptLanguage, ref xDonaIntegration);
+                FormatExportProducts(ref idempotencyKey, exportRequest, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -1236,6 +2009,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -1296,7 +2082,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterExportProductsDefaultImplementation(apiResponseLocalVar, idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
+                        AfterExportProductsDefaultImplementation(apiResponseLocalVar, idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnExportProducts(apiResponseLocalVar);
 
@@ -1310,7 +2096,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorExportProductsDefaultImplementation(e, "/exports/products", uriBuilderLocalVar.Path, idempotencyKey, exportRequest, acceptLanguage, xDonaIntegration);
+                OnErrorExportProductsDefaultImplementation(e, "/exports/products", uriBuilderLocalVar.Path, idempotencyKey, exportRequest, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorExportProducts(e);
                 throw;
             }
@@ -1771,7 +2557,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatGetJob(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatGetJob(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -1794,11 +2580,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterGetJobDefaultImplementation(IGetJobApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterGetJobDefaultImplementation(IGetJobApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterGetJob(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterGetJob(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -1810,8 +2597,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterGetJob(ref bool suppressDefaultLog, IGetJobApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterGetJob(ref bool suppressDefaultLog, IGetJobApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -1821,11 +2609,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorGetJobDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorGetJobDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorGetJob(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorGetJob(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -1839,22 +2628,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorGetJob(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorGetJob(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Poll a job Readable by any key of the shop that holds the scope the job&#39;s kind needs (&#x60;catalog:read&#x60; for &#x60;export_products&#x60;, &#x60;orders:read&#x60; for &#x60;export_orders&#x60;, &#x60;catalog:write&#x60; for &#x60;products_batch&#x60;); otherwise &#x60;404 not_found&#x60;. Poll ≥ 5 s (&#x60;Retry-After&#x60; is set while pending/running). After &#x60;expires_at&#x60; (7 d) ⇒ &#x60;404 not_found&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetJobApiResponse"/>&gt;</returns>
-        public async Task<IGetJobApiResponse?> GetJobOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetJobApiResponse?> GetJobOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await GetJobAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await GetJobAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -1868,10 +2659,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetJobApiResponse"/>&gt;</returns>
-        public async Task<IGetJobApiResponse> GetJobAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetJobApiResponse> GetJobAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -1879,7 +2671,7 @@ namespace Dona.Api.Api
             {
                 ValidateGetJob(acceptLanguage, xDonaIntegration);
 
-                FormatGetJob(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatGetJob(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -1901,6 +2693,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -1952,7 +2757,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterGetJobDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterGetJobDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnGetJob(apiResponseLocalVar);
 
@@ -1966,7 +2771,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorGetJobDefaultImplementation(e, "/jobs/{id}", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorGetJobDefaultImplementation(e, "/jobs/{id}", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorGetJob(e);
                 throw;
             }

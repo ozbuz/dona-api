@@ -59,7 +59,7 @@ const line = variant
 
 const stock = await dona.POST("/stock", {
   params: {
-    query: { dry_run: true },
+    query: { dry_run: "true" },
     // One key per logical write. Re-send the SAME key on a retry: the answer is replayed for 24 h.
     header: { "Idempotency-Key": randomUUID() },
   },

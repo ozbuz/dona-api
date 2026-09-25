@@ -17,6 +17,7 @@ def _get_kwargs(
     *,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -24,6 +25,9 @@ def _get_kwargs(
 
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -110,6 +114,7 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | WebhookWithSecret]:
     """Rotate the signing secret (24 h dual signing)
@@ -121,6 +126,7 @@ def sync_detailed(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -135,6 +141,7 @@ def sync_detailed(
         id=id,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -151,6 +158,7 @@ def sync(
     client: AuthenticatedClient | Client,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | WebhookWithSecret | None:
     """Rotate the signing secret (24 h dual signing)
@@ -162,6 +170,7 @@ def sync(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -177,6 +186,7 @@ def sync(
         client=client,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -187,6 +197,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | WebhookWithSecret]:
     """Rotate the signing secret (24 h dual signing)
@@ -198,6 +209,7 @@ async def asyncio_detailed(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -212,6 +224,7 @@ async def asyncio_detailed(
         id=id,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -226,6 +239,7 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | WebhookWithSecret | None:
     """Rotate the signing secret (24 h dual signing)
@@ -237,6 +251,7 @@ async def asyncio(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -253,6 +268,7 @@ async def asyncio(
             client=client,
             idempotency_key=idempotency_key,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

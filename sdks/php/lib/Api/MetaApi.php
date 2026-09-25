@@ -145,15 +145,16 @@ class MetaApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getChangelog'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\ChangelogEntryPage|\Dona\Api\Model\Error
      */
-    public function getChangelog($cursor = null, $limit = 50, $accept_language = 'uz', string $contentType = self::contentTypes['getChangelog'][0])
+    public function getChangelog($cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getChangelog'][0])
     {
-        list($response) = $this->getChangelogWithHttpInfo($cursor, $limit, $accept_language, $contentType);
+        list($response) = $this->getChangelogWithHttpInfo($cursor, $limit, $accept_language, $dona_seller, $contentType);
         return $response;
     }
 
@@ -165,15 +166,16 @@ class MetaApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getChangelog'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\ChangelogEntryPage|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getChangelogWithHttpInfo($cursor = null, $limit = 50, $accept_language = 'uz', string $contentType = self::contentTypes['getChangelog'][0])
+    public function getChangelogWithHttpInfo($cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getChangelog'][0])
     {
-        $request = $this->getChangelogRequest($cursor, $limit, $accept_language, $contentType);
+        $request = $this->getChangelogRequest($cursor, $limit, $accept_language, $dona_seller, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -266,14 +268,15 @@ class MetaApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getChangelog'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getChangelogAsync($cursor = null, $limit = 50, $accept_language = 'uz', string $contentType = self::contentTypes['getChangelog'][0])
+    public function getChangelogAsync($cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getChangelog'][0])
     {
-        return $this->getChangelogAsyncWithHttpInfo($cursor, $limit, $accept_language, $contentType)
+        return $this->getChangelogAsyncWithHttpInfo($cursor, $limit, $accept_language, $dona_seller, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -289,15 +292,16 @@ class MetaApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getChangelog'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getChangelogAsyncWithHttpInfo($cursor = null, $limit = 50, $accept_language = 'uz', string $contentType = self::contentTypes['getChangelog'][0])
+    public function getChangelogAsyncWithHttpInfo($cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getChangelog'][0])
     {
         $returnType = '\Dona\Api\Model\ChangelogEntryPage';
-        $request = $this->getChangelogRequest($cursor, $limit, $accept_language, $contentType);
+        $request = $this->getChangelogRequest($cursor, $limit, $accept_language, $dona_seller, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -341,12 +345,13 @@ class MetaApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getChangelog'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getChangelogRequest($cursor = null, $limit = 50, $accept_language = 'uz', string $contentType = self::contentTypes['getChangelog'][0])
+    public function getChangelogRequest($cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getChangelog'][0])
     {
 
 
@@ -357,6 +362,7 @@ class MetaApi
             throw new \InvalidArgumentException('invalid value for "$limit" when calling MetaApi.getChangelog, must be bigger than or equal to 1.');
         }
         
+
 
 
         $resourcePath = '/changelog';
@@ -388,6 +394,10 @@ class MetaApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
 
 
@@ -455,15 +465,16 @@ class MetaApi
      * llms.txt index for AI agents
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getLlmsTxt'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return string|\Dona\Api\Model\Error
      */
-    public function getLlmsTxt($accept_language = 'uz', string $contentType = self::contentTypes['getLlmsTxt'][0])
+    public function getLlmsTxt($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getLlmsTxt'][0])
     {
-        list($response) = $this->getLlmsTxtWithHttpInfo($accept_language, $contentType);
+        list($response) = $this->getLlmsTxtWithHttpInfo($accept_language, $dona_seller, $contentType);
         return $response;
     }
 
@@ -473,15 +484,16 @@ class MetaApi
      * llms.txt index for AI agents
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getLlmsTxt'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return array of string|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getLlmsTxtWithHttpInfo($accept_language = 'uz', string $contentType = self::contentTypes['getLlmsTxt'][0])
+    public function getLlmsTxtWithHttpInfo($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getLlmsTxt'][0])
     {
-        $request = $this->getLlmsTxtRequest($accept_language, $contentType);
+        $request = $this->getLlmsTxtRequest($accept_language, $dona_seller, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -572,14 +584,15 @@ class MetaApi
      * llms.txt index for AI agents
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getLlmsTxt'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getLlmsTxtAsync($accept_language = 'uz', string $contentType = self::contentTypes['getLlmsTxt'][0])
+    public function getLlmsTxtAsync($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getLlmsTxt'][0])
     {
-        return $this->getLlmsTxtAsyncWithHttpInfo($accept_language, $contentType)
+        return $this->getLlmsTxtAsyncWithHttpInfo($accept_language, $dona_seller, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -593,15 +606,16 @@ class MetaApi
      * llms.txt index for AI agents
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getLlmsTxt'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getLlmsTxtAsyncWithHttpInfo($accept_language = 'uz', string $contentType = self::contentTypes['getLlmsTxt'][0])
+    public function getLlmsTxtAsyncWithHttpInfo($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getLlmsTxt'][0])
     {
         $returnType = 'string';
-        $request = $this->getLlmsTxtRequest($accept_language, $contentType);
+        $request = $this->getLlmsTxtRequest($accept_language, $dona_seller, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -643,13 +657,15 @@ class MetaApi
      * Create request for operation 'getLlmsTxt'
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getLlmsTxt'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getLlmsTxtRequest($accept_language = 'uz', string $contentType = self::contentTypes['getLlmsTxt'][0])
+    public function getLlmsTxtRequest($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getLlmsTxt'][0])
     {
+
 
 
 
@@ -664,6 +680,10 @@ class MetaApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
 
 
@@ -731,15 +751,16 @@ class MetaApi
      * This document
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getOpenApi'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return object|\Dona\Api\Model\Error
      */
-    public function getOpenApi($accept_language = 'uz', string $contentType = self::contentTypes['getOpenApi'][0])
+    public function getOpenApi($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getOpenApi'][0])
     {
-        list($response) = $this->getOpenApiWithHttpInfo($accept_language, $contentType);
+        list($response) = $this->getOpenApiWithHttpInfo($accept_language, $dona_seller, $contentType);
         return $response;
     }
 
@@ -749,15 +770,16 @@ class MetaApi
      * This document
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getOpenApi'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return array of object|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getOpenApiWithHttpInfo($accept_language = 'uz', string $contentType = self::contentTypes['getOpenApi'][0])
+    public function getOpenApiWithHttpInfo($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getOpenApi'][0])
     {
-        $request = $this->getOpenApiRequest($accept_language, $contentType);
+        $request = $this->getOpenApiRequest($accept_language, $dona_seller, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -848,14 +870,15 @@ class MetaApi
      * This document
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getOpenApi'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getOpenApiAsync($accept_language = 'uz', string $contentType = self::contentTypes['getOpenApi'][0])
+    public function getOpenApiAsync($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getOpenApi'][0])
     {
-        return $this->getOpenApiAsyncWithHttpInfo($accept_language, $contentType)
+        return $this->getOpenApiAsyncWithHttpInfo($accept_language, $dona_seller, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -869,15 +892,16 @@ class MetaApi
      * This document
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getOpenApi'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getOpenApiAsyncWithHttpInfo($accept_language = 'uz', string $contentType = self::contentTypes['getOpenApi'][0])
+    public function getOpenApiAsyncWithHttpInfo($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getOpenApi'][0])
     {
         $returnType = 'object';
-        $request = $this->getOpenApiRequest($accept_language, $contentType);
+        $request = $this->getOpenApiRequest($accept_language, $dona_seller, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -919,13 +943,15 @@ class MetaApi
      * Create request for operation 'getOpenApi'
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getOpenApi'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getOpenApiRequest($accept_language = 'uz', string $contentType = self::contentTypes['getOpenApi'][0])
+    public function getOpenApiRequest($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getOpenApi'][0])
     {
+
 
 
 
@@ -940,6 +966,10 @@ class MetaApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
 
 
@@ -1007,15 +1037,16 @@ class MetaApi
      * Service status
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getStatus'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\Status|\Dona\Api\Model\Error
      */
-    public function getStatus($accept_language = 'uz', string $contentType = self::contentTypes['getStatus'][0])
+    public function getStatus($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getStatus'][0])
     {
-        list($response) = $this->getStatusWithHttpInfo($accept_language, $contentType);
+        list($response) = $this->getStatusWithHttpInfo($accept_language, $dona_seller, $contentType);
         return $response;
     }
 
@@ -1025,15 +1056,16 @@ class MetaApi
      * Service status
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getStatus'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\Status|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getStatusWithHttpInfo($accept_language = 'uz', string $contentType = self::contentTypes['getStatus'][0])
+    public function getStatusWithHttpInfo($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getStatus'][0])
     {
-        $request = $this->getStatusRequest($accept_language, $contentType);
+        $request = $this->getStatusRequest($accept_language, $dona_seller, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -1124,14 +1156,15 @@ class MetaApi
      * Service status
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getStatus'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getStatusAsync($accept_language = 'uz', string $contentType = self::contentTypes['getStatus'][0])
+    public function getStatusAsync($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getStatus'][0])
     {
-        return $this->getStatusAsyncWithHttpInfo($accept_language, $contentType)
+        return $this->getStatusAsyncWithHttpInfo($accept_language, $dona_seller, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -1145,15 +1178,16 @@ class MetaApi
      * Service status
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getStatus'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getStatusAsyncWithHttpInfo($accept_language = 'uz', string $contentType = self::contentTypes['getStatus'][0])
+    public function getStatusAsyncWithHttpInfo($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getStatus'][0])
     {
         $returnType = '\Dona\Api\Model\Status';
-        $request = $this->getStatusRequest($accept_language, $contentType);
+        $request = $this->getStatusRequest($accept_language, $dona_seller, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -1195,13 +1229,15 @@ class MetaApi
      * Create request for operation 'getStatus'
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getStatus'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getStatusRequest($accept_language = 'uz', string $contentType = self::contentTypes['getStatus'][0])
+    public function getStatusRequest($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['getStatus'][0])
     {
+
 
 
 
@@ -1216,6 +1252,10 @@ class MetaApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
 
 
@@ -1283,15 +1323,16 @@ class MetaApi
      * Liveness (key optional)
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['ping'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\Ping|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function ping($accept_language = 'uz', string $contentType = self::contentTypes['ping'][0])
+    public function ping($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['ping'][0])
     {
-        list($response) = $this->pingWithHttpInfo($accept_language, $contentType);
+        list($response) = $this->pingWithHttpInfo($accept_language, $dona_seller, $contentType);
         return $response;
     }
 
@@ -1301,15 +1342,16 @@ class MetaApi
      * Liveness (key optional)
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['ping'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\Ping|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function pingWithHttpInfo($accept_language = 'uz', string $contentType = self::contentTypes['ping'][0])
+    public function pingWithHttpInfo($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['ping'][0])
     {
-        $request = $this->pingRequest($accept_language, $contentType);
+        $request = $this->pingRequest($accept_language, $dona_seller, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -1414,14 +1456,15 @@ class MetaApi
      * Liveness (key optional)
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['ping'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function pingAsync($accept_language = 'uz', string $contentType = self::contentTypes['ping'][0])
+    public function pingAsync($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['ping'][0])
     {
-        return $this->pingAsyncWithHttpInfo($accept_language, $contentType)
+        return $this->pingAsyncWithHttpInfo($accept_language, $dona_seller, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -1435,15 +1478,16 @@ class MetaApi
      * Liveness (key optional)
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['ping'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function pingAsyncWithHttpInfo($accept_language = 'uz', string $contentType = self::contentTypes['ping'][0])
+    public function pingAsyncWithHttpInfo($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['ping'][0])
     {
         $returnType = '\Dona\Api\Model\Ping';
-        $request = $this->pingRequest($accept_language, $contentType);
+        $request = $this->pingRequest($accept_language, $dona_seller, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -1485,13 +1529,15 @@ class MetaApi
      * Create request for operation 'ping'
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['ping'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function pingRequest($accept_language = 'uz', string $contentType = self::contentTypes['ping'][0])
+    public function pingRequest($accept_language = 'uz', $dona_seller = null, string $contentType = self::contentTypes['ping'][0])
     {
+
 
 
 
@@ -1506,6 +1552,10 @@ class MetaApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
 
 

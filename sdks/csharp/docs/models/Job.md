@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 **Progress** | [**JobProgress**](JobProgress.md) |  | 
 **CreatedAt** | **DateTimeOffset** | ISO 8601 with offset (Tashkent &#x60;+05:00&#x60; on output). | 
 **ExpiresAt** | **DateTimeOffset** | Row + file swept after this (7 d); then &#x60;404 not_found&#x60;. | 
-**FileUrl** | **string** | Signed, valid 60 min from this response; re-read the job for a fresh one. | 
+**FileUrl** | **string** | &#x60;GET /jobs/{id}/download?token&#x3D;…&#x60; — the token is valid 15 min from this response and only for a key of this shop (never a public or pre-signed object URL); re-read the job for a fresh one. | 
 **FileExpiresAt** | **DateTimeOffset** |  | 
 **Results** | [**List&lt;LineResult&gt;**](LineResult.md) | &#x60;products_batch&#x60; only: the per-line shape. | 
 **Error** | **string** | Our code only. | 

@@ -141,6 +141,7 @@ class TaxonomyApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getCategoryRequirements'] to see the possible values for this operation
      *
@@ -148,9 +149,9 @@ class TaxonomyApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\CategoryRequirements|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function getCategoryRequirements($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
+    public function getCategoryRequirements($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
     {
-        list($response) = $this->getCategoryRequirementsWithHttpInfo($id, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->getCategoryRequirementsWithHttpInfo($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -161,6 +162,7 @@ class TaxonomyApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getCategoryRequirements'] to see the possible values for this operation
      *
@@ -168,9 +170,9 @@ class TaxonomyApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\CategoryRequirements|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getCategoryRequirementsWithHttpInfo($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
+    public function getCategoryRequirementsWithHttpInfo($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
     {
-        $request = $this->getCategoryRequirementsRequest($id, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->getCategoryRequirementsRequest($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -332,15 +334,16 @@ class TaxonomyApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getCategoryRequirements'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getCategoryRequirementsAsync($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
+    public function getCategoryRequirementsAsync($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
     {
-        return $this->getCategoryRequirementsAsyncWithHttpInfo($id, $accept_language, $x_dona_integration, $contentType)
+        return $this->getCategoryRequirementsAsyncWithHttpInfo($id, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -355,16 +358,17 @@ class TaxonomyApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getCategoryRequirements'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getCategoryRequirementsAsyncWithHttpInfo($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
+    public function getCategoryRequirementsAsyncWithHttpInfo($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
     {
         $returnType = '\Dona\Api\Model\CategoryRequirements';
-        $request = $this->getCategoryRequirementsRequest($id, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->getCategoryRequirementsRequest($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -407,13 +411,14 @@ class TaxonomyApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getCategoryRequirements'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getCategoryRequirementsRequest($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
+    public function getCategoryRequirementsRequest($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getCategoryRequirements'][0])
     {
 
         // verify the required parameter 'id' is set
@@ -422,6 +427,7 @@ class TaxonomyApi
                 'Missing the required parameter $id when calling getCategoryRequirements'
             );
         }
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -440,6 +446,10 @@ class TaxonomyApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -526,6 +536,7 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listCategories'] to see the possible values for this operation
      *
@@ -533,9 +544,9 @@ class TaxonomyApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\CategoryPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function listCategories($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
+    public function listCategories($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
     {
-        list($response) = $this->listCategoriesWithHttpInfo($parent_id, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->listCategoriesWithHttpInfo($parent_id, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -548,6 +559,7 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listCategories'] to see the possible values for this operation
      *
@@ -555,9 +567,9 @@ class TaxonomyApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\CategoryPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function listCategoriesWithHttpInfo($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
+    public function listCategoriesWithHttpInfo($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
     {
-        $request = $this->listCategoriesRequest($parent_id, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->listCategoriesRequest($parent_id, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -721,15 +733,16 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listCategories'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function listCategoriesAsync($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
+    public function listCategoriesAsync($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
     {
-        return $this->listCategoriesAsyncWithHttpInfo($parent_id, $cursor, $limit, $accept_language, $x_dona_integration, $contentType)
+        return $this->listCategoriesAsyncWithHttpInfo($parent_id, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -746,16 +759,17 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listCategories'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function listCategoriesAsyncWithHttpInfo($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
+    public function listCategoriesAsyncWithHttpInfo($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
     {
         $returnType = '\Dona\Api\Model\CategoryPage';
-        $request = $this->listCategoriesRequest($parent_id, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->listCategoriesRequest($parent_id, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -800,13 +814,14 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listCategories'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function listCategoriesRequest($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
+    public function listCategoriesRequest($parent_id = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listCategories'][0])
     {
 
 
@@ -818,6 +833,7 @@ class TaxonomyApi
             throw new \InvalidArgumentException('invalid value for "$limit" when calling TaxonomyApi.listCategories, must be bigger than or equal to 1.');
         }
         
+
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling TaxonomyApi.listCategories, must be smaller than or equal to 128.');
@@ -862,6 +878,10 @@ class TaxonomyApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -940,6 +960,7 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchBrands'] to see the possible values for this operation
      *
@@ -947,9 +968,9 @@ class TaxonomyApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\BrandPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function searchBrands($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
+    public function searchBrands($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
     {
-        list($response) = $this->searchBrandsWithHttpInfo($q, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->searchBrandsWithHttpInfo($q, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -962,6 +983,7 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchBrands'] to see the possible values for this operation
      *
@@ -969,9 +991,9 @@ class TaxonomyApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\BrandPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function searchBrandsWithHttpInfo($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
+    public function searchBrandsWithHttpInfo($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
     {
-        $request = $this->searchBrandsRequest($q, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->searchBrandsRequest($q, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -1135,15 +1157,16 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchBrands'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function searchBrandsAsync($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
+    public function searchBrandsAsync($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
     {
-        return $this->searchBrandsAsyncWithHttpInfo($q, $cursor, $limit, $accept_language, $x_dona_integration, $contentType)
+        return $this->searchBrandsAsyncWithHttpInfo($q, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -1160,16 +1183,17 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchBrands'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function searchBrandsAsyncWithHttpInfo($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
+    public function searchBrandsAsyncWithHttpInfo($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
     {
         $returnType = '\Dona\Api\Model\BrandPage';
-        $request = $this->searchBrandsRequest($q, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->searchBrandsRequest($q, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -1214,13 +1238,14 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchBrands'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function searchBrandsRequest($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
+    public function searchBrandsRequest($q = null, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchBrands'][0])
     {
 
         if ($q !== null && strlen($q) > 100) {
@@ -1238,6 +1263,7 @@ class TaxonomyApi
             throw new \InvalidArgumentException('invalid value for "$limit" when calling TaxonomyApi.searchBrands, must be bigger than or equal to 1.');
         }
         
+
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling TaxonomyApi.searchBrands, must be smaller than or equal to 128.');
@@ -1282,6 +1308,10 @@ class TaxonomyApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -1360,6 +1390,7 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchIkpu'] to see the possible values for this operation
      *
@@ -1367,9 +1398,9 @@ class TaxonomyApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\IkpuPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function searchIkpu($q, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
+    public function searchIkpu($q, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
     {
-        list($response) = $this->searchIkpuWithHttpInfo($q, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->searchIkpuWithHttpInfo($q, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -1382,6 +1413,7 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchIkpu'] to see the possible values for this operation
      *
@@ -1389,9 +1421,9 @@ class TaxonomyApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\IkpuPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function searchIkpuWithHttpInfo($q, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
+    public function searchIkpuWithHttpInfo($q, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
     {
-        $request = $this->searchIkpuRequest($q, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->searchIkpuRequest($q, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -1555,15 +1587,16 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchIkpu'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function searchIkpuAsync($q, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
+    public function searchIkpuAsync($q, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
     {
-        return $this->searchIkpuAsyncWithHttpInfo($q, $cursor, $limit, $accept_language, $x_dona_integration, $contentType)
+        return $this->searchIkpuAsyncWithHttpInfo($q, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -1580,16 +1613,17 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchIkpu'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function searchIkpuAsyncWithHttpInfo($q, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
+    public function searchIkpuAsyncWithHttpInfo($q, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
     {
         $returnType = '\Dona\Api\Model\IkpuPage';
-        $request = $this->searchIkpuRequest($q, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->searchIkpuRequest($q, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -1634,13 +1668,14 @@ class TaxonomyApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['searchIkpu'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function searchIkpuRequest($q, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
+    public function searchIkpuRequest($q, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['searchIkpu'][0])
     {
 
         // verify the required parameter 'q' is set
@@ -1664,6 +1699,7 @@ class TaxonomyApi
             throw new \InvalidArgumentException('invalid value for "$limit" when calling TaxonomyApi.searchIkpu, must be bigger than or equal to 1.');
         }
         
+
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling TaxonomyApi.searchIkpu, must be smaller than or equal to 128.');
@@ -1708,6 +1744,10 @@ class TaxonomyApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {

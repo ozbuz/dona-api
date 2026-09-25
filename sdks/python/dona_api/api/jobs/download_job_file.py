@@ -8,28 +8,18 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.error import Error
-from ...models.note_created import NoteCreated
-from ...models.note_request import NoteRequest
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     id: UUID,
     *,
-    body: NoteRequest,
-    dry_run: str | Unset = UNSET,
-    idempotency_key: str,
-    dona_dry_run: str | Unset = UNSET,
+    token: str,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
-    headers["Idempotency-Key"] = idempotency_key
-
-    if not isinstance(dona_dry_run, Unset):
-        headers["Dona-Dry-Run"] = dona_dry_run
-
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
 
@@ -41,36 +31,26 @@ def _get_kwargs(
 
     params: dict[str, Any] = {}
 
-    params["dry_run"] = dry_run
+    params["token"] = token
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": "/orders/{id}/notes".format(
+        "method": "get",
+        "url": "/jobs/{id}/download".format(
             id=quote(str(id), safe=""),
         ),
         "params": params,
     }
 
-    _kwargs["json"] = body.to_dict()
-
-    headers["Content-Type"] = "application/json"
-
     _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Error | NoteCreated | None:
-    if response.status_code == 201:
-        response_201 = NoteCreated.from_dict(response.json())
-
-        return response_201
-
-    if response.status_code == 400:
-        response_400 = Error.from_dict(response.json())
-
-        return response_400
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Error | str | None:
+    if response.status_code == 200:
+        response_200 = response.text
+        return response_200
 
     if response.status_code == 401:
         response_401 = Error.from_dict(response.json())
@@ -86,11 +66,6 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         response_404 = Error.from_dict(response.json())
 
         return response_404
-
-    if response.status_code == 409:
-        response_409 = Error.from_dict(response.json())
-
-        return response_409
 
     if response.status_code == 429:
         response_429 = Error.from_dict(response.json())
@@ -113,7 +88,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Error | NoteCreated]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Error | str]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -126,43 +101,40 @@ def sync_detailed(
     id: UUID,
     *,
     client: AuthenticatedClient | Client,
-    body: NoteRequest,
-    dry_run: str | Unset = UNSET,
-    idempotency_key: str,
-    dona_dry_run: str | Unset = UNSET,
+    token: str,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Response[Error | NoteCreated]:
-    """Add a seller note
+) -> Response[Error | str]:
+    """Download an export's file
 
-     Appends to `order_notes`. Kill switch: `writes_enabled`.
+     What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope
+    the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404
+    not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401
+    download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its
+    time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a
+    public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
+    `writes_enabled`.
 
     Args:
         id (UUID):
-        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
-        idempotency_key (str):
-        dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
+        token (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
         dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
-        body (NoteRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | NoteCreated]
+        Response[Error | str]
     """
 
     kwargs = _get_kwargs(
         id=id,
-        body=body,
-        dry_run=dry_run,
-        idempotency_key=idempotency_key,
-        dona_dry_run=dona_dry_run,
+        token=token,
         accept_language=accept_language,
         dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
@@ -179,44 +151,41 @@ def sync(
     id: UUID,
     *,
     client: AuthenticatedClient | Client,
-    body: NoteRequest,
-    dry_run: str | Unset = UNSET,
-    idempotency_key: str,
-    dona_dry_run: str | Unset = UNSET,
+    token: str,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Error | NoteCreated | None:
-    """Add a seller note
+) -> Error | str | None:
+    """Download an export's file
 
-     Appends to `order_notes`. Kill switch: `writes_enabled`.
+     What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope
+    the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404
+    not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401
+    download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its
+    time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a
+    public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
+    `writes_enabled`.
 
     Args:
         id (UUID):
-        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
-        idempotency_key (str):
-        dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
+        token (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
         dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
-        body (NoteRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | NoteCreated
+        Error | str
     """
 
     return sync_detailed(
         id=id,
         client=client,
-        body=body,
-        dry_run=dry_run,
-        idempotency_key=idempotency_key,
-        dona_dry_run=dona_dry_run,
+        token=token,
         accept_language=accept_language,
         dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
@@ -227,43 +196,40 @@ async def asyncio_detailed(
     id: UUID,
     *,
     client: AuthenticatedClient | Client,
-    body: NoteRequest,
-    dry_run: str | Unset = UNSET,
-    idempotency_key: str,
-    dona_dry_run: str | Unset = UNSET,
+    token: str,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Response[Error | NoteCreated]:
-    """Add a seller note
+) -> Response[Error | str]:
+    """Download an export's file
 
-     Appends to `order_notes`. Kill switch: `writes_enabled`.
+     What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope
+    the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404
+    not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401
+    download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its
+    time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a
+    public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
+    `writes_enabled`.
 
     Args:
         id (UUID):
-        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
-        idempotency_key (str):
-        dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
+        token (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
         dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
-        body (NoteRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | NoteCreated]
+        Response[Error | str]
     """
 
     kwargs = _get_kwargs(
         id=id,
-        body=body,
-        dry_run=dry_run,
-        idempotency_key=idempotency_key,
-        dona_dry_run=dona_dry_run,
+        token=token,
         accept_language=accept_language,
         dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
@@ -278,45 +244,42 @@ async def asyncio(
     id: UUID,
     *,
     client: AuthenticatedClient | Client,
-    body: NoteRequest,
-    dry_run: str | Unset = UNSET,
-    idempotency_key: str,
-    dona_dry_run: str | Unset = UNSET,
+    token: str,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Error | NoteCreated | None:
-    """Add a seller note
+) -> Error | str | None:
+    """Download an export's file
 
-     Appends to `order_notes`. Kill switch: `writes_enabled`.
+     What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope
+    the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404
+    not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401
+    download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its
+    time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a
+    public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by
+    `writes_enabled`.
 
     Args:
         id (UUID):
-        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
-        idempotency_key (str):
-        dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
+        token (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
         dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
-        body (NoteRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | NoteCreated
+        Error | str
     """
 
     return (
         await asyncio_detailed(
             id=id,
             client=client,
-            body=body,
-            dry_run=dry_run,
-            idempotency_key=idempotency_key,
-            dona_dry_run=dona_dry_run,
+            token=token,
             accept_language=accept_language,
             dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,

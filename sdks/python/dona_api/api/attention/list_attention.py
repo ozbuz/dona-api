@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any, cast
+from uuid import UUID
 
 import httpx
 
@@ -22,6 +23,7 @@ def _get_kwargs(
     limit: int | Unset = 50,
     if_none_match: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -30,6 +32,9 @@ def _get_kwargs(
 
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -144,6 +149,7 @@ def sync_detailed(
     limit: int | Unset = 50,
     if_none_match: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Any | AttentionPage | Error]:
     """Errors, warnings, attention required
@@ -164,6 +170,7 @@ def sync_detailed(
         if_none_match (str | Unset):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -185,6 +192,7 @@ def sync_detailed(
         limit=limit,
         if_none_match=if_none_match,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -208,6 +216,7 @@ def sync(
     limit: int | Unset = 50,
     if_none_match: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Any | AttentionPage | Error | None:
     """Errors, warnings, attention required
@@ -228,6 +237,7 @@ def sync(
         if_none_match (str | Unset):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -250,6 +260,7 @@ def sync(
         limit=limit,
         if_none_match=if_none_match,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -267,6 +278,7 @@ async def asyncio_detailed(
     limit: int | Unset = 50,
     if_none_match: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Any | AttentionPage | Error]:
     """Errors, warnings, attention required
@@ -287,6 +299,7 @@ async def asyncio_detailed(
         if_none_match (str | Unset):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -308,6 +321,7 @@ async def asyncio_detailed(
         limit=limit,
         if_none_match=if_none_match,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -329,6 +343,7 @@ async def asyncio(
     limit: int | Unset = 50,
     if_none_match: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Any | AttentionPage | Error | None:
     """Errors, warnings, attention required
@@ -349,6 +364,7 @@ async def asyncio(
         if_none_match (str | Unset):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -372,6 +388,7 @@ async def asyncio(
             limit=limit,
             if_none_match=if_none_match,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

@@ -38,7 +38,7 @@ namespace Dona.Api.Model
         /// <param name="progress">progress</param>
         /// <param name="createdAt">ISO 8601 with offset (Tashkent &#x60;+05:00&#x60; on output).</param>
         /// <param name="expiresAt">Row + file swept after this (7 d); then &#x60;404 not_found&#x60;.</param>
-        /// <param name="fileUrl">Signed, valid 60 min from this response; re-read the job for a fresh one.</param>
+        /// <param name="fileUrl">&#x60;GET /jobs/{id}/download?token&#x3D;…&#x60; — the token is valid 15 min from this response and only for a key of this shop (never a public or pre-signed object URL); re-read the job for a fresh one.</param>
         /// <param name="fileExpiresAt">fileExpiresAt</param>
         /// <param name="results">&#x60;products_batch&#x60; only: the per-line shape.</param>
         /// <param name="error">Our code only.</param>
@@ -103,9 +103,9 @@ namespace Dona.Api.Model
         public DateTimeOffset ExpiresAt { get; set; }
 
         /// <summary>
-        /// Signed, valid 60 min from this response; re-read the job for a fresh one.
+        /// &#x60;GET /jobs/{id}/download?token&#x3D;…&#x60; — the token is valid 15 min from this response and only for a key of this shop (never a public or pre-signed object URL); re-read the job for a fresh one.
         /// </summary>
-        /// <value>Signed, valid 60 min from this response; re-read the job for a fresh one.</value>
+        /// <value>&#x60;GET /jobs/{id}/download?token&#x3D;…&#x60; — the token is valid 15 min from this response and only for a key of this shop (never a public or pre-signed object URL); re-read the job for a fresh one.</value>
         [JsonPropertyName("file_url")]
         public string? FileUrl { get; set; }
 

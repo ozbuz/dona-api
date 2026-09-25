@@ -85,7 +85,7 @@ def main() -> None:
         resp = set_stock.sync_detailed(
             client=client,
             body=StockRequest(items=[line]),
-            dry_run=True,
+            dry_run="true",
             # One key per logical write. Re-send the SAME key on a retry: the answer is replayed for 24 h.
             idempotency_key=str(uuid.uuid4()),
         )

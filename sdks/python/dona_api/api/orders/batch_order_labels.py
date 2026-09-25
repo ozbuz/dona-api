@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any, cast
+from uuid import UUID
 
 import httpx
 
@@ -14,11 +15,15 @@ def _get_kwargs(
     *,
     body: LabelsRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -61,6 +66,11 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
         return response_404
 
+    if response.status_code == 409:
+        response_409 = Error.from_dict(response.json())
+
+        return response_409
+
     if response.status_code == 429:
         response_429 = Error.from_dict(response.json())
 
@@ -96,16 +106,20 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: LabelsRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | str]:
     """Labels for ≤ 100 orders (one PDF)
 
      A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole
-    call. ≤ 30/min.
+    call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10
+    on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as
+    `label.pdf`).
 
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (LabelsRequest):
 
@@ -120,6 +134,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         body=body,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -135,16 +150,20 @@ def sync(
     client: AuthenticatedClient | Client,
     body: LabelsRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | str | None:
     """Labels for ≤ 100 orders (one PDF)
 
      A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole
-    call. ≤ 30/min.
+    call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10
+    on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as
+    `label.pdf`).
 
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (LabelsRequest):
 
@@ -160,6 +179,7 @@ def sync(
         client=client,
         body=body,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -169,16 +189,20 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: LabelsRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | str]:
     """Labels for ≤ 100 orders (one PDF)
 
      A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole
-    call. ≤ 30/min.
+    call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10
+    on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as
+    `label.pdf`).
 
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (LabelsRequest):
 
@@ -193,6 +217,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         body=body,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -206,16 +231,20 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: LabelsRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | str | None:
     """Labels for ≤ 100 orders (one PDF)
 
      A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole
-    call. ≤ 30/min.
+    call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10
+    on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as
+    `label.pdf`).
 
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (LabelsRequest):
 
@@ -232,6 +261,7 @@ async def asyncio(
             client=client,
             body=body,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

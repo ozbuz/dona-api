@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from uuid import UUID
 
 import httpx
 
@@ -14,10 +15,11 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     *,
     body: BatchRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -28,6 +30,9 @@ def _get_kwargs(
 
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -117,10 +122,11 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: BatchRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | JobAccepted]:
     """Batch create/update (async job)
@@ -129,11 +135,12 @@ def sync_detailed(
     per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
 
     Args:
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (BatchRequest):
 
@@ -151,6 +158,7 @@ def sync_detailed(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -165,10 +173,11 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     body: BatchRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | JobAccepted | None:
     """Batch create/update (async job)
@@ -177,11 +186,12 @@ def sync(
     per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
 
     Args:
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (BatchRequest):
 
@@ -200,6 +210,7 @@ def sync(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -208,10 +219,11 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: BatchRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | JobAccepted]:
     """Batch create/update (async job)
@@ -220,11 +232,12 @@ async def asyncio_detailed(
     per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
 
     Args:
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (BatchRequest):
 
@@ -242,6 +255,7 @@ async def asyncio_detailed(
         idempotency_key=idempotency_key,
         dona_dry_run=dona_dry_run,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -254,10 +268,11 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     body: BatchRequest,
-    dry_run: bool | Unset = UNSET,
+    dry_run: str | Unset = UNSET,
     idempotency_key: str,
     dona_dry_run: str | Unset = UNSET,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | JobAccepted | None:
     """Batch create/update (async job)
@@ -266,11 +281,12 @@ async def asyncio(
     per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
 
     Args:
-        dry_run (bool | Unset):
+        dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         idempotency_key (str):
         dona_dry_run (str | Unset): Known values (open set — tolerate new ones): `true`, `false`.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (BatchRequest):
 
@@ -290,6 +306,7 @@ async def asyncio(
             idempotency_key=idempotency_key,
             dona_dry_run=dona_dry_run,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any, cast
+from uuid import UUID
 
 import httpx
 
@@ -15,10 +16,14 @@ def _get_kwargs(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     params: dict[str, Any] = {}
 
@@ -78,17 +83,23 @@ def sync_detailed(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> Response[Any | ChangelogEntryPage | Error]:
     """Changelog (JSON, or RSS with Accept)
 
-     Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an
-    empty list until then.
+     Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487,
+    S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona
+    Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-
+    docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300`
+    with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-
+    None-Match` with it answers `304` and no body.
 
     Args:
         cursor (str | Unset):
         limit (int | Unset):  Default: 50.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -102,6 +113,7 @@ def sync_detailed(
         cursor=cursor,
         limit=limit,
         accept_language=accept_language,
+        dona_seller=dona_seller,
     )
 
     response = client.get_httpx_client().request(
@@ -117,17 +129,23 @@ def sync(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> Any | ChangelogEntryPage | Error | None:
     """Changelog (JSON, or RSS with Accept)
 
-     Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an
-    empty list until then.
+     Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487,
+    S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona
+    Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-
+    docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300`
+    with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-
+    None-Match` with it answers `304` and no body.
 
     Args:
         cursor (str | Unset):
         limit (int | Unset):  Default: 50.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -142,6 +160,7 @@ def sync(
         cursor=cursor,
         limit=limit,
         accept_language=accept_language,
+        dona_seller=dona_seller,
     ).parsed
 
 
@@ -151,17 +170,23 @@ async def asyncio_detailed(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> Response[Any | ChangelogEntryPage | Error]:
     """Changelog (JSON, or RSS with Accept)
 
-     Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an
-    empty list until then.
+     Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487,
+    S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona
+    Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-
+    docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300`
+    with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-
+    None-Match` with it answers `304` and no body.
 
     Args:
         cursor (str | Unset):
         limit (int | Unset):  Default: 50.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -175,6 +200,7 @@ async def asyncio_detailed(
         cursor=cursor,
         limit=limit,
         accept_language=accept_language,
+        dona_seller=dona_seller,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -188,17 +214,23 @@ async def asyncio(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
 ) -> Any | ChangelogEntryPage | Error | None:
     """Changelog (JSON, or RSS with Accept)
 
-     Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an
-    empty list until then.
+     Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487,
+    S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona
+    Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-
+    docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300`
+    with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-
+    None-Match` with it answers `304` and no body.
 
     Args:
         cursor (str | Unset):
         limit (int | Unset):  Default: 50.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -214,5 +246,6 @@ async def asyncio(
             cursor=cursor,
             limit=limit,
             accept_language=accept_language,
+            dona_seller=dona_seller,
         )
     ).parsed

@@ -47,10 +47,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetCategoryRequirementsApiResponse"/>&gt;</returns>
-        Task<IGetCategoryRequirementsApiResponse> GetCategoryRequirementsAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetCategoryRequirementsApiResponse> GetCategoryRequirementsAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// What a product in this leaf needs
@@ -60,10 +61,11 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetCategoryRequirementsApiResponse"/>?&gt;</returns>
-        Task<IGetCategoryRequirementsApiResponse?> GetCategoryRequirementsOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetCategoryRequirementsApiResponse?> GetCategoryRequirementsOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Category tree (platform-owned)
@@ -76,10 +78,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListCategoriesApiResponse"/>&gt;</returns>
-        Task<IListCategoriesApiResponse> ListCategoriesAsync(Option<Guid> parentId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListCategoriesApiResponse> ListCategoriesAsync(Option<Guid> parentId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Category tree (platform-owned)
@@ -91,10 +94,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListCategoriesApiResponse"/>?&gt;</returns>
-        Task<IListCategoriesApiResponse?> ListCategoriesOrDefaultAsync(Option<Guid> parentId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListCategoriesApiResponse?> ListCategoriesOrDefaultAsync(Option<Guid> parentId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Brand search
@@ -107,10 +111,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ISearchBrandsApiResponse"/>&gt;</returns>
-        Task<ISearchBrandsApiResponse> SearchBrandsAsync(Option<string> q = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<ISearchBrandsApiResponse> SearchBrandsAsync(Option<string> q = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Brand search
@@ -122,10 +127,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ISearchBrandsApiResponse"/>?&gt;</returns>
-        Task<ISearchBrandsApiResponse?> SearchBrandsOrDefaultAsync(Option<string> q = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<ISearchBrandsApiResponse?> SearchBrandsOrDefaultAsync(Option<string> q = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// IKPU (tax classifier) search
@@ -138,10 +144,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ISearchIkpuApiResponse"/>&gt;</returns>
-        Task<ISearchIkpuApiResponse> SearchIkpuAsync(string q, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<ISearchIkpuApiResponse> SearchIkpuAsync(string q, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// IKPU (tax classifier) search
@@ -153,10 +160,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ISearchIkpuApiResponse"/>?&gt;</returns>
-        Task<ISearchIkpuApiResponse?> SearchIkpuOrDefaultAsync(string q, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<ISearchIkpuApiResponse?> SearchIkpuOrDefaultAsync(string q, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -478,7 +486,7 @@ namespace Dona.Api.Api
             BearerTokenProvider = bearerTokenProvider;
         }
 
-        partial void FormatGetCategoryRequirements(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatGetCategoryRequirements(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -501,11 +509,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterGetCategoryRequirementsDefaultImplementation(IGetCategoryRequirementsApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterGetCategoryRequirementsDefaultImplementation(IGetCategoryRequirementsApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterGetCategoryRequirements(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterGetCategoryRequirements(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -517,8 +526,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterGetCategoryRequirements(ref bool suppressDefaultLog, IGetCategoryRequirementsApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterGetCategoryRequirements(ref bool suppressDefaultLog, IGetCategoryRequirementsApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -528,11 +538,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorGetCategoryRequirementsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorGetCategoryRequirementsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorGetCategoryRequirements(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorGetCategoryRequirements(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -546,22 +557,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorGetCategoryRequirements(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorGetCategoryRequirements(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// What a product in this leaf needs Per-category requirements + listing policy.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetCategoryRequirementsApiResponse"/>&gt;</returns>
-        public async Task<IGetCategoryRequirementsApiResponse?> GetCategoryRequirementsOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetCategoryRequirementsApiResponse?> GetCategoryRequirementsOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await GetCategoryRequirementsAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await GetCategoryRequirementsAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -575,10 +588,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetCategoryRequirementsApiResponse"/>&gt;</returns>
-        public async Task<IGetCategoryRequirementsApiResponse> GetCategoryRequirementsAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetCategoryRequirementsApiResponse> GetCategoryRequirementsAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -586,7 +600,7 @@ namespace Dona.Api.Api
             {
                 ValidateGetCategoryRequirements(acceptLanguage, xDonaIntegration);
 
-                FormatGetCategoryRequirements(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatGetCategoryRequirements(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -608,6 +622,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -659,7 +686,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterGetCategoryRequirementsDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterGetCategoryRequirementsDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnGetCategoryRequirements(apiResponseLocalVar);
 
@@ -673,7 +700,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorGetCategoryRequirementsDefaultImplementation(e, "/categories/{id}/requirements", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorGetCategoryRequirementsDefaultImplementation(e, "/categories/{id}/requirements", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorGetCategoryRequirements(e);
                 throw;
             }
@@ -1084,7 +1111,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatListCategories(ref Option<Guid> parentId, ref Option<string> cursor, ref Option<int> limit, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatListCategories(ref Option<Guid> parentId, ref Option<string> cursor, ref Option<int> limit, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -1113,11 +1140,12 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterListCategoriesDefaultImplementation(IListCategoriesApiResponse apiResponseLocalVar, Option<Guid> parentId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterListCategoriesDefaultImplementation(IListCategoriesApiResponse apiResponseLocalVar, Option<Guid> parentId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterListCategories(ref suppressDefaultLog, apiResponseLocalVar, parentId, cursor, limit, acceptLanguage, xDonaIntegration);
+            AfterListCategories(ref suppressDefaultLog, apiResponseLocalVar, parentId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -1131,8 +1159,9 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterListCategories(ref bool suppressDefaultLog, IListCategoriesApiResponse apiResponseLocalVar, Option<Guid> parentId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterListCategories(ref bool suppressDefaultLog, IListCategoriesApiResponse apiResponseLocalVar, Option<Guid> parentId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -1144,11 +1173,12 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorListCategoriesDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<Guid> parentId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorListCategoriesDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<Guid> parentId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorListCategories(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, parentId, cursor, limit, acceptLanguage, xDonaIntegration);
+            OnErrorListCategories(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, parentId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -1164,8 +1194,9 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorListCategories(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<Guid> parentId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorListCategories(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<Guid> parentId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Category tree (platform-owned) Walk the 5-level tree by &#x60;parent_id&#x60; (omit it for the roots).
@@ -1174,14 +1205,15 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListCategoriesApiResponse"/>&gt;</returns>
-        public async Task<IListCategoriesApiResponse?> ListCategoriesOrDefaultAsync(Option<Guid> parentId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListCategoriesApiResponse?> ListCategoriesOrDefaultAsync(Option<Guid> parentId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await ListCategoriesAsync(parentId, cursor, limit, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await ListCategoriesAsync(parentId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -1197,10 +1229,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListCategoriesApiResponse"/>&gt;</returns>
-        public async Task<IListCategoriesApiResponse> ListCategoriesAsync(Option<Guid> parentId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListCategoriesApiResponse> ListCategoriesAsync(Option<Guid> parentId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -1208,7 +1241,7 @@ namespace Dona.Api.Api
             {
                 ValidateListCategories(cursor, acceptLanguage, xDonaIntegration);
 
-                FormatListCategories(ref parentId, ref cursor, ref limit, ref acceptLanguage, ref xDonaIntegration);
+                FormatListCategories(ref parentId, ref cursor, ref limit, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -1242,6 +1275,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -1293,7 +1339,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterListCategoriesDefaultImplementation(apiResponseLocalVar, parentId, cursor, limit, acceptLanguage, xDonaIntegration);
+                        AfterListCategoriesDefaultImplementation(apiResponseLocalVar, parentId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnListCategories(apiResponseLocalVar);
 
@@ -1307,7 +1353,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorListCategoriesDefaultImplementation(e, "/categories", uriBuilderLocalVar.Path, parentId, cursor, limit, acceptLanguage, xDonaIntegration);
+                OnErrorListCategoriesDefaultImplementation(e, "/categories", uriBuilderLocalVar.Path, parentId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorListCategories(e);
                 throw;
             }
@@ -1718,7 +1764,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatSearchBrands(ref Option<string> q, ref Option<string> cursor, ref Option<int> limit, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatSearchBrands(ref Option<string> q, ref Option<string> cursor, ref Option<int> limit, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -1751,11 +1797,12 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterSearchBrandsDefaultImplementation(ISearchBrandsApiResponse apiResponseLocalVar, Option<string> q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterSearchBrandsDefaultImplementation(ISearchBrandsApiResponse apiResponseLocalVar, Option<string> q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterSearchBrands(ref suppressDefaultLog, apiResponseLocalVar, q, cursor, limit, acceptLanguage, xDonaIntegration);
+            AfterSearchBrands(ref suppressDefaultLog, apiResponseLocalVar, q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -1769,8 +1816,9 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterSearchBrands(ref bool suppressDefaultLog, ISearchBrandsApiResponse apiResponseLocalVar, Option<string> q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterSearchBrands(ref bool suppressDefaultLog, ISearchBrandsApiResponse apiResponseLocalVar, Option<string> q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -1782,11 +1830,12 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorSearchBrandsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorSearchBrandsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorSearchBrands(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, q, cursor, limit, acceptLanguage, xDonaIntegration);
+            OnErrorSearchBrands(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -1802,8 +1851,9 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorSearchBrands(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorSearchBrands(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Brand search Prefix search.
@@ -1812,14 +1862,15 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ISearchBrandsApiResponse"/>&gt;</returns>
-        public async Task<ISearchBrandsApiResponse?> SearchBrandsOrDefaultAsync(Option<string> q = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<ISearchBrandsApiResponse?> SearchBrandsOrDefaultAsync(Option<string> q = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await SearchBrandsAsync(q, cursor, limit, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await SearchBrandsAsync(q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -1835,10 +1886,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ISearchBrandsApiResponse"/>&gt;</returns>
-        public async Task<ISearchBrandsApiResponse> SearchBrandsAsync(Option<string> q = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<ISearchBrandsApiResponse> SearchBrandsAsync(Option<string> q = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -1846,7 +1898,7 @@ namespace Dona.Api.Api
             {
                 ValidateSearchBrands(q, cursor, acceptLanguage, xDonaIntegration);
 
-                FormatSearchBrands(ref q, ref cursor, ref limit, ref acceptLanguage, ref xDonaIntegration);
+                FormatSearchBrands(ref q, ref cursor, ref limit, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -1880,6 +1932,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -1931,7 +1996,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterSearchBrandsDefaultImplementation(apiResponseLocalVar, q, cursor, limit, acceptLanguage, xDonaIntegration);
+                        AfterSearchBrandsDefaultImplementation(apiResponseLocalVar, q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnSearchBrands(apiResponseLocalVar);
 
@@ -1945,7 +2010,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorSearchBrandsDefaultImplementation(e, "/brands", uriBuilderLocalVar.Path, q, cursor, limit, acceptLanguage, xDonaIntegration);
+                OnErrorSearchBrandsDefaultImplementation(e, "/brands", uriBuilderLocalVar.Path, q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorSearchBrands(e);
                 throw;
             }
@@ -2356,7 +2421,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatSearchIkpu(ref string q, ref Option<string> cursor, ref Option<int> limit, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatSearchIkpu(ref string q, ref Option<string> cursor, ref Option<int> limit, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -2389,11 +2454,12 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterSearchIkpuDefaultImplementation(ISearchIkpuApiResponse apiResponseLocalVar, string q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterSearchIkpuDefaultImplementation(ISearchIkpuApiResponse apiResponseLocalVar, string q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterSearchIkpu(ref suppressDefaultLog, apiResponseLocalVar, q, cursor, limit, acceptLanguage, xDonaIntegration);
+            AfterSearchIkpu(ref suppressDefaultLog, apiResponseLocalVar, q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -2407,8 +2473,9 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterSearchIkpu(ref bool suppressDefaultLog, ISearchIkpuApiResponse apiResponseLocalVar, string q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterSearchIkpu(ref bool suppressDefaultLog, ISearchIkpuApiResponse apiResponseLocalVar, string q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -2420,11 +2487,12 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorSearchIkpuDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorSearchIkpuDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorSearchIkpu(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, q, cursor, limit, acceptLanguage, xDonaIntegration);
+            OnErrorSearchIkpu(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -2440,8 +2508,9 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorSearchIkpu(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorSearchIkpu(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string q, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// IKPU (tax classifier) search From the local &#x60;tasnif&#x60; copy.
@@ -2450,14 +2519,15 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ISearchIkpuApiResponse"/>&gt;</returns>
-        public async Task<ISearchIkpuApiResponse?> SearchIkpuOrDefaultAsync(string q, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<ISearchIkpuApiResponse?> SearchIkpuOrDefaultAsync(string q, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await SearchIkpuAsync(q, cursor, limit, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await SearchIkpuAsync(q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -2473,10 +2543,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ISearchIkpuApiResponse"/>&gt;</returns>
-        public async Task<ISearchIkpuApiResponse> SearchIkpuAsync(string q, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<ISearchIkpuApiResponse> SearchIkpuAsync(string q, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -2484,7 +2555,7 @@ namespace Dona.Api.Api
             {
                 ValidateSearchIkpu(q, cursor, acceptLanguage, xDonaIntegration);
 
-                FormatSearchIkpu(ref q, ref cursor, ref limit, ref acceptLanguage, ref xDonaIntegration);
+                FormatSearchIkpu(ref q, ref cursor, ref limit, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -2517,6 +2588,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -2568,7 +2652,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterSearchIkpuDefaultImplementation(apiResponseLocalVar, q, cursor, limit, acceptLanguage, xDonaIntegration);
+                        AfterSearchIkpuDefaultImplementation(apiResponseLocalVar, q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnSearchIkpu(apiResponseLocalVar);
 
@@ -2582,7 +2666,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorSearchIkpuDefaultImplementation(e, "/ikpu", uriBuilderLocalVar.Path, q, cursor, limit, acceptLanguage, xDonaIntegration);
+                OnErrorSearchIkpuDefaultImplementation(e, "/ikpu", uriBuilderLocalVar.Path, q, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorSearchIkpu(e);
                 throw;
             }

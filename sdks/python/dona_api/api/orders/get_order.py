@@ -17,11 +17,15 @@ def _get_kwargs(
     id: UUID,
     *,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -113,17 +117,22 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | Order | OrderWithPii]:
     """Get an order (PII only with orders:pii)
 
      `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets
-    `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+    `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door
+    would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7)
+    the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld:
+    <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
 
     Args:
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -137,6 +146,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         id=id,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -152,17 +162,22 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | Order | OrderWithPii | None:
     """Get an order (PII only with orders:pii)
 
      `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets
-    `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+    `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door
+    would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7)
+    the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld:
+    <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
 
     Args:
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -177,6 +192,7 @@ def sync(
         id=id,
         client=client,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -186,17 +202,22 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | Order | OrderWithPii]:
     """Get an order (PII only with orders:pii)
 
      `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets
-    `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+    `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door
+    would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7)
+    the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld:
+    <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
 
     Args:
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -210,6 +231,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         id=id,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -223,17 +245,22 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | Order | OrderWithPii | None:
     """Get an order (PII only with orders:pii)
 
      `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets
-    `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+    `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door
+    would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7)
+    the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld:
+    <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
 
     Args:
         id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -249,6 +276,7 @@ async def asyncio(
             id=id,
             client=client,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

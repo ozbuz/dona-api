@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from uuid import UUID
 
 import httpx
 
@@ -16,11 +17,15 @@ def _get_kwargs(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -105,6 +110,7 @@ def sync_detailed(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | TombstonePage]:
     """Tombstones since a time
@@ -117,6 +123,7 @@ def sync_detailed(
         limit (int | Unset):  Default: 50.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -132,6 +139,7 @@ def sync_detailed(
         cursor=cursor,
         limit=limit,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -149,6 +157,7 @@ def sync(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | TombstonePage | None:
     """Tombstones since a time
@@ -161,6 +170,7 @@ def sync(
         limit (int | Unset):  Default: 50.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -177,6 +187,7 @@ def sync(
         cursor=cursor,
         limit=limit,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -188,6 +199,7 @@ async def asyncio_detailed(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | TombstonePage]:
     """Tombstones since a time
@@ -200,6 +212,7 @@ async def asyncio_detailed(
         limit (int | Unset):  Default: 50.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -215,6 +228,7 @@ async def asyncio_detailed(
         cursor=cursor,
         limit=limit,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -230,6 +244,7 @@ async def asyncio(
     cursor: str | Unset = UNSET,
     limit: int | Unset = 50,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | TombstonePage | None:
     """Tombstones since a time
@@ -242,6 +257,7 @@ async def asyncio(
         limit (int | Unset):  Default: 50.
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
 
     Raises:
@@ -259,6 +275,7 @@ async def asyncio(
             cursor=cursor,
             limit=limit,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

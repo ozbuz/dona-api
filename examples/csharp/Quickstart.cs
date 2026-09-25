@@ -73,7 +73,7 @@ public static class Quickstart
             // One key per logical write. Re-send the SAME key on a retry: the answer is replayed for 24 h.
             idempotencyKey: Guid.NewGuid().ToString(),
             stockRequest: new StockRequest([line]),
-            dryRun: true,
+            dryRun: "true",
             xDonaIntegration: Integration);
         if (stock.TryAccepted(out var held))
             Console.WriteLine($"POST /stock held for review: rule {held.Rule} · approval {held.ApprovalId} — nothing was written");

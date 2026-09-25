@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from uuid import UUID
 
 import httpx
 
@@ -15,11 +16,15 @@ def _get_kwargs(
     *,
     body: MediaUploadRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -95,6 +100,7 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: MediaUploadRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | MediaUploadUrl]:
     """Presigned media upload
@@ -105,6 +111,7 @@ def sync_detailed(
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (MediaUploadRequest):
 
@@ -119,6 +126,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         body=body,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -134,6 +142,7 @@ def sync(
     client: AuthenticatedClient | Client,
     body: MediaUploadRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | MediaUploadUrl | None:
     """Presigned media upload
@@ -144,6 +153,7 @@ def sync(
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (MediaUploadRequest):
 
@@ -159,6 +169,7 @@ def sync(
         client=client,
         body=body,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -168,6 +179,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: MediaUploadRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | MediaUploadUrl]:
     """Presigned media upload
@@ -178,6 +190,7 @@ async def asyncio_detailed(
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (MediaUploadRequest):
 
@@ -192,6 +205,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         body=body,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -205,6 +219,7 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: MediaUploadRequest,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | MediaUploadUrl | None:
     """Presigned media upload
@@ -215,6 +230,7 @@ async def asyncio(
     Args:
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (MediaUploadRequest):
 
@@ -231,6 +247,7 @@ async def asyncio(
             client=client,
             body=body,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

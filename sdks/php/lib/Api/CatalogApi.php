@@ -159,9 +159,10 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\BatchRequest $batch_request batch_request (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['batchProducts'] to see the possible values for this operation
      *
@@ -169,9 +170,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\JobAccepted|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function batchProducts($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
+    public function batchProducts($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
     {
-        list($response) = $this->batchProductsWithHttpInfo($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->batchProductsWithHttpInfo($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -182,9 +183,10 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\BatchRequest $batch_request (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['batchProducts'] to see the possible values for this operation
      *
@@ -192,9 +194,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\JobAccepted|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function batchProductsWithHttpInfo($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
+    public function batchProductsWithHttpInfo($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
     {
-        $request = $this->batchProductsRequest($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->batchProductsRequest($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -384,18 +386,19 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\BatchRequest $batch_request (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['batchProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function batchProductsAsync($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
+    public function batchProductsAsync($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
     {
-        return $this->batchProductsAsyncWithHttpInfo($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType)
+        return $this->batchProductsAsyncWithHttpInfo($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -410,19 +413,20 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\BatchRequest $batch_request (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['batchProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function batchProductsAsyncWithHttpInfo($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
+    public function batchProductsAsyncWithHttpInfo($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
     {
         $returnType = '\Dona\Api\Model\JobAccepted';
-        $request = $this->batchProductsRequest($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->batchProductsRequest($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -465,16 +469,17 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\BatchRequest $batch_request (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['batchProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function batchProductsRequest($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
+    public function batchProductsRequest($idempotency_key, $batch_request, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['batchProducts'][0])
     {
 
         // verify the required parameter 'idempotency_key' is set
@@ -500,6 +505,7 @@ class CatalogApi
 
 
 
+
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling CatalogApi.batchProducts, must be smaller than or equal to 128.');
         }
@@ -516,7 +522,7 @@ class CatalogApi
         $queryParams = array_merge($queryParams, ObjectSerializer::toQueryValue(
             $dry_run,
             'dry_run', // param base name
-            'boolean', // openApiType
+            'string', // openApiType
             'form', // style
             true, // explode
             false // required
@@ -533,6 +539,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -620,6 +630,7 @@ class CatalogApi
      *
      * @param  \Dona\Api\Model\MediaUploadRequest $media_upload_request media_upload_request (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createMediaUploadUrl'] to see the possible values for this operation
      *
@@ -627,9 +638,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\MediaUploadUrl|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function createMediaUploadUrl($media_upload_request, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
+    public function createMediaUploadUrl($media_upload_request, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
     {
-        list($response) = $this->createMediaUploadUrlWithHttpInfo($media_upload_request, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->createMediaUploadUrlWithHttpInfo($media_upload_request, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -640,6 +651,7 @@ class CatalogApi
      *
      * @param  \Dona\Api\Model\MediaUploadRequest $media_upload_request (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createMediaUploadUrl'] to see the possible values for this operation
      *
@@ -647,9 +659,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\MediaUploadUrl|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function createMediaUploadUrlWithHttpInfo($media_upload_request, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
+    public function createMediaUploadUrlWithHttpInfo($media_upload_request, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
     {
-        $request = $this->createMediaUploadUrlRequest($media_upload_request, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->createMediaUploadUrlRequest($media_upload_request, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -811,15 +823,16 @@ class CatalogApi
      *
      * @param  \Dona\Api\Model\MediaUploadRequest $media_upload_request (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createMediaUploadUrl'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function createMediaUploadUrlAsync($media_upload_request, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
+    public function createMediaUploadUrlAsync($media_upload_request, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
     {
-        return $this->createMediaUploadUrlAsyncWithHttpInfo($media_upload_request, $accept_language, $x_dona_integration, $contentType)
+        return $this->createMediaUploadUrlAsyncWithHttpInfo($media_upload_request, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -834,16 +847,17 @@ class CatalogApi
      *
      * @param  \Dona\Api\Model\MediaUploadRequest $media_upload_request (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createMediaUploadUrl'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function createMediaUploadUrlAsyncWithHttpInfo($media_upload_request, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
+    public function createMediaUploadUrlAsyncWithHttpInfo($media_upload_request, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
     {
         $returnType = '\Dona\Api\Model\MediaUploadUrl';
-        $request = $this->createMediaUploadUrlRequest($media_upload_request, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->createMediaUploadUrlRequest($media_upload_request, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -886,13 +900,14 @@ class CatalogApi
      *
      * @param  \Dona\Api\Model\MediaUploadRequest $media_upload_request (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createMediaUploadUrl'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function createMediaUploadUrlRequest($media_upload_request, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
+    public function createMediaUploadUrlRequest($media_upload_request, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createMediaUploadUrl'][0])
     {
 
         // verify the required parameter 'media_upload_request' is set
@@ -901,6 +916,7 @@ class CatalogApi
                 'Missing the required parameter $media_upload_request when calling createMediaUploadUrl'
             );
         }
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -919,6 +935,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -1006,9 +1026,10 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductCreate $product_create product_create (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createProduct'] to see the possible values for this operation
      *
@@ -1016,9 +1037,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\ProductCreated|\Dona\Api\Model\HeldForReview|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function createProduct($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
+    public function createProduct($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
     {
-        list($response) = $this->createProductWithHttpInfo($idempotency_key, $product_create, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->createProductWithHttpInfo($idempotency_key, $product_create, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -1029,9 +1050,10 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductCreate $product_create (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createProduct'] to see the possible values for this operation
      *
@@ -1039,9 +1061,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\ProductCreated|\Dona\Api\Model\HeldForReview|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function createProductWithHttpInfo($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
+    public function createProductWithHttpInfo($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
     {
-        $request = $this->createProductRequest($idempotency_key, $product_create, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->createProductRequest($idempotency_key, $product_create, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -1231,18 +1253,19 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductCreate $product_create (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function createProductAsync($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
+    public function createProductAsync($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
     {
-        return $this->createProductAsyncWithHttpInfo($idempotency_key, $product_create, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType)
+        return $this->createProductAsyncWithHttpInfo($idempotency_key, $product_create, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -1257,19 +1280,20 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductCreate $product_create (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function createProductAsyncWithHttpInfo($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
+    public function createProductAsyncWithHttpInfo($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
     {
         $returnType = '\Dona\Api\Model\ProductCreated';
-        $request = $this->createProductRequest($idempotency_key, $product_create, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->createProductRequest($idempotency_key, $product_create, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -1312,16 +1336,17 @@ class CatalogApi
      *
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductCreate $product_create (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['createProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function createProductRequest($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
+    public function createProductRequest($idempotency_key, $product_create, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['createProduct'][0])
     {
 
         // verify the required parameter 'idempotency_key' is set
@@ -1347,6 +1372,7 @@ class CatalogApi
 
 
 
+
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling CatalogApi.createProduct, must be smaller than or equal to 128.');
         }
@@ -1363,7 +1389,7 @@ class CatalogApi
         $queryParams = array_merge($queryParams, ObjectSerializer::toQueryValue(
             $dry_run,
             'dry_run', // param base name
-            'boolean', // openApiType
+            'string', // openApiType
             'form', // style
             true, // explode
             false // required
@@ -1380,6 +1406,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -1467,19 +1497,20 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['delistProduct'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
-     * @return \Dona\Api\Model\ProductState|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
+     * @return \Dona\Api\Model\ProductState|\Dona\Api\Model\HeldForReview|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function delistProduct($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
+    public function delistProduct($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
     {
-        list($response) = $this->delistProductWithHttpInfo($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->delistProductWithHttpInfo($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -1490,19 +1521,20 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['delistProduct'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
-     * @return array of \Dona\Api\Model\ProductState|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
+     * @return array of \Dona\Api\Model\ProductState|\Dona\Api\Model\HeldForReview|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function delistProductWithHttpInfo($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
+    public function delistProductWithHttpInfo($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
     {
-        $request = $this->delistProductRequest($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->delistProductRequest($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -1531,6 +1563,12 @@ class CatalogApi
                 case 200:
                     return $this->handleResponseWithDataType(
                         '\Dona\Api\Model\ProductState',
+                        $request,
+                        $response,
+                    );
+                case 202:
+                    return $this->handleResponseWithDataType(
+                        '\Dona\Api\Model\HeldForReview',
                         $request,
                         $response,
                     );
@@ -1614,6 +1652,14 @@ class CatalogApi
                     );
                     $e->setResponseObject($data);
                     throw $e;
+                case 202:
+                    $data = ObjectSerializer::deserialize(
+                        $e->getResponseBody(),
+                        '\Dona\Api\Model\HeldForReview',
+                        $e->getResponseHeaders()
+                    );
+                    $e->setResponseObject($data);
+                    throw $e;
                 case 400:
                     $data = ObjectSerializer::deserialize(
                         $e->getResponseBody(),
@@ -1692,18 +1738,19 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['delistProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function delistProductAsync($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
+    public function delistProductAsync($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
     {
-        return $this->delistProductAsyncWithHttpInfo($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType)
+        return $this->delistProductAsyncWithHttpInfo($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -1718,19 +1765,20 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['delistProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function delistProductAsyncWithHttpInfo($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
+    public function delistProductAsyncWithHttpInfo($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
     {
         $returnType = '\Dona\Api\Model\ProductState';
-        $request = $this->delistProductRequest($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->delistProductRequest($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -1773,16 +1821,17 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['delistProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function delistProductRequest($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
+    public function delistProductRequest($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['delistProduct'][0])
     {
 
         // verify the required parameter 'id' is set
@@ -1808,6 +1857,7 @@ class CatalogApi
 
 
 
+
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling CatalogApi.delistProduct, must be smaller than or equal to 128.');
         }
@@ -1824,7 +1874,7 @@ class CatalogApi
         $queryParams = array_merge($queryParams, ObjectSerializer::toQueryValue(
             $dry_run,
             'dry_run', // param base name
-            'boolean', // openApiType
+            'string', // openApiType
             'form', // style
             true, // explode
             false // required
@@ -1841,6 +1891,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -1925,6 +1979,7 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProduct'] to see the possible values for this operation
      *
@@ -1932,9 +1987,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\Product|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function getProduct($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
+    public function getProduct($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
     {
-        list($response) = $this->getProductWithHttpInfo($id, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->getProductWithHttpInfo($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -1945,6 +2000,7 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProduct'] to see the possible values for this operation
      *
@@ -1952,9 +2008,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\Product|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getProductWithHttpInfo($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
+    public function getProductWithHttpInfo($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
     {
-        $request = $this->getProductRequest($id, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->getProductRequest($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -2116,15 +2172,16 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getProductAsync($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
+    public function getProductAsync($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
     {
-        return $this->getProductAsyncWithHttpInfo($id, $accept_language, $x_dona_integration, $contentType)
+        return $this->getProductAsyncWithHttpInfo($id, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -2139,16 +2196,17 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getProductAsyncWithHttpInfo($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
+    public function getProductAsyncWithHttpInfo($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
     {
         $returnType = '\Dona\Api\Model\Product';
-        $request = $this->getProductRequest($id, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->getProductRequest($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -2191,13 +2249,14 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getProductRequest($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
+    public function getProductRequest($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProduct'][0])
     {
 
         // verify the required parameter 'id' is set
@@ -2206,6 +2265,7 @@ class CatalogApi
                 'Missing the required parameter $id when calling getProduct'
             );
         }
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -2224,6 +2284,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -2308,6 +2372,7 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProductIssues'] to see the possible values for this operation
      *
@@ -2315,9 +2380,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\ProductIssues|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function getProductIssues($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
+    public function getProductIssues($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
     {
-        list($response) = $this->getProductIssuesWithHttpInfo($id, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->getProductIssuesWithHttpInfo($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -2328,6 +2393,7 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProductIssues'] to see the possible values for this operation
      *
@@ -2335,9 +2401,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\ProductIssues|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getProductIssuesWithHttpInfo($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
+    public function getProductIssuesWithHttpInfo($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
     {
-        $request = $this->getProductIssuesRequest($id, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->getProductIssuesRequest($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -2499,15 +2565,16 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProductIssues'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getProductIssuesAsync($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
+    public function getProductIssuesAsync($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
     {
-        return $this->getProductIssuesAsyncWithHttpInfo($id, $accept_language, $x_dona_integration, $contentType)
+        return $this->getProductIssuesAsyncWithHttpInfo($id, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -2522,16 +2589,17 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProductIssues'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getProductIssuesAsyncWithHttpInfo($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
+    public function getProductIssuesAsyncWithHttpInfo($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
     {
         $returnType = '\Dona\Api\Model\ProductIssues';
-        $request = $this->getProductIssuesRequest($id, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->getProductIssuesRequest($id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -2574,13 +2642,14 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getProductIssues'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getProductIssuesRequest($id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
+    public function getProductIssuesRequest($id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getProductIssues'][0])
     {
 
         // verify the required parameter 'id' is set
@@ -2589,6 +2658,7 @@ class CatalogApi
                 'Missing the required parameter $id when calling getProductIssues'
             );
         }
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -2607,6 +2677,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -2693,6 +2767,7 @@ class CatalogApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listDeletedProducts'] to see the possible values for this operation
      *
@@ -2700,9 +2775,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\TombstonePage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function listDeletedProducts($since, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
+    public function listDeletedProducts($since, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
     {
-        list($response) = $this->listDeletedProductsWithHttpInfo($since, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->listDeletedProductsWithHttpInfo($since, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -2715,6 +2790,7 @@ class CatalogApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listDeletedProducts'] to see the possible values for this operation
      *
@@ -2722,9 +2798,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\TombstonePage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function listDeletedProductsWithHttpInfo($since, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
+    public function listDeletedProductsWithHttpInfo($since, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
     {
-        $request = $this->listDeletedProductsRequest($since, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->listDeletedProductsRequest($since, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -2888,15 +2964,16 @@ class CatalogApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listDeletedProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function listDeletedProductsAsync($since, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
+    public function listDeletedProductsAsync($since, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
     {
-        return $this->listDeletedProductsAsyncWithHttpInfo($since, $cursor, $limit, $accept_language, $x_dona_integration, $contentType)
+        return $this->listDeletedProductsAsyncWithHttpInfo($since, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -2913,16 +2990,17 @@ class CatalogApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listDeletedProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function listDeletedProductsAsyncWithHttpInfo($since, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
+    public function listDeletedProductsAsyncWithHttpInfo($since, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
     {
         $returnType = '\Dona\Api\Model\TombstonePage';
-        $request = $this->listDeletedProductsRequest($since, $cursor, $limit, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->listDeletedProductsRequest($since, $cursor, $limit, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -2967,13 +3045,14 @@ class CatalogApi
      * @param  string|null $cursor Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)
      * @param  int|null $limit Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listDeletedProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function listDeletedProductsRequest($since, $cursor = null, $limit = 50, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
+    public function listDeletedProductsRequest($since, $cursor = null, $limit = 50, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listDeletedProducts'][0])
     {
 
         // verify the required parameter 'since' is set
@@ -2991,6 +3070,7 @@ class CatalogApi
             throw new \InvalidArgumentException('invalid value for "$limit" when calling CatalogApi.listDeletedProducts, must be bigger than or equal to 1.');
         }
         
+
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling CatalogApi.listDeletedProducts, must be smaller than or equal to 128.');
@@ -3035,6 +3115,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -3119,6 +3203,7 @@ class CatalogApi
      * @param  string|null $q Title search (prefix FTS). (optional)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listProducts'] to see the possible values for this operation
      *
@@ -3126,9 +3211,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\ProductPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function listProducts($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
+    public function listProducts($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
     {
-        list($response) = $this->listProductsWithHttpInfo($cursor, $limit, $updated_since, $status, $seller_sku, $barcode, $external_id, $q, $if_none_match, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->listProductsWithHttpInfo($cursor, $limit, $updated_since, $status, $seller_sku, $barcode, $external_id, $q, $if_none_match, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -3147,6 +3232,7 @@ class CatalogApi
      * @param  string|null $q Title search (prefix FTS). (optional)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listProducts'] to see the possible values for this operation
      *
@@ -3154,9 +3240,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\ProductPage|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function listProductsWithHttpInfo($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
+    public function listProductsWithHttpInfo($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
     {
-        $request = $this->listProductsRequest($cursor, $limit, $updated_since, $status, $seller_sku, $barcode, $external_id, $q, $if_none_match, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->listProductsRequest($cursor, $limit, $updated_since, $status, $seller_sku, $barcode, $external_id, $q, $if_none_match, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -3326,15 +3412,16 @@ class CatalogApi
      * @param  string|null $q Title search (prefix FTS). (optional)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function listProductsAsync($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
+    public function listProductsAsync($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
     {
-        return $this->listProductsAsyncWithHttpInfo($cursor, $limit, $updated_since, $status, $seller_sku, $barcode, $external_id, $q, $if_none_match, $accept_language, $x_dona_integration, $contentType)
+        return $this->listProductsAsyncWithHttpInfo($cursor, $limit, $updated_since, $status, $seller_sku, $barcode, $external_id, $q, $if_none_match, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -3357,16 +3444,17 @@ class CatalogApi
      * @param  string|null $q Title search (prefix FTS). (optional)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function listProductsAsyncWithHttpInfo($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
+    public function listProductsAsyncWithHttpInfo($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
     {
         $returnType = '\Dona\Api\Model\ProductPage';
-        $request = $this->listProductsRequest($cursor, $limit, $updated_since, $status, $seller_sku, $barcode, $external_id, $q, $if_none_match, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->listProductsRequest($cursor, $limit, $updated_since, $status, $seller_sku, $barcode, $external_id, $q, $if_none_match, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -3417,13 +3505,14 @@ class CatalogApi
      * @param  string|null $q Title search (prefix FTS). (optional)
      * @param  string|null $if_none_match An &#x60;ETag&#x60; from a previous identical request ⇒ &#x60;304&#x60; with rate headers (cost 0.5). (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['listProducts'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function listProductsRequest($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
+    public function listProductsRequest($cursor = null, $limit = 50, $updated_since = null, $status = null, $seller_sku = null, $barcode = null, $external_id = null, $q = null, $if_none_match = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['listProducts'][0])
     {
 
 
@@ -3446,6 +3535,7 @@ class CatalogApi
             throw new \InvalidArgumentException('invalid length for "$q" when calling CatalogApi.listProducts, must be bigger than or equal to 2.');
         }
         
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -3542,6 +3632,10 @@ class CatalogApi
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
         }
         // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
+        }
+        // header params
         if ($x_dona_integration !== null) {
             $headerParams['X-Dona-Integration'] = ObjectSerializer::toHeaderValue($x_dona_integration);
         }
@@ -3616,19 +3710,20 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['publishProduct'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
-     * @return \Dona\Api\Model\ProductState|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
+     * @return \Dona\Api\Model\ProductState|\Dona\Api\Model\HeldForReview|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function publishProduct($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
+    public function publishProduct($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
     {
-        list($response) = $this->publishProductWithHttpInfo($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->publishProductWithHttpInfo($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -3639,19 +3734,20 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['publishProduct'] to see the possible values for this operation
      *
      * @throws \Dona\Api\ApiException on non-2xx response or if the response body is not in the expected format
      * @throws \InvalidArgumentException
-     * @return array of \Dona\Api\Model\ProductState|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
+     * @return array of \Dona\Api\Model\ProductState|\Dona\Api\Model\HeldForReview|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function publishProductWithHttpInfo($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
+    public function publishProductWithHttpInfo($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
     {
-        $request = $this->publishProductRequest($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->publishProductRequest($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -3680,6 +3776,12 @@ class CatalogApi
                 case 200:
                     return $this->handleResponseWithDataType(
                         '\Dona\Api\Model\ProductState',
+                        $request,
+                        $response,
+                    );
+                case 202:
+                    return $this->handleResponseWithDataType(
+                        '\Dona\Api\Model\HeldForReview',
                         $request,
                         $response,
                     );
@@ -3763,6 +3865,14 @@ class CatalogApi
                     );
                     $e->setResponseObject($data);
                     throw $e;
+                case 202:
+                    $data = ObjectSerializer::deserialize(
+                        $e->getResponseBody(),
+                        '\Dona\Api\Model\HeldForReview',
+                        $e->getResponseHeaders()
+                    );
+                    $e->setResponseObject($data);
+                    throw $e;
                 case 400:
                     $data = ObjectSerializer::deserialize(
                         $e->getResponseBody(),
@@ -3841,18 +3951,19 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['publishProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function publishProductAsync($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
+    public function publishProductAsync($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
     {
-        return $this->publishProductAsyncWithHttpInfo($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType)
+        return $this->publishProductAsyncWithHttpInfo($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -3867,19 +3978,20 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['publishProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function publishProductAsyncWithHttpInfo($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
+    public function publishProductAsyncWithHttpInfo($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
     {
         $returnType = '\Dona\Api\Model\ProductState';
-        $request = $this->publishProductRequest($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->publishProductRequest($id, $idempotency_key, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -3922,16 +4034,17 @@ class CatalogApi
      *
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['publishProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function publishProductRequest($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
+    public function publishProductRequest($id, $idempotency_key, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['publishProduct'][0])
     {
 
         // verify the required parameter 'id' is set
@@ -3957,6 +4070,7 @@ class CatalogApi
 
 
 
+
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling CatalogApi.publishProduct, must be smaller than or equal to 128.');
         }
@@ -3973,7 +4087,7 @@ class CatalogApi
         $queryParams = array_merge($queryParams, ObjectSerializer::toQueryValue(
             $dry_run,
             'dry_run', // param base name
-            'boolean', // openApiType
+            'string', // openApiType
             'form', // style
             true, // explode
             false // required
@@ -3990,6 +4104,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -4075,9 +4193,10 @@ class CatalogApi
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductUpdate $product_update product_update (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['updateProduct'] to see the possible values for this operation
      *
@@ -4085,9 +4204,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\Product|\Dona\Api\Model\HeldForReview|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function updateProduct($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
+    public function updateProduct($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
     {
-        list($response) = $this->updateProductWithHttpInfo($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->updateProductWithHttpInfo($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -4099,9 +4218,10 @@ class CatalogApi
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductUpdate $product_update (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['updateProduct'] to see the possible values for this operation
      *
@@ -4109,9 +4229,9 @@ class CatalogApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\Product|\Dona\Api\Model\HeldForReview|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function updateProductWithHttpInfo($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
+    public function updateProductWithHttpInfo($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
     {
-        $request = $this->updateProductRequest($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->updateProductRequest($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -4316,18 +4436,19 @@ class CatalogApi
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductUpdate $product_update (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['updateProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function updateProductAsync($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
+    public function updateProductAsync($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
     {
-        return $this->updateProductAsyncWithHttpInfo($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType)
+        return $this->updateProductAsyncWithHttpInfo($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -4343,19 +4464,20 @@ class CatalogApi
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductUpdate $product_update (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['updateProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function updateProductAsyncWithHttpInfo($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
+    public function updateProductAsyncWithHttpInfo($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
     {
         $returnType = '\Dona\Api\Model\Product';
-        $request = $this->updateProductRequest($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->updateProductRequest($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -4399,16 +4521,17 @@ class CatalogApi
      * @param  string $id Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;. (required)
      * @param  string $idempotency_key 1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;. (required)
      * @param  \Dona\Api\Model\ProductUpdate $product_update (required)
-     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)
-     * @param  bool|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)
+     * @param  string|null $dona_dry_run &#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)
+     * @param  string|null $dry_run Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['updateProduct'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function updateProductRequest($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
+    public function updateProductRequest($id, $idempotency_key, $product_update, $dona_dry_run = null, $dry_run = null, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['updateProduct'][0])
     {
 
         // verify the required parameter 'id' is set
@@ -4441,6 +4564,7 @@ class CatalogApi
 
 
 
+
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
             throw new \InvalidArgumentException('invalid length for "$x_dona_integration" when calling CatalogApi.updateProduct, must be smaller than or equal to 128.');
         }
@@ -4457,7 +4581,7 @@ class CatalogApi
         $queryParams = array_merge($queryParams, ObjectSerializer::toQueryValue(
             $dry_run,
             'dry_run', // param base name
-            'boolean', // openApiType
+            'string', // openApiType
             'form', // style
             true, // explode
             false // required
@@ -4474,6 +4598,10 @@ class CatalogApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {

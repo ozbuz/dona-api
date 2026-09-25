@@ -48,10 +48,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="webhookCreate"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ICreateWebhookApiResponse"/>&gt;</returns>
-        Task<ICreateWebhookApiResponse> CreateWebhookAsync(string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<ICreateWebhookApiResponse> CreateWebhookAsync(string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Register an endpoint (secret shown once)
@@ -62,10 +63,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="webhookCreate"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ICreateWebhookApiResponse"/>?&gt;</returns>
-        Task<ICreateWebhookApiResponse?> CreateWebhookOrDefaultAsync(string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<ICreateWebhookApiResponse?> CreateWebhookOrDefaultAsync(string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Remove an endpoint
@@ -76,10 +78,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IDeleteWebhookApiResponse"/>&gt;</returns>
-        Task<IDeleteWebhookApiResponse> DeleteWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IDeleteWebhookApiResponse> DeleteWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Remove an endpoint
@@ -89,10 +92,11 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IDeleteWebhookApiResponse"/>?&gt;</returns>
-        Task<IDeleteWebhookApiResponse?> DeleteWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IDeleteWebhookApiResponse?> DeleteWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get an endpoint
@@ -103,10 +107,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetWebhookApiResponse"/>&gt;</returns>
-        Task<IGetWebhookApiResponse> GetWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetWebhookApiResponse> GetWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get an endpoint
@@ -116,10 +121,11 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetWebhookApiResponse"/>?&gt;</returns>
-        Task<IGetWebhookApiResponse?> GetWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetWebhookApiResponse?> GetWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Delivery log (30 d)
@@ -134,10 +140,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListWebhookDeliveriesApiResponse"/>&gt;</returns>
-        Task<IListWebhookDeliveriesApiResponse> ListWebhookDeliveriesAsync(Guid id, Option<string> status = default, Option<Guid> eventId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListWebhookDeliveriesApiResponse> ListWebhookDeliveriesAsync(Guid id, Option<string> status = default, Option<Guid> eventId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Delivery log (30 d)
@@ -151,10 +158,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListWebhookDeliveriesApiResponse"/>?&gt;</returns>
-        Task<IListWebhookDeliveriesApiResponse?> ListWebhookDeliveriesOrDefaultAsync(Guid id, Option<string> status = default, Option<Guid> eventId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListWebhookDeliveriesApiResponse?> ListWebhookDeliveriesOrDefaultAsync(Guid id, Option<string> status = default, Option<Guid> eventId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// List endpoints (≤ 5)
@@ -164,10 +172,11 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListWebhooksApiResponse"/>&gt;</returns>
-        Task<IListWebhooksApiResponse> ListWebhooksAsync(Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListWebhooksApiResponse> ListWebhooksAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// List endpoints (≤ 5)
@@ -176,10 +185,11 @@ namespace Dona.Api.Api
         /// Never a secret.
         /// </remarks>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListWebhooksApiResponse"/>?&gt;</returns>
-        Task<IListWebhooksApiResponse?> ListWebhooksOrDefaultAsync(Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListWebhooksApiResponse?> ListWebhooksOrDefaultAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Re-run the verification ping
@@ -190,10 +200,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IPingWebhookApiResponse"/>&gt;</returns>
-        Task<IPingWebhookApiResponse> PingWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IPingWebhookApiResponse> PingWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Re-run the verification ping
@@ -203,10 +214,11 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IPingWebhookApiResponse"/>?&gt;</returns>
-        Task<IPingWebhookApiResponse?> PingWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IPingWebhookApiResponse?> PingWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Redeliver one delivery
@@ -219,10 +231,11 @@ namespace Dona.Api.Api
         /// <param name="deliveryId">Delivery id.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IRedeliverWebhookDeliveryApiResponse"/>&gt;</returns>
-        Task<IRedeliverWebhookDeliveryApiResponse> RedeliverWebhookDeliveryAsync(Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IRedeliverWebhookDeliveryApiResponse> RedeliverWebhookDeliveryAsync(Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Redeliver one delivery
@@ -234,10 +247,11 @@ namespace Dona.Api.Api
         /// <param name="deliveryId">Delivery id.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IRedeliverWebhookDeliveryApiResponse"/>?&gt;</returns>
-        Task<IRedeliverWebhookDeliveryApiResponse?> RedeliverWebhookDeliveryOrDefaultAsync(Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IRedeliverWebhookDeliveryApiResponse?> RedeliverWebhookDeliveryOrDefaultAsync(Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Rotate the signing secret (24 h dual signing)
@@ -249,10 +263,11 @@ namespace Dona.Api.Api
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IRotateWebhookSecretApiResponse"/>&gt;</returns>
-        Task<IRotateWebhookSecretApiResponse> RotateWebhookSecretAsync(Guid id, string idempotencyKey, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IRotateWebhookSecretApiResponse> RotateWebhookSecretAsync(Guid id, string idempotencyKey, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Rotate the signing secret (24 h dual signing)
@@ -263,10 +278,11 @@ namespace Dona.Api.Api
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IRotateWebhookSecretApiResponse"/>?&gt;</returns>
-        Task<IRotateWebhookSecretApiResponse?> RotateWebhookSecretOrDefaultAsync(Guid id, string idempotencyKey, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IRotateWebhookSecretApiResponse?> RotateWebhookSecretOrDefaultAsync(Guid id, string idempotencyKey, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Change url / event types / pause
@@ -279,10 +295,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="webhookUpdate"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IUpdateWebhookApiResponse"/>&gt;</returns>
-        Task<IUpdateWebhookApiResponse> UpdateWebhookAsync(Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IUpdateWebhookApiResponse> UpdateWebhookAsync(Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Change url / event types / pause
@@ -294,10 +311,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="webhookUpdate"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IUpdateWebhookApiResponse"/>?&gt;</returns>
-        Task<IUpdateWebhookApiResponse?> UpdateWebhookOrDefaultAsync(Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IUpdateWebhookApiResponse?> UpdateWebhookOrDefaultAsync(Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -1013,7 +1031,7 @@ namespace Dona.Api.Api
             BearerTokenProvider = bearerTokenProvider;
         }
 
-        partial void FormatCreateWebhook(ref string idempotencyKey, WebhookCreate webhookCreate, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatCreateWebhook(ref string idempotencyKey, WebhookCreate webhookCreate, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -1045,11 +1063,12 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="webhookCreate"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterCreateWebhookDefaultImplementation(ICreateWebhookApiResponse apiResponseLocalVar, string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterCreateWebhookDefaultImplementation(ICreateWebhookApiResponse apiResponseLocalVar, string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterCreateWebhook(ref suppressDefaultLog, apiResponseLocalVar, idempotencyKey, webhookCreate, acceptLanguage, xDonaIntegration);
+            AfterCreateWebhook(ref suppressDefaultLog, apiResponseLocalVar, idempotencyKey, webhookCreate, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -1062,8 +1081,9 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="webhookCreate"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterCreateWebhook(ref bool suppressDefaultLog, ICreateWebhookApiResponse apiResponseLocalVar, string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterCreateWebhook(ref bool suppressDefaultLog, ICreateWebhookApiResponse apiResponseLocalVar, string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -1074,11 +1094,12 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="webhookCreate"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorCreateWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorCreateWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorCreateWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, idempotencyKey, webhookCreate, acceptLanguage, xDonaIntegration);
+            OnErrorCreateWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, idempotencyKey, webhookCreate, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -1093,8 +1114,9 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="webhookCreate"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorCreateWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorCreateWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Register an endpoint (secret shown once) Dona sends a signed &#x60;ping&#x60; immediately; your endpoint must answer 2xx within 1 s or the create is &#x60;422 webhook_url_invalid&#x60;. ≤ 5 endpoints per shop: a 6th is &#x60;422 webhook_url_invalid&#x60; with &#x60;details[{field:\&quot;url\&quot;,code:\&quot;endpoint_limit\&quot;}]&#x60;. Kill switch: &#x60;webhooks_enabled&#x60;.
@@ -1102,14 +1124,15 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="webhookCreate"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ICreateWebhookApiResponse"/>&gt;</returns>
-        public async Task<ICreateWebhookApiResponse?> CreateWebhookOrDefaultAsync(string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<ICreateWebhookApiResponse?> CreateWebhookOrDefaultAsync(string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await CreateWebhookAsync(idempotencyKey, webhookCreate, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await CreateWebhookAsync(idempotencyKey, webhookCreate, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -1124,10 +1147,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="webhookCreate"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ICreateWebhookApiResponse"/>&gt;</returns>
-        public async Task<ICreateWebhookApiResponse> CreateWebhookAsync(string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<ICreateWebhookApiResponse> CreateWebhookAsync(string idempotencyKey, WebhookCreate webhookCreate, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -1135,7 +1159,7 @@ namespace Dona.Api.Api
             {
                 ValidateCreateWebhook(idempotencyKey, webhookCreate, acceptLanguage, xDonaIntegration);
 
-                FormatCreateWebhook(ref idempotencyKey, webhookCreate, ref acceptLanguage, ref xDonaIntegration);
+                FormatCreateWebhook(ref idempotencyKey, webhookCreate, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -1170,6 +1194,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -1230,7 +1267,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterCreateWebhookDefaultImplementation(apiResponseLocalVar, idempotencyKey, webhookCreate, acceptLanguage, xDonaIntegration);
+                        AfterCreateWebhookDefaultImplementation(apiResponseLocalVar, idempotencyKey, webhookCreate, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnCreateWebhook(apiResponseLocalVar);
 
@@ -1244,7 +1281,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorCreateWebhookDefaultImplementation(e, "/webhooks", uriBuilderLocalVar.Path, idempotencyKey, webhookCreate, acceptLanguage, xDonaIntegration);
+                OnErrorCreateWebhookDefaultImplementation(e, "/webhooks", uriBuilderLocalVar.Path, idempotencyKey, webhookCreate, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorCreateWebhook(e);
                 throw;
             }
@@ -1755,7 +1792,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatDeleteWebhook(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatDeleteWebhook(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -1778,11 +1815,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterDeleteWebhookDefaultImplementation(IDeleteWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterDeleteWebhookDefaultImplementation(IDeleteWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterDeleteWebhook(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterDeleteWebhook(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -1794,8 +1832,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterDeleteWebhook(ref bool suppressDefaultLog, IDeleteWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterDeleteWebhook(ref bool suppressDefaultLog, IDeleteWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -1805,11 +1844,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorDeleteWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorDeleteWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorDeleteWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorDeleteWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -1823,22 +1863,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorDeleteWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorDeleteWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Remove an endpoint Soft delete (&#x60;deleted_at&#x60;); delivery history is kept its 30 days. Repeating it is &#x60;404 not_found&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IDeleteWebhookApiResponse"/>&gt;</returns>
-        public async Task<IDeleteWebhookApiResponse?> DeleteWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IDeleteWebhookApiResponse?> DeleteWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await DeleteWebhookAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await DeleteWebhookAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -1852,10 +1894,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IDeleteWebhookApiResponse"/>&gt;</returns>
-        public async Task<IDeleteWebhookApiResponse> DeleteWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IDeleteWebhookApiResponse> DeleteWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -1863,7 +1906,7 @@ namespace Dona.Api.Api
             {
                 ValidateDeleteWebhook(acceptLanguage, xDonaIntegration);
 
-                FormatDeleteWebhook(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatDeleteWebhook(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -1885,6 +1928,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -1936,7 +1992,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterDeleteWebhookDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterDeleteWebhookDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnDeleteWebhook(apiResponseLocalVar);
 
@@ -1950,7 +2006,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorDeleteWebhookDefaultImplementation(e, "/webhooks/{id}", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorDeleteWebhookDefaultImplementation(e, "/webhooks/{id}", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorDeleteWebhook(e);
                 throw;
             }
@@ -2317,7 +2373,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatGetWebhook(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatGetWebhook(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -2340,11 +2396,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterGetWebhookDefaultImplementation(IGetWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterGetWebhookDefaultImplementation(IGetWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterGetWebhook(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterGetWebhook(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -2356,8 +2413,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterGetWebhook(ref bool suppressDefaultLog, IGetWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterGetWebhook(ref bool suppressDefaultLog, IGetWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -2367,11 +2425,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorGetWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorGetWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorGetWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorGetWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -2385,22 +2444,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorGetWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorGetWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Get an endpoint —
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetWebhookApiResponse"/>&gt;</returns>
-        public async Task<IGetWebhookApiResponse?> GetWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetWebhookApiResponse?> GetWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await GetWebhookAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await GetWebhookAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -2414,10 +2475,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetWebhookApiResponse"/>&gt;</returns>
-        public async Task<IGetWebhookApiResponse> GetWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetWebhookApiResponse> GetWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -2425,7 +2487,7 @@ namespace Dona.Api.Api
             {
                 ValidateGetWebhook(acceptLanguage, xDonaIntegration);
 
-                FormatGetWebhook(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatGetWebhook(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -2447,6 +2509,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -2498,7 +2573,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterGetWebhookDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterGetWebhookDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnGetWebhook(apiResponseLocalVar);
 
@@ -2512,7 +2587,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorGetWebhookDefaultImplementation(e, "/webhooks/{id}", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorGetWebhookDefaultImplementation(e, "/webhooks/{id}", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorGetWebhook(e);
                 throw;
             }
@@ -2923,7 +2998,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatListWebhookDeliveries(ref Guid id, ref Option<string> status, ref Option<Guid> eventId, ref Option<string> cursor, ref Option<int> limit, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatListWebhookDeliveries(ref Guid id, ref Option<string> status, ref Option<Guid> eventId, ref Option<string> cursor, ref Option<int> limit, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -2958,11 +3033,12 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterListWebhookDeliveriesDefaultImplementation(IListWebhookDeliveriesApiResponse apiResponseLocalVar, Guid id, Option<string> status, Option<Guid> eventId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterListWebhookDeliveriesDefaultImplementation(IListWebhookDeliveriesApiResponse apiResponseLocalVar, Guid id, Option<string> status, Option<Guid> eventId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterListWebhookDeliveries(ref suppressDefaultLog, apiResponseLocalVar, id, status, eventId, cursor, limit, acceptLanguage, xDonaIntegration);
+            AfterListWebhookDeliveries(ref suppressDefaultLog, apiResponseLocalVar, id, status, eventId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -2978,8 +3054,9 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterListWebhookDeliveries(ref bool suppressDefaultLog, IListWebhookDeliveriesApiResponse apiResponseLocalVar, Guid id, Option<string> status, Option<Guid> eventId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterListWebhookDeliveries(ref bool suppressDefaultLog, IListWebhookDeliveriesApiResponse apiResponseLocalVar, Guid id, Option<string> status, Option<Guid> eventId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -2993,11 +3070,12 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorListWebhookDeliveriesDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> status, Option<Guid> eventId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorListWebhookDeliveriesDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> status, Option<Guid> eventId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorListWebhookDeliveries(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, status, eventId, cursor, limit, acceptLanguage, xDonaIntegration);
+            OnErrorListWebhookDeliveries(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, status, eventId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -3015,8 +3093,9 @@ namespace Dona.Api.Api
         /// <param name="cursor"></param>
         /// <param name="limit"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorListWebhookDeliveries(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> status, Option<Guid> eventId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorListWebhookDeliveries(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> status, Option<Guid> eventId, Option<string> cursor, Option<int> limit, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Delivery log (30 d) Newest first. &#x60;status&#x3D;dead&#x60; is the dead-letter view.
@@ -3027,14 +3106,15 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListWebhookDeliveriesApiResponse"/>&gt;</returns>
-        public async Task<IListWebhookDeliveriesApiResponse?> ListWebhookDeliveriesOrDefaultAsync(Guid id, Option<string> status = default, Option<Guid> eventId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListWebhookDeliveriesApiResponse?> ListWebhookDeliveriesOrDefaultAsync(Guid id, Option<string> status = default, Option<Guid> eventId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await ListWebhookDeliveriesAsync(id, status, eventId, cursor, limit, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await ListWebhookDeliveriesAsync(id, status, eventId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -3052,10 +3132,11 @@ namespace Dona.Api.Api
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="limit">Page size, default 50, max 100 (clamped, with &#x60;Dona-API-Warn&#x60;). &#x60;limit &gt; 50&#x60; costs &#x60;1 + ceil(limit/50)&#x60;. (optional, default to 50)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListWebhookDeliveriesApiResponse"/>&gt;</returns>
-        public async Task<IListWebhookDeliveriesApiResponse> ListWebhookDeliveriesAsync(Guid id, Option<string> status = default, Option<Guid> eventId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListWebhookDeliveriesApiResponse> ListWebhookDeliveriesAsync(Guid id, Option<string> status = default, Option<Guid> eventId = default, Option<string> cursor = default, Option<int> limit = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -3063,7 +3144,7 @@ namespace Dona.Api.Api
             {
                 ValidateListWebhookDeliveries(status, cursor, acceptLanguage, xDonaIntegration);
 
-                FormatListWebhookDeliveries(ref id, ref status, ref eventId, ref cursor, ref limit, ref acceptLanguage, ref xDonaIntegration);
+                FormatListWebhookDeliveries(ref id, ref status, ref eventId, ref cursor, ref limit, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -3101,6 +3182,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -3152,7 +3246,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterListWebhookDeliveriesDefaultImplementation(apiResponseLocalVar, id, status, eventId, cursor, limit, acceptLanguage, xDonaIntegration);
+                        AfterListWebhookDeliveriesDefaultImplementation(apiResponseLocalVar, id, status, eventId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnListWebhookDeliveries(apiResponseLocalVar);
 
@@ -3166,7 +3260,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorListWebhookDeliveriesDefaultImplementation(e, "/webhooks/{id}/deliveries", uriBuilderLocalVar.Path, id, status, eventId, cursor, limit, acceptLanguage, xDonaIntegration);
+                OnErrorListWebhookDeliveriesDefaultImplementation(e, "/webhooks/{id}/deliveries", uriBuilderLocalVar.Path, id, status, eventId, cursor, limit, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorListWebhookDeliveries(e);
                 throw;
             }
@@ -3627,7 +3721,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatListWebhooks(ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatListWebhooks(ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -3649,11 +3743,12 @@ namespace Dona.Api.Api
         /// </summary>
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterListWebhooksDefaultImplementation(IListWebhooksApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterListWebhooksDefaultImplementation(IListWebhooksApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterListWebhooks(ref suppressDefaultLog, apiResponseLocalVar, acceptLanguage, xDonaIntegration);
+            AfterListWebhooks(ref suppressDefaultLog, apiResponseLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -3664,8 +3759,9 @@ namespace Dona.Api.Api
         /// <param name="suppressDefaultLog"></param>
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterListWebhooks(ref bool suppressDefaultLog, IListWebhooksApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterListWebhooks(ref bool suppressDefaultLog, IListWebhooksApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -3674,11 +3770,12 @@ namespace Dona.Api.Api
         /// <param name="pathFormatLocalVar"></param>
         /// <param name="pathLocalVar"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorListWebhooksDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorListWebhooksDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorListWebhooks(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, acceptLanguage, xDonaIntegration);
+            OnErrorListWebhooks(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -3691,21 +3788,23 @@ namespace Dona.Api.Api
         /// <param name="pathFormatLocalVar"></param>
         /// <param name="pathLocalVar"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorListWebhooks(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorListWebhooks(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// List endpoints (≤ 5) Never a secret.
         /// </summary>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListWebhooksApiResponse"/>&gt;</returns>
-        public async Task<IListWebhooksApiResponse?> ListWebhooksOrDefaultAsync(Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListWebhooksApiResponse?> ListWebhooksOrDefaultAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await ListWebhooksAsync(acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await ListWebhooksAsync(acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -3718,10 +3817,11 @@ namespace Dona.Api.Api
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListWebhooksApiResponse"/>&gt;</returns>
-        public async Task<IListWebhooksApiResponse> ListWebhooksAsync(Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListWebhooksApiResponse> ListWebhooksAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -3729,7 +3829,7 @@ namespace Dona.Api.Api
             {
                 ValidateListWebhooks(acceptLanguage, xDonaIntegration);
 
-                FormatListWebhooks(ref acceptLanguage, ref xDonaIntegration);
+                FormatListWebhooks(ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -3750,6 +3850,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -3801,7 +3914,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterListWebhooksDefaultImplementation(apiResponseLocalVar, acceptLanguage, xDonaIntegration);
+                        AfterListWebhooksDefaultImplementation(apiResponseLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnListWebhooks(apiResponseLocalVar);
 
@@ -3815,7 +3928,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorListWebhooksDefaultImplementation(e, "/webhooks", uriBuilderLocalVar.Path, acceptLanguage, xDonaIntegration);
+                OnErrorListWebhooksDefaultImplementation(e, "/webhooks", uriBuilderLocalVar.Path, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorListWebhooks(e);
                 throw;
             }
@@ -4176,7 +4289,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatPingWebhook(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatPingWebhook(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -4199,11 +4312,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterPingWebhookDefaultImplementation(IPingWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterPingWebhookDefaultImplementation(IPingWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterPingWebhook(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterPingWebhook(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -4215,8 +4329,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterPingWebhook(ref bool suppressDefaultLog, IPingWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterPingWebhook(ref bool suppressDefaultLog, IPingWebhookApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -4226,11 +4341,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorPingWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorPingWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorPingWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorPingWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -4244,22 +4360,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorPingWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorPingWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Re-run the verification ping ≤ 10/min per endpoint. A 2xx within 1 s re-enables a &#x60;disabled&#x60; or auto-paused endpoint and closes its breaker. No &#x60;Idempotency-Key&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IPingWebhookApiResponse"/>&gt;</returns>
-        public async Task<IPingWebhookApiResponse?> PingWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IPingWebhookApiResponse?> PingWebhookOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await PingWebhookAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await PingWebhookAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -4273,10 +4391,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IPingWebhookApiResponse"/>&gt;</returns>
-        public async Task<IPingWebhookApiResponse> PingWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IPingWebhookApiResponse> PingWebhookAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -4284,7 +4403,7 @@ namespace Dona.Api.Api
             {
                 ValidatePingWebhook(acceptLanguage, xDonaIntegration);
 
-                FormatPingWebhook(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatPingWebhook(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -4306,6 +4425,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -4357,7 +4489,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterPingWebhookDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterPingWebhookDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnPingWebhook(apiResponseLocalVar);
 
@@ -4371,7 +4503,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorPingWebhookDefaultImplementation(e, "/webhooks/{id}/ping", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorPingWebhookDefaultImplementation(e, "/webhooks/{id}/ping", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorPingWebhook(e);
                 throw;
             }
@@ -4782,7 +4914,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatRedeliverWebhookDelivery(ref Guid id, ref Guid deliveryId, ref string idempotencyKey, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatRedeliverWebhookDelivery(ref Guid id, ref Guid deliveryId, ref string idempotencyKey, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -4811,11 +4943,12 @@ namespace Dona.Api.Api
         /// <param name="deliveryId"></param>
         /// <param name="idempotencyKey"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterRedeliverWebhookDeliveryDefaultImplementation(IRedeliverWebhookDeliveryApiResponse apiResponseLocalVar, Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterRedeliverWebhookDeliveryDefaultImplementation(IRedeliverWebhookDeliveryApiResponse apiResponseLocalVar, Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterRedeliverWebhookDelivery(ref suppressDefaultLog, apiResponseLocalVar, id, deliveryId, idempotencyKey, acceptLanguage, xDonaIntegration);
+            AfterRedeliverWebhookDelivery(ref suppressDefaultLog, apiResponseLocalVar, id, deliveryId, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -4829,8 +4962,9 @@ namespace Dona.Api.Api
         /// <param name="deliveryId"></param>
         /// <param name="idempotencyKey"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterRedeliverWebhookDelivery(ref bool suppressDefaultLog, IRedeliverWebhookDeliveryApiResponse apiResponseLocalVar, Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterRedeliverWebhookDelivery(ref bool suppressDefaultLog, IRedeliverWebhookDeliveryApiResponse apiResponseLocalVar, Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -4842,11 +4976,12 @@ namespace Dona.Api.Api
         /// <param name="deliveryId"></param>
         /// <param name="idempotencyKey"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorRedeliverWebhookDeliveryDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorRedeliverWebhookDeliveryDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorRedeliverWebhookDelivery(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, deliveryId, idempotencyKey, acceptLanguage, xDonaIntegration);
+            OnErrorRedeliverWebhookDelivery(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, deliveryId, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -4862,8 +4997,9 @@ namespace Dona.Api.Api
         /// <param name="deliveryId"></param>
         /// <param name="idempotencyKey"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorRedeliverWebhookDelivery(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorRedeliverWebhookDelivery(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Redeliver one delivery Fresh timestamp + signature, same &#x60;webhook-id&#x60;; a new attempt chain. ≤ 100/hour/endpoint. An event older than 30 d ⇒ &#x60;404 not_found&#x60;.
@@ -4872,14 +5008,15 @@ namespace Dona.Api.Api
         /// <param name="deliveryId">Delivery id.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IRedeliverWebhookDeliveryApiResponse"/>&gt;</returns>
-        public async Task<IRedeliverWebhookDeliveryApiResponse?> RedeliverWebhookDeliveryOrDefaultAsync(Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IRedeliverWebhookDeliveryApiResponse?> RedeliverWebhookDeliveryOrDefaultAsync(Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await RedeliverWebhookDeliveryAsync(id, deliveryId, idempotencyKey, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await RedeliverWebhookDeliveryAsync(id, deliveryId, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -4895,10 +5032,11 @@ namespace Dona.Api.Api
         /// <param name="deliveryId">Delivery id.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IRedeliverWebhookDeliveryApiResponse"/>&gt;</returns>
-        public async Task<IRedeliverWebhookDeliveryApiResponse> RedeliverWebhookDeliveryAsync(Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IRedeliverWebhookDeliveryApiResponse> RedeliverWebhookDeliveryAsync(Guid id, Guid deliveryId, string idempotencyKey, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -4906,7 +5044,7 @@ namespace Dona.Api.Api
             {
                 ValidateRedeliverWebhookDelivery(idempotencyKey, acceptLanguage, xDonaIntegration);
 
-                FormatRedeliverWebhookDelivery(ref id, ref deliveryId, ref idempotencyKey, ref acceptLanguage, ref xDonaIntegration);
+                FormatRedeliverWebhookDelivery(ref id, ref deliveryId, ref idempotencyKey, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -4939,6 +5077,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -4990,7 +5141,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterRedeliverWebhookDeliveryDefaultImplementation(apiResponseLocalVar, id, deliveryId, idempotencyKey, acceptLanguage, xDonaIntegration);
+                        AfterRedeliverWebhookDeliveryDefaultImplementation(apiResponseLocalVar, id, deliveryId, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnRedeliverWebhookDelivery(apiResponseLocalVar);
 
@@ -5004,7 +5155,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorRedeliverWebhookDeliveryDefaultImplementation(e, "/webhooks/{id}/deliveries/{delivery_id}/redeliver", uriBuilderLocalVar.Path, id, deliveryId, idempotencyKey, acceptLanguage, xDonaIntegration);
+                OnErrorRedeliverWebhookDeliveryDefaultImplementation(e, "/webhooks/{id}/deliveries/{delivery_id}/redeliver", uriBuilderLocalVar.Path, id, deliveryId, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorRedeliverWebhookDelivery(e);
                 throw;
             }
@@ -5515,7 +5666,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatRotateWebhookSecret(ref Guid id, ref string idempotencyKey, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatRotateWebhookSecret(ref Guid id, ref string idempotencyKey, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -5543,11 +5694,12 @@ namespace Dona.Api.Api
         /// <param name="id"></param>
         /// <param name="idempotencyKey"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterRotateWebhookSecretDefaultImplementation(IRotateWebhookSecretApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterRotateWebhookSecretDefaultImplementation(IRotateWebhookSecretApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterRotateWebhookSecret(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, acceptLanguage, xDonaIntegration);
+            AfterRotateWebhookSecret(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -5560,8 +5712,9 @@ namespace Dona.Api.Api
         /// <param name="id"></param>
         /// <param name="idempotencyKey"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterRotateWebhookSecret(ref bool suppressDefaultLog, IRotateWebhookSecretApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterRotateWebhookSecret(ref bool suppressDefaultLog, IRotateWebhookSecretApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -5572,11 +5725,12 @@ namespace Dona.Api.Api
         /// <param name="id"></param>
         /// <param name="idempotencyKey"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorRotateWebhookSecretDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorRotateWebhookSecretDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorRotateWebhookSecret(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, acceptLanguage, xDonaIntegration);
+            OnErrorRotateWebhookSecret(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -5591,8 +5745,9 @@ namespace Dona.Api.Api
         /// <param name="id"></param>
         /// <param name="idempotencyKey"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorRotateWebhookSecret(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorRotateWebhookSecret(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Rotate the signing secret (24 h dual signing) New &#x60;whsec_&#x60; shown once; for 24 h both secrets sign (&#x60;webhook-signature: v1,&lt;new&gt; v1,&lt;old&gt;&#x60;).
@@ -5600,14 +5755,15 @@ namespace Dona.Api.Api
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IRotateWebhookSecretApiResponse"/>&gt;</returns>
-        public async Task<IRotateWebhookSecretApiResponse?> RotateWebhookSecretOrDefaultAsync(Guid id, string idempotencyKey, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IRotateWebhookSecretApiResponse?> RotateWebhookSecretOrDefaultAsync(Guid id, string idempotencyKey, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await RotateWebhookSecretAsync(id, idempotencyKey, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await RotateWebhookSecretAsync(id, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -5622,10 +5778,11 @@ namespace Dona.Api.Api
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IRotateWebhookSecretApiResponse"/>&gt;</returns>
-        public async Task<IRotateWebhookSecretApiResponse> RotateWebhookSecretAsync(Guid id, string idempotencyKey, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IRotateWebhookSecretApiResponse> RotateWebhookSecretAsync(Guid id, string idempotencyKey, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -5633,7 +5790,7 @@ namespace Dona.Api.Api
             {
                 ValidateRotateWebhookSecret(idempotencyKey, acceptLanguage, xDonaIntegration);
 
-                FormatRotateWebhookSecret(ref id, ref idempotencyKey, ref acceptLanguage, ref xDonaIntegration);
+                FormatRotateWebhookSecret(ref id, ref idempotencyKey, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -5665,6 +5822,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -5716,7 +5886,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterRotateWebhookSecretDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, acceptLanguage, xDonaIntegration);
+                        AfterRotateWebhookSecretDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnRotateWebhookSecret(apiResponseLocalVar);
 
@@ -5730,7 +5900,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorRotateWebhookSecretDefaultImplementation(e, "/webhooks/{id}/rotate-secret", uriBuilderLocalVar.Path, id, idempotencyKey, acceptLanguage, xDonaIntegration);
+                OnErrorRotateWebhookSecretDefaultImplementation(e, "/webhooks/{id}/rotate-secret", uriBuilderLocalVar.Path, id, idempotencyKey, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorRotateWebhookSecret(e);
                 throw;
             }
@@ -6241,7 +6411,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatUpdateWebhook(ref Guid id, ref string idempotencyKey, WebhookUpdate webhookUpdate, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatUpdateWebhook(ref Guid id, ref string idempotencyKey, WebhookUpdate webhookUpdate, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -6274,11 +6444,12 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="webhookUpdate"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterUpdateWebhookDefaultImplementation(IUpdateWebhookApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterUpdateWebhookDefaultImplementation(IUpdateWebhookApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterUpdateWebhook(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, webhookUpdate, acceptLanguage, xDonaIntegration);
+            AfterUpdateWebhook(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, webhookUpdate, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -6292,8 +6463,9 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="webhookUpdate"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterUpdateWebhook(ref bool suppressDefaultLog, IUpdateWebhookApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterUpdateWebhook(ref bool suppressDefaultLog, IUpdateWebhookApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -6305,11 +6477,12 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="webhookUpdate"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorUpdateWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorUpdateWebhookDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorUpdateWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, webhookUpdate, acceptLanguage, xDonaIntegration);
+            OnErrorUpdateWebhook(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, webhookUpdate, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -6325,8 +6498,9 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="webhookUpdate"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorUpdateWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorUpdateWebhook(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Change url / event types / pause A new &#x60;url&#x60; is re-verified with a ping (same 1 s rule).
@@ -6335,14 +6509,15 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="webhookUpdate"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IUpdateWebhookApiResponse"/>&gt;</returns>
-        public async Task<IUpdateWebhookApiResponse?> UpdateWebhookOrDefaultAsync(Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IUpdateWebhookApiResponse?> UpdateWebhookOrDefaultAsync(Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await UpdateWebhookAsync(id, idempotencyKey, webhookUpdate, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await UpdateWebhookAsync(id, idempotencyKey, webhookUpdate, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -6358,10 +6533,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="webhookUpdate"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IUpdateWebhookApiResponse"/>&gt;</returns>
-        public async Task<IUpdateWebhookApiResponse> UpdateWebhookAsync(Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IUpdateWebhookApiResponse> UpdateWebhookAsync(Guid id, string idempotencyKey, WebhookUpdate webhookUpdate, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -6369,7 +6545,7 @@ namespace Dona.Api.Api
             {
                 ValidateUpdateWebhook(idempotencyKey, webhookUpdate, acceptLanguage, xDonaIntegration);
 
-                FormatUpdateWebhook(ref id, ref idempotencyKey, webhookUpdate, ref acceptLanguage, ref xDonaIntegration);
+                FormatUpdateWebhook(ref id, ref idempotencyKey, webhookUpdate, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -6405,6 +6581,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -6465,7 +6654,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterUpdateWebhookDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, webhookUpdate, acceptLanguage, xDonaIntegration);
+                        AfterUpdateWebhookDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, webhookUpdate, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnUpdateWebhook(apiResponseLocalVar);
 
@@ -6479,7 +6668,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorUpdateWebhookDefaultImplementation(e, "/webhooks/{id}", uriBuilderLocalVar.Path, id, idempotencyKey, webhookUpdate, acceptLanguage, xDonaIntegration);
+                OnErrorUpdateWebhookDefaultImplementation(e, "/webhooks/{id}", uriBuilderLocalVar.Path, id, idempotencyKey, webhookUpdate, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorUpdateWebhook(e);
                 throw;
             }

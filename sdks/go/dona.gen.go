@@ -1490,7 +1490,7 @@ type AttentionPage struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
-// Balance From the double-entry ledger (the portal `/sellers/me/balance` numbers). No requisites, PAN or statement URLs.
+// Balance The wallet's figures for the shop (the portal's `/sellers/me/finance/wallet`). No lifetime totals — the wallet has none, and the portal's balance drops them for the same reason (C57). No requisites, PAN or statement URLs.
 type Balance struct {
 	// AsOf ISO 8601 with offset (Tashkent `+05:00` on output).
 	AsOf time.Time `json:"as_of"`
@@ -1499,11 +1499,11 @@ type Balance struct {
 	AvailableUzs int64           `json:"available_uzs"`
 	Currency     BalanceCurrency `json:"currency"`
 
-	// LifetimeEarnedUzs Integer soʻm (no decimals).
-	LifetimeEarnedUzs int64 `json:"lifetime_earned_uzs"`
+	// ExpectedUzs Integer soʻm — orders in flight, not yet earned.
+	ExpectedUzs int64 `json:"expected_uzs"`
 
-	// LifetimeRefundedUzs Integer soʻm (no decimals).
-	LifetimeRefundedUzs int64 `json:"lifetime_refunded_uzs"`
+	// HeldUzs Integer soʻm — earned, still inside the admin hold (not yet withdrawable).
+	HeldUzs int64 `json:"held_uzs"`
 }
 
 // BalanceCurrency defines model for Balance.Currency.
@@ -1919,7 +1919,7 @@ type Job struct {
 	ExpiresAt     time.Time  `json:"expires_at"`
 	FileExpiresAt *time.Time `json:"file_expires_at"`
 
-	// FileUrl Signed, valid 60 min from this response; re-read the job for a fresh one.
+	// FileUrl `GET /jobs/{id}/download?token=…` — the token is valid 15 min from this response and only for a key of this shop (never a public or pre-signed object URL); re-read the job for a fresh one.
 	FileUrl    *string            `json:"file_url"`
 	FinishedAt *time.Time         `json:"finished_at"`
 	Id         openapi_types.UUID `json:"id"`
@@ -3006,8 +3006,11 @@ type Cursor = string
 // DonaDryRun Known values (open set — tolerate new ones): `true`, `false`.
 type DonaDryRun = string
 
-// DryRunQuery defines model for DryRunQuery.
-type DryRunQuery = bool
+// DonaSeller defines model for DonaSeller.
+type DonaSeller = openapi_types.UUID
+
+// DryRunQuery Known values (open set — tolerate new ones): `true`, `false`.
+type DryRunQuery = string
 
 // IdPath defines model for IdPath.
 type IdPath = openapi_types.UUID
@@ -3077,6 +3080,9 @@ type GetAccountHealthParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3086,6 +3092,9 @@ type GetAccountMetricParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3094,6 +3103,9 @@ type GetAccountMetricParams struct {
 type GetAccountVerificationParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3131,6 +3143,9 @@ type ListAttentionParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3140,6 +3155,9 @@ type GetAttentionParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3148,6 +3166,9 @@ type GetAttentionParams struct {
 type AckAttentionParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3167,6 +3188,9 @@ type SearchBrandsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3185,6 +3209,9 @@ type ListCategoriesParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3193,6 +3220,9 @@ type ListCategoriesParams struct {
 type GetCategoryRequirementsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3208,6 +3238,9 @@ type GetChangelogParams struct {
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 }
 
 // ListEventsParams defines parameters for ListEvents.
@@ -3230,6 +3263,9 @@ type ListEventsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3241,6 +3277,9 @@ type ExportOrdersParams struct {
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3254,6 +3293,9 @@ type ExportProductsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3262,6 +3304,9 @@ type ExportProductsParams struct {
 type GetBalanceParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3287,6 +3332,9 @@ type ListSettlementsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3305,6 +3353,9 @@ type SearchIkpuParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3313,6 +3364,24 @@ type SearchIkpuParams struct {
 type GetJobParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
+	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
+	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
+}
+
+// DownloadJobFileParams defines parameters for DownloadJobFile.
+type DownloadJobFileParams struct {
+	// Token The download token `file_url` carries (`v1.<unix expiry>.<mac>`), bound to this job and this shop.
+	Token string `form:"token" json:"token"`
+
+	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
+	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3323,6 +3392,9 @@ type ListKeysParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3331,12 +3403,18 @@ type ListKeysParams struct {
 type GetLlmsTxtParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 }
 
 // GetMeParams defines parameters for GetMe.
 type GetMeParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3347,6 +3425,9 @@ type CreateMediaUploadUrlParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3355,6 +3436,9 @@ type CreateMediaUploadUrlParams struct {
 type GetOpenApiParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 }
 
 // ListOrdersParams defines parameters for ListOrders.
@@ -3386,6 +3470,9 @@ type ListOrdersParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3395,6 +3482,9 @@ type BatchOrderLabelsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3403,6 +3493,9 @@ type BatchOrderLabelsParams struct {
 type GetOrderParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3415,17 +3508,20 @@ type GetOrder200JSONResponseBody struct {
 
 // AcceptOrderParams defines parameters for AcceptOrder.
 type AcceptOrderParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3433,17 +3529,20 @@ type AcceptOrderParams struct {
 
 // CancelOrderParams defines parameters for CancelOrder.
 type CancelOrderParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3451,17 +3550,20 @@ type CancelOrderParams struct {
 
 // DeclineOrderParams defines parameters for DeclineOrder.
 type DeclineOrderParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3469,17 +3571,20 @@ type DeclineOrderParams struct {
 
 // HandoverOrderParams defines parameters for HandoverOrder.
 type HandoverOrderParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3490,6 +3595,9 @@ type GetOrderInvoiceParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3499,23 +3607,29 @@ type GetOrderLabelParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
 
 // AddOrderNoteParams defines parameters for AddOrderNote.
 type AddOrderNoteParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3523,17 +3637,20 @@ type AddOrderNoteParams struct {
 
 // MarkOrderReadyParams defines parameters for MarkOrderReady.
 type MarkOrderReadyParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3541,17 +3658,20 @@ type MarkOrderReadyParams struct {
 
 // ShipOrderParams defines parameters for ShipOrder.
 type ShipOrderParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3562,6 +3682,9 @@ type GetOrderTimelineParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3570,6 +3693,9 @@ type GetOrderTimelineParams struct {
 type PingParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 }
 
 // SetPricesParams defines parameters for SetPrices.
@@ -3577,17 +3703,20 @@ type SetPricesParams struct {
 	// Atomic All-or-nothing.
 	Atomic *bool `form:"atomic,omitempty" json:"atomic,omitempty"`
 
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3625,23 +3754,29 @@ type ListProductsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
 
 // CreateProductParams defines parameters for CreateProduct.
 type CreateProductParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3649,17 +3784,20 @@ type CreateProductParams struct {
 
 // BatchProductsParams defines parameters for BatchProducts.
 type BatchProductsParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3679,6 +3817,9 @@ type ListDeletedProductsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3688,23 +3829,29 @@ type GetProductParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
 
 // UpdateProductParams defines parameters for UpdateProduct.
 type UpdateProductParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3712,17 +3859,20 @@ type UpdateProductParams struct {
 
 // DelistProductParams defines parameters for DelistProduct.
 type DelistProductParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3733,23 +3883,29 @@ type GetProductIssuesParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
 
 // PublishProductParams defines parameters for PublishProduct.
 type PublishProductParams struct {
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3772,6 +3928,9 @@ type ListReturnsParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3781,6 +3940,9 @@ type GetReturnParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3789,6 +3951,9 @@ type GetReturnParams struct {
 type GetStatusParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 }
 
 // ListStockParams defines parameters for ListStock.
@@ -3814,6 +3979,9 @@ type ListStockParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3823,17 +3991,20 @@ type SetStockParams struct {
 	// Atomic All-or-nothing (Yandex default).
 	Atomic *bool `form:"atomic,omitempty" json:"atomic,omitempty"`
 
-	// DryRun Alias of the `Dona-Dry-Run` header.
+	// DryRun Alias of the `Dona-Dry-Run` header. Only the literal strings `true` / `false` — `1`, `0`, `TRUE`, `yes`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run", code:"invalid"}]` (C51). A string enum, not a boolean, so no SDK generator serialises it as `1`/`0`.
 	DryRun *DryRunQuery `form:"dry_run,omitempty" json:"dry_run,omitempty"`
 
 	// IdempotencyKey 1–255 chars. Scope = this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ `400 invalid_body` with `details[{field:"Idempotency-Key",code:"required"}]`.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 
-	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`.
+	// DonaDryRun `true` ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as `?dry_run=true`. Only the literal `true` / `false`; any other value ⇒ `400 invalid_body` + `details[{field:"Dona-Dry-Run", code:"invalid"}]` (C51).
 	DonaDryRun *DonaDryRun `json:"Dona-Dry-Run,omitempty"`
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3843,6 +4014,9 @@ type SetStockParams struct {
 type ListWebhooksParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3856,6 +4030,9 @@ type CreateWebhookParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3865,6 +4042,9 @@ type DeleteWebhookParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3873,6 +4053,9 @@ type DeleteWebhookParams struct {
 type GetWebhookParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3885,6 +4068,9 @@ type UpdateWebhookParams struct {
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3907,6 +4093,9 @@ type ListWebhookDeliveriesParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3919,6 +4108,9 @@ type RedeliverWebhookDeliveryParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
 
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
@@ -3927,6 +4119,9 @@ type RedeliverWebhookDeliveryParams struct {
 type PingWebhookParams struct {
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -3939,6 +4134,9 @@ type RotateWebhookSecretParams struct {
 
 	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
 	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
 
 	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
@@ -5983,7 +6181,7 @@ type ClientInterface interface {
 
 	// GetChangelog Changelog (JSON, or RSS with Accept)
 	//
-	// Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an empty list until then.
+	// Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487, S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300` with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-None-Match` with it answers `304` and no body.
 	//
 	// Corresponds with GET /changelog (the `GetChangelog` operationId).
 	GetChangelog(ctx context.Context, params *GetChangelogParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6033,14 +6231,14 @@ type ClientInterface interface {
 
 	// GetBalance Balance
 	//
-	// Never error-copied. No requisites, PAN or statement URLs.
+	// The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`), never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` before any read (D3).
 	//
 	// Corresponds with GET /finance/balance (the `GetBalance` operationId).
 	GetBalance(ctx context.Context, params *GetBalanceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListSettlements Settlement lines
 	//
-	// Ledger lines of the shop's payable account, newest first.
+	// The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo` is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`, `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`, `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`, `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
 	//
 	// Corresponds with GET /finance/settlements (the `ListSettlements` operationId).
 	ListSettlements(ctx context.Context, params *ListSettlementsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6058,6 +6256,13 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /jobs/{id} (the `GetJob` operationId).
 	GetJob(ctx context.Context, id IdPath, params *GetJobParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DownloadJobFile Download an export's file
+	//
+	// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+	//
+	// Corresponds with GET /jobs/{id}/download (the `DownloadJobFile` operationId).
+	DownloadJobFile(ctx context.Context, id IdPath, params *DownloadJobFileParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListKeys The shop's keys (read-only; management is portal-only)
 	//
@@ -6114,7 +6319,7 @@ type ClientInterface interface {
 
 	// BatchOrderLabelsWithBody Labels for ≤ 100 orders (one PDF)
 	//
-	// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+	// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -6123,7 +6328,7 @@ type ClientInterface interface {
 
 	// BatchOrderLabels Labels for ≤ 100 orders (one PDF)
 	//
-	// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+	// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -6132,7 +6337,7 @@ type ClientInterface interface {
 
 	// GetOrder Get an order (PII only with orders:pii)
 	//
-	// `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+	// `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7) the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld: <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
 	//
 	// Corresponds with GET /orders/{id} (the `GetOrder` operationId).
 	GetOrder(ctx context.Context, id IdPath, params *GetOrderParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6146,7 +6351,7 @@ type ClientInterface interface {
 
 	// CancelOrderWithBody Cancel (after acceptance) — money-reversing
 	//
-	// Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -6155,7 +6360,7 @@ type ClientInterface interface {
 
 	// CancelOrder Cancel (after acceptance) — money-reversing
 	//
-	// Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -6164,7 +6369,7 @@ type ClientInterface interface {
 
 	// DeclineOrderWithBody Decline (before acceptance) — money-reversing
 	//
-	// `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -6173,7 +6378,7 @@ type ClientInterface interface {
 
 	// DeclineOrder Decline (before acceptance) — money-reversing
 	//
-	// `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -6189,14 +6394,14 @@ type ClientInterface interface {
 
 	// GetOrderInvoice Invoice (PDF, contains PII)
 	//
-	// As the label. ≤ 30/min.
+	// The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block name (Form A Q12 states both).
 	//
 	// Corresponds with GET /orders/{id}/invoice.pdf (the `GetOrderInvoice` operationId).
 	GetOrderInvoice(ctx context.Context, id IdPath, params *GetOrderInvoiceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrderLabel Shipping label (PDF, contains PII)
 	//
-	// Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤ 30/min.
+	// The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not charged.
 	//
 	// Corresponds with GET /orders/{id}/label.pdf (the `GetOrderLabel` operationId).
 	GetOrderLabel(ctx context.Context, id IdPath, params *GetOrderLabelParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6342,7 +6547,7 @@ type ClientInterface interface {
 
 	// DelistProduct Delist (hide) — never a hard delete
 	//
-	// Sets the product `hidden`. There is no hard delete on this API. Kill switch: `writes_enabled`.
+	// Sets the product `delisted` (the portal's delist). Delisting more than 30 % of the shop's live products at once ⇒ `202 held_for_review` (`delist_30pct`). There is no hard delete on this API. Kill switch: `writes_enabled`.
 	//
 	// Corresponds with POST /products/{id}/delist (the `DelistProduct` operationId).
 	DelistProduct(ctx context.Context, id IdPath, params *DelistProductParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6356,7 +6561,7 @@ type ClientInterface interface {
 
 	// PublishProduct Publish
 	//
-	// `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). Kill switch: `writes_enabled`.
+	// `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits for an approver). Kill switch: `writes_enabled`.
 	//
 	// Corresponds with POST /products/{id}/publish (the `PublishProduct` operationId).
 	PublishProduct(ctx context.Context, id IdPath, params *PublishProductParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6648,7 +6853,7 @@ func (c *Client) GetCategoryRequirements(ctx context.Context, id IdPath, params 
 
 // GetChangelog Changelog (JSON, or RSS with Accept)
 //
-// Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an empty list until then.
+// Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487, S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300` with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-None-Match` with it answers `304` and no body.
 //
 // Corresponds with GET /changelog (the `GetChangelog` operationId).
 func (c *Client) GetChangelog(ctx context.Context, params *GetChangelogParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -6758,7 +6963,7 @@ func (c *Client) ExportProducts(ctx context.Context, params *ExportProductsParam
 
 // GetBalance Balance
 //
-// Never error-copied. No requisites, PAN or statement URLs.
+// The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`), never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` before any read (D3).
 //
 // Corresponds with GET /finance/balance (the `GetBalance` operationId).
 func (c *Client) GetBalance(ctx context.Context, params *GetBalanceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -6775,7 +6980,7 @@ func (c *Client) GetBalance(ctx context.Context, params *GetBalanceParams, reqEd
 
 // ListSettlements Settlement lines
 //
-// Ledger lines of the shop's payable account, newest first.
+// The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo` is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`, `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`, `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`, `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
 //
 // Corresponds with GET /finance/settlements (the `ListSettlements` operationId).
 func (c *Client) ListSettlements(ctx context.Context, params *ListSettlementsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -6814,6 +7019,23 @@ func (c *Client) SearchIkpu(ctx context.Context, params *SearchIkpuParams, reqEd
 // Corresponds with GET /jobs/{id} (the `GetJob` operationId).
 func (c *Client) GetJob(ctx context.Context, id IdPath, params *GetJobParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetJobRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DownloadJobFile Download an export's file
+//
+// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+//
+// Corresponds with GET /jobs/{id}/download (the `DownloadJobFile` operationId).
+func (c *Client) DownloadJobFile(ctx context.Context, id IdPath, params *DownloadJobFileParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDownloadJobFileRequest(c.Server, id, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6949,7 +7171,7 @@ func (c *Client) ListOrders(ctx context.Context, params *ListOrdersParams, reqEd
 
 // BatchOrderLabelsWithBody Labels for ≤ 100 orders (one PDF)
 //
-// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
 //
 // Takes any type of body and a specified content type.
 //
@@ -6968,7 +7190,7 @@ func (c *Client) BatchOrderLabelsWithBody(ctx context.Context, params *BatchOrde
 
 // BatchOrderLabels Labels for ≤ 100 orders (one PDF)
 //
-// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
 //
 // Takes a body of the `application/json` content type.
 //
@@ -6987,7 +7209,7 @@ func (c *Client) BatchOrderLabels(ctx context.Context, params *BatchOrderLabelsP
 
 // GetOrder Get an order (PII only with orders:pii)
 //
-// `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+// `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7) the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld: <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
 //
 // Corresponds with GET /orders/{id} (the `GetOrder` operationId).
 func (c *Client) GetOrder(ctx context.Context, id IdPath, params *GetOrderParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -7021,7 +7243,7 @@ func (c *Client) AcceptOrder(ctx context.Context, id IdPath, params *AcceptOrder
 
 // CancelOrderWithBody Cancel (after acceptance) — money-reversing
 //
-// Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 //
 // Takes any type of body and a specified content type.
 //
@@ -7040,7 +7262,7 @@ func (c *Client) CancelOrderWithBody(ctx context.Context, id IdPath, params *Can
 
 // CancelOrder Cancel (after acceptance) — money-reversing
 //
-// Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -7059,7 +7281,7 @@ func (c *Client) CancelOrder(ctx context.Context, id IdPath, params *CancelOrder
 
 // DeclineOrderWithBody Decline (before acceptance) — money-reversing
 //
-// `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
 //
 // Takes any type of body and a specified content type.
 //
@@ -7078,7 +7300,7 @@ func (c *Client) DeclineOrderWithBody(ctx context.Context, id IdPath, params *De
 
 // DeclineOrder Decline (before acceptance) — money-reversing
 //
-// `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
 //
 // Takes a body of the `application/json` content type.
 //
@@ -7114,7 +7336,7 @@ func (c *Client) HandoverOrder(ctx context.Context, id IdPath, params *HandoverO
 
 // GetOrderInvoice Invoice (PDF, contains PII)
 //
-// As the label. ≤ 30/min.
+// The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block name (Form A Q12 states both).
 //
 // Corresponds with GET /orders/{id}/invoice.pdf (the `GetOrderInvoice` operationId).
 func (c *Client) GetOrderInvoice(ctx context.Context, id IdPath, params *GetOrderInvoiceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -7131,7 +7353,7 @@ func (c *Client) GetOrderInvoice(ctx context.Context, id IdPath, params *GetOrde
 
 // GetOrderLabel Shipping label (PDF, contains PII)
 //
-// Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤ 30/min.
+// The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not charged.
 //
 // Corresponds with GET /orders/{id}/label.pdf (the `GetOrderLabel` operationId).
 func (c *Client) GetOrderLabel(ctx context.Context, id IdPath, params *GetOrderLabelParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -7457,7 +7679,7 @@ func (c *Client) UpdateProduct(ctx context.Context, id IdPath, params *UpdatePro
 
 // DelistProduct Delist (hide) — never a hard delete
 //
-// Sets the product `hidden`. There is no hard delete on this API. Kill switch: `writes_enabled`.
+// Sets the product `delisted` (the portal's delist). Delisting more than 30 % of the shop's live products at once ⇒ `202 held_for_review` (`delist_30pct`). There is no hard delete on this API. Kill switch: `writes_enabled`.
 //
 // Corresponds with POST /products/{id}/delist (the `DelistProduct` operationId).
 func (c *Client) DelistProduct(ctx context.Context, id IdPath, params *DelistProductParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -7491,7 +7713,7 @@ func (c *Client) GetProductIssues(ctx context.Context, id IdPath, params *GetPro
 
 // PublishProduct Publish
 //
-// `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). Kill switch: `writes_enabled`.
+// `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits for an approver). Kill switch: `writes_enabled`.
 //
 // Corresponds with POST /products/{id}/publish (the `PublishProduct` operationId).
 func (c *Client) PublishProduct(ctx context.Context, id IdPath, params *PublishProductParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -7844,15 +8066,26 @@ func NewGetAccountHealthRequest(server string, params *GetAccountHealthParams) (
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -7904,15 +8137,26 @@ func NewGetAccountMetricRequest(server string, metricId string, params *GetAccou
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -7957,15 +8201,26 @@ func NewGetAccountVerificationRequest(server string, params *GetAccountVerificat
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -8132,15 +8387,26 @@ func NewListAttentionRequest(server string, params *ListAttentionParams) (*http.
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -8192,15 +8458,26 @@ func NewGetAttentionRequest(server string, id IdPath, params *GetAttentionParams
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -8252,15 +8529,26 @@ func NewAckAttentionRequest(server string, id IdPath, params *AckAttentionParams
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -8356,15 +8644,26 @@ func NewSearchBrandsRequest(server string, params *SearchBrandsParams) (*http.Re
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -8460,15 +8759,26 @@ func NewListCategoriesRequest(server string, params *ListCategoriesParams) (*htt
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -8520,15 +8830,26 @@ func NewGetCategoryRequirementsRequest(server string, id IdPath, params *GetCate
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -8610,6 +8931,17 @@ func NewGetChangelogRequest(server string, params *GetChangelogParams) (*http.Re
 			}
 
 			req.Header.Set("Accept-Language", headerParam0)
+		}
+
+		if params.DonaSeller != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Dona-Seller", headerParam1)
 		}
 
 	}
@@ -8728,15 +9060,26 @@ func NewListEventsRequest(server string, params *ListEventsParams) (*http.Reques
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -8803,15 +9146,26 @@ func NewExportOrdersRequestWithBody(server string, params *ExportOrdersParams, c
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -8878,15 +9232,26 @@ func NewExportProductsRequestWithBody(server string, params *ExportProductsParam
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -8931,15 +9296,26 @@ func NewGetBalanceRequest(server string, params *GetBalanceParams) (*http.Reques
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9059,15 +9435,26 @@ func NewListSettlementsRequest(server string, params *ListSettlementsParams) (*h
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9159,15 +9546,26 @@ func NewSearchIkpuRequest(server string, params *SearchIkpuParams) (*http.Reques
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9219,15 +9617,120 @@ func NewGetJobRequest(server string, id IdPath, params *GetJobParams) (*http.Req
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewDownloadJobFileRequest constructs an http.Request for the DownloadJobFile method
+func NewDownloadJobFileRequest(server string, id IdPath, params *DownloadJobFileParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/jobs/%s/download", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "token", params.Token, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.AcceptLanguage != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Accept-Language", *params.AcceptLanguage, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Accept-Language", headerParam0)
+		}
+
+		if params.DonaSeller != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9272,15 +9775,26 @@ func NewListKeysRequest(server string, params *ListKeysParams) (*http.Request, e
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9325,6 +9839,17 @@ func NewGetLlmsTxtRequest(server string, params *GetLlmsTxtParams) (*http.Reques
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
+		if params.DonaSeller != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
 	}
 
 	return req, nil
@@ -9367,15 +9892,26 @@ func NewGetMeRequest(server string, params *GetMeParams) (*http.Request, error) 
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9433,15 +9969,26 @@ func NewCreateMediaUploadUrlRequestWithBody(server string, params *CreateMediaUp
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9484,6 +10031,17 @@ func NewGetOpenApiRequest(server string, params *GetOpenApiParams) (*http.Reques
 			}
 
 			req.Header.Set("Accept-Language", headerParam0)
+		}
+
+		if params.DonaSeller != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Dona-Seller", headerParam1)
 		}
 
 	}
@@ -9639,15 +10197,26 @@ func NewListOrdersRequest(server string, params *ListOrdersParams) (*http.Reques
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9705,15 +10274,26 @@ func NewBatchOrderLabelsRequestWithBody(server string, params *BatchOrderLabelsP
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9765,15 +10345,26 @@ func NewGetOrderRequest(server string, id IdPath, params *GetOrderParams) (*http
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -9818,7 +10409,7 @@ func NewAcceptOrderRequest(server string, id IdPath, params *AcceptOrderParams) 
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -9872,15 +10463,26 @@ func NewAcceptOrderRequest(server string, id IdPath, params *AcceptOrderParams) 
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -9936,7 +10538,7 @@ func NewCancelOrderRequestWithBody(server string, id IdPath, params *CancelOrder
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -9992,15 +10594,26 @@ func NewCancelOrderRequestWithBody(server string, id IdPath, params *CancelOrder
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -10056,7 +10669,7 @@ func NewDeclineOrderRequestWithBody(server string, id IdPath, params *DeclineOrd
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -10112,15 +10725,26 @@ func NewDeclineOrderRequestWithBody(server string, id IdPath, params *DeclineOrd
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -10165,7 +10789,7 @@ func NewHandoverOrderRequest(server string, id IdPath, params *HandoverOrderPara
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -10219,15 +10843,26 @@ func NewHandoverOrderRequest(server string, id IdPath, params *HandoverOrderPara
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -10279,15 +10914,26 @@ func NewGetOrderInvoiceRequest(server string, id IdPath, params *GetOrderInvoice
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -10339,15 +10985,26 @@ func NewGetOrderLabelRequest(server string, id IdPath, params *GetOrderLabelPara
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -10403,7 +11060,7 @@ func NewAddOrderNoteRequestWithBody(server string, id IdPath, params *AddOrderNo
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -10459,15 +11116,26 @@ func NewAddOrderNoteRequestWithBody(server string, id IdPath, params *AddOrderNo
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -10512,7 +11180,7 @@ func NewMarkOrderReadyRequest(server string, id IdPath, params *MarkOrderReadyPa
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -10566,15 +11234,26 @@ func NewMarkOrderReadyRequest(server string, id IdPath, params *MarkOrderReadyPa
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -10619,7 +11298,7 @@ func NewShipOrderRequest(server string, id IdPath, params *ShipOrderParams) (*ht
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -10673,15 +11352,26 @@ func NewShipOrderRequest(server string, id IdPath, params *ShipOrderParams) (*ht
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -10733,15 +11423,26 @@ func NewGetOrderTimelineRequest(server string, id IdPath, params *GetOrderTimeli
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -10784,6 +11485,17 @@ func NewPingRequest(server string, params *PingParams) (*http.Request, error) {
 			}
 
 			req.Header.Set("Accept-Language", headerParam0)
+		}
+
+		if params.DonaSeller != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Dona-Seller", headerParam1)
 		}
 
 	}
@@ -10844,7 +11556,7 @@ func NewSetPricesRequestWithBody(server string, params *SetPricesParams, content
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -10900,15 +11612,26 @@ func NewSetPricesRequestWithBody(server string, params *SetPricesParams, content
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -11075,15 +11798,26 @@ func NewListProductsRequest(server string, params *ListProductsParams) (*http.Re
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -11132,7 +11866,7 @@ func NewCreateProductRequestWithBody(server string, params *CreateProductParams,
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -11188,15 +11922,26 @@ func NewCreateProductRequestWithBody(server string, params *CreateProductParams,
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -11245,7 +11990,7 @@ func NewBatchProductsRequestWithBody(server string, params *BatchProductsParams,
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -11301,15 +12046,26 @@ func NewBatchProductsRequestWithBody(server string, params *BatchProductsParams,
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -11401,15 +12157,26 @@ func NewListDeletedProductsRequest(server string, params *ListDeletedProductsPar
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -11461,15 +12228,26 @@ func NewGetProductRequest(server string, id IdPath, params *GetProductParams) (*
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -11525,7 +12303,7 @@ func NewUpdateProductRequestWithBody(server string, id IdPath, params *UpdatePro
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -11581,15 +12359,26 @@ func NewUpdateProductRequestWithBody(server string, id IdPath, params *UpdatePro
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -11634,7 +12423,7 @@ func NewDelistProductRequest(server string, id IdPath, params *DelistProductPara
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -11688,15 +12477,26 @@ func NewDelistProductRequest(server string, id IdPath, params *DelistProductPara
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -11748,15 +12548,26 @@ func NewGetProductIssuesRequest(server string, id IdPath, params *GetProductIssu
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -11801,7 +12612,7 @@ func NewPublishProductRequest(server string, id IdPath, params *PublishProductPa
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -11855,15 +12666,26 @@ func NewPublishProductRequest(server string, id IdPath, params *PublishProductPa
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -11971,15 +12793,26 @@ func NewListReturnsRequest(server string, params *ListReturnsParams) (*http.Requ
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -12031,15 +12864,26 @@ func NewGetReturnRequest(server string, id IdPath, params *GetReturnParams) (*ht
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -12082,6 +12926,17 @@ func NewGetStatusRequest(server string, params *GetStatusParams) (*http.Request,
 			}
 
 			req.Header.Set("Accept-Language", headerParam0)
+		}
+
+		if params.DonaSeller != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Dona-Seller", headerParam1)
 		}
 
 	}
@@ -12212,15 +13067,26 @@ func NewListStockRequest(server string, params *ListStockParams) (*http.Request,
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -12281,7 +13147,7 @@ func NewSetStockRequestWithBody(server string, params *SetStockParams, contentTy
 
 		if params.DryRun != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dry_run", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -12337,15 +13203,26 @@ func NewSetStockRequestWithBody(server string, params *SetStockParams, contentTy
 			req.Header.Set("Accept-Language", headerParam2)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam3 string
 
-			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam3)
+			req.Header.Set("Dona-Seller", headerParam3)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam4 string
+
+			headerParam4, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam4)
 		}
 
 	}
@@ -12390,15 +13267,26 @@ func NewListWebhooksRequest(server string, params *ListWebhooksParams) (*http.Re
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -12465,15 +13353,26 @@ func NewCreateWebhookRequestWithBody(server string, params *CreateWebhookParams,
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -12525,15 +13424,26 @@ func NewDeleteWebhookRequest(server string, id IdPath, params *DeleteWebhookPara
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -12585,15 +13495,26 @@ func NewGetWebhookRequest(server string, id IdPath, params *GetWebhookParams) (*
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -12667,15 +13588,26 @@ func NewUpdateWebhookRequestWithBody(server string, id IdPath, params *UpdateWeb
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -12790,15 +13722,26 @@ func NewListWebhookDeliveriesRequest(server string, id IdPath, params *ListWebho
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -12866,15 +13809,26 @@ func NewRedeliverWebhookDeliveryRequest(server string, id IdPath, deliveryId ope
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -12926,15 +13880,26 @@ func NewPingWebhookRequest(server string, id IdPath, params *PingWebhookParams) 
 			req.Header.Set("Accept-Language", headerParam0)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam1)
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -12995,15 +13960,26 @@ func NewRotateWebhookSecretRequest(server string, id IdPath, params *RotateWebho
 			req.Header.Set("Accept-Language", headerParam1)
 		}
 
-		if params.XDonaIntegration != nil {
+		if params.DonaSeller != nil {
 			var headerParam2 string
 
-			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("X-Dona-Integration", headerParam2)
+			req.Header.Set("Dona-Seller", headerParam2)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam3)
 		}
 
 	}
@@ -13138,7 +14114,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetChangelogWithResponse Changelog (JSON, or RSS with Accept)
 	//
-	// Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an empty list until then.
+	// Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487, S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300` with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-None-Match` with it answers `304` and no body.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -13192,7 +14168,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetBalanceWithResponse Balance
 	//
-	// Never error-copied. No requisites, PAN or statement URLs.
+	// The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`), never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` before any read (D3).
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -13201,7 +14177,7 @@ type ClientWithResponsesInterface interface {
 
 	// ListSettlementsWithResponse Settlement lines
 	//
-	// Ledger lines of the shop's payable account, newest first.
+	// The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo` is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`, `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`, `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`, `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -13225,6 +14201,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /jobs/{id} (the `GetJob` operationId).
 	GetJobWithResponse(ctx context.Context, id IdPath, params *GetJobParams, reqEditors ...RequestEditorFn) (*GetJobResponse, error)
+
+	// DownloadJobFileWithResponse Download an export's file
+	//
+	// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /jobs/{id}/download (the `DownloadJobFile` operationId).
+	DownloadJobFileWithResponse(ctx context.Context, id IdPath, params *DownloadJobFileParams, reqEditors ...RequestEditorFn) (*DownloadJobFileResponse, error)
 
 	// ListKeysWithResponse The shop's keys (read-only; management is portal-only)
 	//
@@ -13291,7 +14276,7 @@ type ClientWithResponsesInterface interface {
 
 	// BatchOrderLabelsWithBodyWithResponse Labels for ≤ 100 orders (one PDF)
 	//
-	// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+	// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -13300,7 +14285,7 @@ type ClientWithResponsesInterface interface {
 
 	// BatchOrderLabelsWithResponse Labels for ≤ 100 orders (one PDF)
 	//
-	// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+	// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -13309,7 +14294,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetOrderWithResponse Get an order (PII only with orders:pii)
 	//
-	// `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+	// `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7) the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld: <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -13327,7 +14312,7 @@ type ClientWithResponsesInterface interface {
 
 	// CancelOrderWithBodyWithResponse Cancel (after acceptance) — money-reversing
 	//
-	// Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -13336,7 +14321,7 @@ type ClientWithResponsesInterface interface {
 
 	// CancelOrderWithResponse Cancel (after acceptance) — money-reversing
 	//
-	// Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -13345,7 +14330,7 @@ type ClientWithResponsesInterface interface {
 
 	// DeclineOrderWithBodyWithResponse Decline (before acceptance) — money-reversing
 	//
-	// `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -13354,7 +14339,7 @@ type ClientWithResponsesInterface interface {
 
 	// DeclineOrderWithResponse Decline (before acceptance) — money-reversing
 	//
-	// `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -13372,7 +14357,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetOrderInvoiceWithResponse Invoice (PDF, contains PII)
 	//
-	// As the label. ≤ 30/min.
+	// The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block name (Form A Q12 states both).
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -13381,7 +14366,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetOrderLabelWithResponse Shipping label (PDF, contains PII)
 	//
-	// Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤ 30/min.
+	// The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not charged.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -13543,7 +14528,7 @@ type ClientWithResponsesInterface interface {
 
 	// DelistProductWithResponse Delist (hide) — never a hard delete
 	//
-	// Sets the product `hidden`. There is no hard delete on this API. Kill switch: `writes_enabled`.
+	// Sets the product `delisted` (the portal's delist). Delisting more than 30 % of the shop's live products at once ⇒ `202 held_for_review` (`delist_30pct`). There is no hard delete on this API. Kill switch: `writes_enabled`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -13561,7 +14546,7 @@ type ClientWithResponsesInterface interface {
 
 	// PublishProductWithResponse Publish
 	//
-	// `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). Kill switch: `writes_enabled`.
+	// `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits for an approver). Kill switch: `writes_enabled`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -15373,8 +16358,10 @@ type ExportOrdersResponse202Headers struct {
 	Deprecation         *string
 	DonaAPIWarn         *string
 	DonaRequestId       *string
+	Location            *string
 	RateLimit           *string
 	RateLimitPolicy     *string
+	RetryAfter          *int
 	Sunset              *string
 	XDonaKeyExpires     *time.Time
 	XRateLimitLimit     *int
@@ -15548,8 +16535,10 @@ type ExportProductsResponse202Headers struct {
 	Deprecation         *string
 	DonaAPIWarn         *string
 	DonaRequestId       *string
+	Location            *string
 	RateLimit           *string
 	RateLimitPolicy     *string
+	RetryAfter          *int
 	Sunset              *string
 	XDonaKeyExpires     *time.Time
 	XRateLimitLimit     *int
@@ -16339,6 +17328,159 @@ func (r GetJobResponse) ContentType() string {
 	return ""
 }
 
+// DownloadJobFileResponse200Headers the declared response headers of an HTTP 200 response for DownloadJobFile
+type DownloadJobFileResponse200Headers struct {
+	CacheControl        *string
+	ContentDisposition  *string
+	Deprecation         *string
+	DonaAPIWarn         *string
+	DonaRequestId       *string
+	RateLimit           *string
+	RateLimitPolicy     *string
+	Sunset              *string
+	XDonaKeyExpires     *time.Time
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DownloadJobFileResponse401Headers the declared response headers of an HTTP 401 response for DownloadJobFile
+type DownloadJobFileResponse401Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+}
+
+// DownloadJobFileResponse403Headers the declared response headers of an HTTP 403 response for DownloadJobFile
+type DownloadJobFileResponse403Headers struct {
+	CacheControl          *string
+	DonaRateLimitedReason *string
+	DonaRequestId         *string
+	RetryAfter            *int
+}
+
+// DownloadJobFileResponse404Headers the declared response headers of an HTTP 404 response for DownloadJobFile
+type DownloadJobFileResponse404Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+}
+
+// DownloadJobFileResponse429Headers the declared response headers of an HTTP 429 response for DownloadJobFile
+type DownloadJobFileResponse429Headers struct {
+	CacheControl          *string
+	DonaRateLimitedReason *string
+	DonaRequestId         *string
+	RateLimit             *string
+	RateLimitPolicy       *string
+	RetryAfter            *int
+	XRateLimitLimit       *int
+	XRateLimitRemaining   *int
+	XRateLimitReset       *int
+}
+
+// DownloadJobFileResponse500Headers the declared response headers of an HTTP 500 response for DownloadJobFile
+type DownloadJobFileResponse500Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+}
+
+// DownloadJobFileResponse503Headers the declared response headers of an HTTP 503 response for DownloadJobFile
+type DownloadJobFileResponse503Headers struct {
+	CacheControl          *string
+	DonaRateLimitedReason *string
+	DonaRequestId         *string
+	RetryAfter            *int
+}
+
+type DownloadJobFileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Unauthorized
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Forbidden
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *NotFound
+	// JSON429 the response for an HTTP 429 `application/json` response
+	JSON429 *TooManyRequests
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *InternalError
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *DownloadJobFileResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *DownloadJobFileResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DownloadJobFileResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DownloadJobFileResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DownloadJobFileResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DownloadJobFileResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *DownloadJobFileResponse503Headers
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r DownloadJobFileResponse) GetJSON401() *Unauthorized {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r DownloadJobFileResponse) GetJSON403() *Forbidden {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r DownloadJobFileResponse) GetJSON404() *NotFound {
+	return r.JSON404
+}
+
+// GetJSON429 returns the response for an HTTP 429 `application/json` response
+func (r DownloadJobFileResponse) GetJSON429() *TooManyRequests {
+	return r.JSON429
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r DownloadJobFileResponse) GetJSON500() *InternalError {
+	return r.JSON500
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r DownloadJobFileResponse) GetJSON503() *ServiceUnavailable {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r DownloadJobFileResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DownloadJobFileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DownloadJobFileResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DownloadJobFileResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListKeysResponse200Headers the declared response headers of an HTTP 200 response for ListKeys
 type ListKeysResponse200Headers struct {
 	CacheControl        *string
@@ -17105,6 +18247,13 @@ type BatchOrderLabelsResponse404Headers struct {
 	DonaRequestId *string
 }
 
+// BatchOrderLabelsResponse409Headers the declared response headers of an HTTP 409 response for BatchOrderLabels
+type BatchOrderLabelsResponse409Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+	RetryAfter    *int
+}
+
 // BatchOrderLabelsResponse429Headers the declared response headers of an HTTP 429 response for BatchOrderLabels
 type BatchOrderLabelsResponse429Headers struct {
 	CacheControl          *string
@@ -17143,6 +18292,8 @@ type BatchOrderLabelsResponse struct {
 	JSON403 *Forbidden
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *NotFound
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Conflict
 	// JSON429 the response for an HTTP 429 `application/json` response
 	JSON429 *TooManyRequests
 	// JSON500 the response for an HTTP 500 `application/json` response
@@ -17159,6 +18310,8 @@ type BatchOrderLabelsResponse struct {
 	Headers403 *BatchOrderLabelsResponse403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *BatchOrderLabelsResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *BatchOrderLabelsResponse409Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *BatchOrderLabelsResponse429Headers
 	// Headers500 the parsed response headers for an HTTP 500 response
@@ -17185,6 +18338,11 @@ func (r BatchOrderLabelsResponse) GetJSON403() *Forbidden {
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r BatchOrderLabelsResponse) GetJSON404() *NotFound {
 	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r BatchOrderLabelsResponse) GetJSON409() *Conflict {
+	return r.JSON409
 }
 
 // GetJSON429 returns the response for an HTTP 429 `application/json` response
@@ -18185,6 +19343,13 @@ type GetOrderInvoiceResponse404Headers struct {
 	DonaRequestId *string
 }
 
+// GetOrderInvoiceResponse409Headers the declared response headers of an HTTP 409 response for GetOrderInvoice
+type GetOrderInvoiceResponse409Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+	RetryAfter    *int
+}
+
 // GetOrderInvoiceResponse429Headers the declared response headers of an HTTP 429 response for GetOrderInvoice
 type GetOrderInvoiceResponse429Headers struct {
 	CacheControl          *string
@@ -18221,6 +19386,8 @@ type GetOrderInvoiceResponse struct {
 	JSON403 *Forbidden
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *NotFound
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Conflict
 	// JSON429 the response for an HTTP 429 `application/json` response
 	JSON429 *TooManyRequests
 	// JSON500 the response for an HTTP 500 `application/json` response
@@ -18235,6 +19402,8 @@ type GetOrderInvoiceResponse struct {
 	Headers403 *GetOrderInvoiceResponse403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *GetOrderInvoiceResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *GetOrderInvoiceResponse409Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *GetOrderInvoiceResponse429Headers
 	// Headers500 the parsed response headers for an HTTP 500 response
@@ -18256,6 +19425,11 @@ func (r GetOrderInvoiceResponse) GetJSON403() *Forbidden {
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r GetOrderInvoiceResponse) GetJSON404() *NotFound {
 	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r GetOrderInvoiceResponse) GetJSON409() *Conflict {
+	return r.JSON409
 }
 
 // GetJSON429 returns the response for an HTTP 429 `application/json` response
@@ -18337,6 +19511,13 @@ type GetOrderLabelResponse404Headers struct {
 	DonaRequestId *string
 }
 
+// GetOrderLabelResponse409Headers the declared response headers of an HTTP 409 response for GetOrderLabel
+type GetOrderLabelResponse409Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+	RetryAfter    *int
+}
+
 // GetOrderLabelResponse429Headers the declared response headers of an HTTP 429 response for GetOrderLabel
 type GetOrderLabelResponse429Headers struct {
 	CacheControl          *string
@@ -18373,6 +19554,8 @@ type GetOrderLabelResponse struct {
 	JSON403 *Forbidden
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *NotFound
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Conflict
 	// JSON429 the response for an HTTP 429 `application/json` response
 	JSON429 *TooManyRequests
 	// JSON500 the response for an HTTP 500 `application/json` response
@@ -18387,6 +19570,8 @@ type GetOrderLabelResponse struct {
 	Headers403 *GetOrderLabelResponse403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *GetOrderLabelResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *GetOrderLabelResponse409Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *GetOrderLabelResponse429Headers
 	// Headers500 the parsed response headers for an HTTP 500 response
@@ -18408,6 +19593,11 @@ func (r GetOrderLabelResponse) GetJSON403() *Forbidden {
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r GetOrderLabelResponse) GetJSON404() *NotFound {
 	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r GetOrderLabelResponse) GetJSON409() *Conflict {
+	return r.JSON409
 }
 
 // GetJSON429 returns the response for an HTTP 429 `application/json` response
@@ -19865,8 +21055,10 @@ type BatchProductsResponse202Headers struct {
 	Deprecation         *string
 	DonaAPIWarn         *string
 	DonaRequestId       *string
+	Location            *string
 	RateLimit           *string
 	RateLimitPolicy     *string
+	RetryAfter          *int
 	Sunset              *string
 	XDonaKeyExpires     *time.Time
 	XRateLimitLimit     *int
@@ -20596,6 +21788,21 @@ type DelistProductResponse200Headers struct {
 	XRateLimitReset     *int
 }
 
+// DelistProductResponse202Headers the declared response headers of an HTTP 202 response for DelistProduct
+type DelistProductResponse202Headers struct {
+	CacheControl        *string
+	Deprecation         *string
+	DonaAPIWarn         *string
+	DonaRequestId       *string
+	RateLimit           *string
+	RateLimitPolicy     *string
+	Sunset              *string
+	XDonaKeyExpires     *time.Time
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
 // DelistProductResponse400Headers the declared response headers of an HTTP 400 response for DelistProduct
 type DelistProductResponse400Headers struct {
 	CacheControl  *string
@@ -20661,6 +21868,8 @@ type DelistProductResponse struct {
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *ProductState
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *HeldForReview
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *BadRequest
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -20679,6 +21888,8 @@ type DelistProductResponse struct {
 	JSON503 *ServiceUnavailable
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *DelistProductResponse200Headers
+	// Headers202 the parsed response headers for an HTTP 202 response
+	Headers202 *DelistProductResponse202Headers
 	// Headers400 the parsed response headers for an HTTP 400 response
 	Headers400 *DelistProductResponse400Headers
 	// Headers401 the parsed response headers for an HTTP 401 response
@@ -20700,6 +21911,11 @@ type DelistProductResponse struct {
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r DelistProductResponse) GetJSON200() *ProductState {
 	return r.JSON200
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r DelistProductResponse) GetJSON202() *HeldForReview {
+	return r.JSON202
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -20945,6 +22161,21 @@ type PublishProductResponse200Headers struct {
 	XRateLimitReset     *int
 }
 
+// PublishProductResponse202Headers the declared response headers of an HTTP 202 response for PublishProduct
+type PublishProductResponse202Headers struct {
+	CacheControl        *string
+	Deprecation         *string
+	DonaAPIWarn         *string
+	DonaRequestId       *string
+	RateLimit           *string
+	RateLimitPolicy     *string
+	Sunset              *string
+	XDonaKeyExpires     *time.Time
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
 // PublishProductResponse400Headers the declared response headers of an HTTP 400 response for PublishProduct
 type PublishProductResponse400Headers struct {
 	CacheControl  *string
@@ -21010,6 +22241,8 @@ type PublishProductResponse struct {
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *ProductState
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *HeldForReview
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *BadRequest
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -21028,6 +22261,8 @@ type PublishProductResponse struct {
 	JSON503 *ServiceUnavailable
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *PublishProductResponse200Headers
+	// Headers202 the parsed response headers for an HTTP 202 response
+	Headers202 *PublishProductResponse202Headers
 	// Headers400 the parsed response headers for an HTTP 400 response
 	Headers400 *PublishProductResponse400Headers
 	// Headers401 the parsed response headers for an HTTP 401 response
@@ -21049,6 +22284,11 @@ type PublishProductResponse struct {
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r PublishProductResponse) GetJSON200() *ProductState {
 	return r.JSON200
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r PublishProductResponse) GetJSON202() *HeldForReview {
+	return r.JSON202
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -23600,7 +24840,7 @@ func (c *ClientWithResponses) GetCategoryRequirementsWithResponse(ctx context.Co
 
 // GetChangelogWithResponse Changelog (JSON, or RSS with Accept)
 //
-// Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (0465, S4) — an empty list until then.
+// Public. `Accept: application/rss+xml` returns RSS. Backed by `seller_api_changelog` (migration 0487, S4): published entries only, newest first; the first row is the v1 seed. Written only from Dona Control (admin-contract §7). The seller portal reads the same body at `GET /api/v1/sellers/me/api-docs/changelog` (portal-contract §6a) — this tree sends no CORS grant. Cached `public, max-age=300` with `Vary: Accept-Language, Accept` on BOTH formats, and a weak `ETag` over the exact bytes: `If-None-Match` with it answers `304` and no body.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -23690,7 +24930,7 @@ func (c *ClientWithResponses) ExportProductsWithResponse(ctx context.Context, pa
 
 // GetBalanceWithResponse Balance
 //
-// Never error-copied. No requisites, PAN or statement URLs.
+// The wallet's answer for the key's shop, asked as the shop's CURRENT owner (the portal's own finance bridge), projected field by field. Never error-copied. No requisites, PAN or statement URLs. The wallet unreachable, erroring or not knowing the shop ⇒ `503 wallet_unavailable` (`Retry-After: 30`), never its body (C57). Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` before any read (D3).
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -23705,7 +24945,7 @@ func (c *ClientWithResponses) GetBalanceWithResponse(ctx context.Context, params
 
 // ListSettlementsWithResponse Settlement lines
 //
-// Ledger lines of the shop's payable account, newest first.
+// The wallet statement's lines for the shop, newest first (asked as the shop's current owner). `memo` is the line's machine `kind` from the wallet's CLOSED vocabulary (`sale_income`, `escrow_hold`, `escrow_release`, `refund`, `return`, `adjustment`, `withdrawal`, `withdrawal_failed`, `fee`, `commission`, `hold_placed`, `hold_captured`, `hold_released`, `cod_collected`, `cod_remitted`, `transfer`) or `other` — never the wallet's free-text title (C57). A line whose `id` or `txn_id` is not a UUID, or a `next_cursor` that is not an opaque ≤ 512-character URL-safe token, refuses the whole page. `503 wallet_unavailable` / `role_unavailable` as `/finance/balance`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -23746,6 +24986,21 @@ func (c *ClientWithResponses) GetJobWithResponse(ctx context.Context, id IdPath,
 		return nil, err
 	}
 	return ParseGetJobResponse(rsp)
+}
+
+// DownloadJobFileWithResponse Download an export's file
+//
+// What a ready export's `file_url` points at. Needs BOTH a key of the job's shop that holds the scope the job's kind needs (any key of the shop — the file is the shop's; a key of another shop is `404 not_found` whatever token it carries) AND the job's own `token` from `file_url`, valid 15 min (`401 download_token_invalid` when absent, forged or another job's; `401 download_token_expired` past its time — re-read `GET /jobs/{id}` for a fresh one). The file is kept in the database, never on a public origin, and is swept with its job after `expires_at` (7 d) ⇒ `404 not_found`. Not gated by `writes_enabled`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /jobs/{id}/download (the `DownloadJobFile` operationId).
+func (c *ClientWithResponses) DownloadJobFileWithResponse(ctx context.Context, id IdPath, params *DownloadJobFileParams, reqEditors ...RequestEditorFn) (*DownloadJobFileResponse, error) {
+	rsp, err := c.DownloadJobFile(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDownloadJobFileResponse(rsp)
 }
 
 // ListKeysWithResponse The shop's keys (read-only; management is portal-only)
@@ -23855,7 +25110,7 @@ func (c *ClientWithResponses) ListOrdersWithResponse(ctx context.Context, params
 
 // BatchOrderLabelsWithBodyWithResponse Labels for ≤ 100 orders (one PDF)
 //
-// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -23870,7 +25125,7 @@ func (c *ClientWithResponses) BatchOrderLabelsWithBodyWithResponse(ctx context.C
 
 // BatchOrderLabelsWithResponse Labels for ≤ 100 orders (one PDF)
 //
-// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. ≤ 30/min.
+// A read with a body — no `Idempotency-Key`. Any foreign/missing id ⇒ `404 not_found` for the whole call. Doors and 409s as `label.pdf` (C53); `no_tracking_number` names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (`429 api_busy` as `label.pdf`).
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -23885,7 +25140,7 @@ func (c *ClientWithResponses) BatchOrderLabelsWithResponse(ctx context.Context, 
 
 // GetOrderWithResponse Get an order (PII only with orders:pii)
 //
-// `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`.
+// `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7) the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld: <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -23915,7 +25170,7 @@ func (c *ClientWithResponses) AcceptOrderWithResponse(ctx context.Context, id Id
 
 // CancelOrderWithBodyWithResponse Cancel (after acceptance) — money-reversing
 //
-// Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -23930,7 +25185,7 @@ func (c *ClientWithResponses) CancelOrderWithBodyWithResponse(ctx context.Contex
 
 // CancelOrderWithResponse Cancel (after acceptance) — money-reversing
 //
-// Same reasons and effects as `decline`, for an accepted order. 409 `order_not_cancellable` (existing estate code). Kill switch: `writes_enabled`.
+// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -23945,7 +25200,7 @@ func (c *ClientWithResponses) CancelOrderWithResponse(ctx context.Context, id Id
 
 // DeclineOrderWithBodyWithResponse Decline (before acceptance) — money-reversing
 //
-// `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -23960,7 +25215,7 @@ func (c *ClientWithResponses) DeclineOrderWithBodyWithResponse(ctx context.Conte
 
 // DeclineOrderWithResponse Decline (before acceptance) — money-reversing
 //
-// `declineOrderTx` on the marketplace pool. ADVANCED: a documents-waived shop is `403 tier_required`. 400 `invalid_decline_reason`; 409 `order_not_acceptable`. Kill switch: `writes_enabled`.
+// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -23990,7 +25245,7 @@ func (c *ClientWithResponses) HandoverOrderWithResponse(ctx context.Context, id 
 
 // GetOrderInvoiceWithResponse Invoice (PDF, contains PII)
 //
-// As the label. ≤ 30/min.
+// The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block name (Form A Q12 states both).
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -24005,7 +25260,7 @@ func (c *ClientWithResponses) GetOrderInvoiceWithResponse(ctx context.Context, i
 
 // GetOrderLabelWithResponse Shipping label (PDF, contains PII)
 //
-// Prints buyer name/phone/address. `sk` keys only; logged `pii=true`; never stored by the API. ≤ 30/min.
+// The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not charged.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -24275,7 +25530,7 @@ func (c *ClientWithResponses) UpdateProductWithResponse(ctx context.Context, id 
 
 // DelistProductWithResponse Delist (hide) — never a hard delete
 //
-// Sets the product `hidden`. There is no hard delete on this API. Kill switch: `writes_enabled`.
+// Sets the product `delisted` (the portal's delist). Delisting more than 30 % of the shop's live products at once ⇒ `202 held_for_review` (`delist_30pct`). There is no hard delete on this API. Kill switch: `writes_enabled`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -24305,7 +25560,7 @@ func (c *ClientWithResponses) GetProductIssuesWithResponse(ctx context.Context, 
 
 // PublishProductWithResponse Publish
 //
-// `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). Kill switch: `writes_enabled`.
+// `gateBlocksActivation`. Pending shop ⇒ `200` with `hold.reason=shop_not_activated` (goes live on documents approval). A gate failure ⇒ `400 invalid_body` with `details[]` (the same issues `/issues` lists). A price below the catalogue floor ⇒ `202 held_for_review` (`price_floor`; activation waits for an approver). Kill switch: `writes_enabled`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -28079,6 +29334,13 @@ func ParseExportOrdersResponse(rsp *http.Response) (*ExportOrdersResponse, error
 			}
 			headers.DonaRequestId = &value
 		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "uri-reference"}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
@@ -28092,6 +29354,13 @@ func ParseExportOrdersResponse(rsp *http.Response) (*ExportOrdersResponse, error
 				return nil, err
 			}
 			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
 		}
 		if values := rsp.Header.Values("Sunset"); len(values) > 0 {
 			var value string
@@ -28440,6 +29709,13 @@ func ParseExportProductsResponse(rsp *http.Response) (*ExportProductsResponse, e
 			}
 			headers.DonaRequestId = &value
 		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "uri-reference"}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
@@ -28453,6 +29729,13 @@ func ParseExportProductsResponse(rsp *http.Response) (*ExportProductsResponse, e
 				return nil, err
 			}
 			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
 		}
 		if values := rsp.Header.Values("Sunset"); len(values) > 0 {
 			var value string
@@ -30001,6 +31284,336 @@ func ParseGetJobResponse(rsp *http.Response) (*GetJobResponse, error) {
 	return response, nil
 }
 
+// ParseDownloadJobFileResponse parses an HTTP response from a DownloadJobFileWithResponse call
+func ParseDownloadJobFileResponse(rsp *http.Response) (*DownloadJobFileResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DownloadJobFileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest TooManyRequests
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers DownloadJobFileResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Content-Disposition"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Disposition", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentDisposition = &value
+		}
+		if values := rsp.Header.Values("Deprecation"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Deprecation", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Deprecation = &value
+		}
+		if values := rsp.Header.Values("Dona-API-Warn"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-API-Warn", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaAPIWarn = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Sunset"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Sunset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Sunset = &value
+		}
+		if values := rsp.Header.Values("X-Dona-Key-Expires"); len(values) > 0 {
+			var value time.Time
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dona-Key-Expires", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			}
+			headers.XDonaKeyExpires = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers DownloadJobFileResponse401Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers DownloadJobFileResponse403Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Rate-Limited-Reason"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Rate-Limited-Reason", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRateLimitedReason = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DownloadJobFileResponse404Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers DownloadJobFileResponse429Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Rate-Limited-Reason"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Rate-Limited-Reason", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRateLimitedReason = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers DownloadJobFileResponse500Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers DownloadJobFileResponse503Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Rate-Limited-Reason"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Rate-Limited-Reason", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRateLimitedReason = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListKeysResponse parses an HTTP response from a ListKeysWithResponse call
 func ParseListKeysResponse(rsp *http.Response) (*ListKeysResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -31440,6 +33053,13 @@ func ParseBatchOrderLabelsResponse(rsp *http.Response) (*BatchOrderLabelsRespons
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest TooManyRequests
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -31626,6 +33246,30 @@ func ParseBatchOrderLabelsResponse(rsp *http.Response) (*BatchOrderLabelsRespons
 			headers.DonaRequestId = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers BatchOrderLabelsResponse409Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers409 = &headers
 	case rsp.StatusCode == 429:
 		var headers BatchOrderLabelsResponse429Headers
 		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
@@ -33650,6 +35294,13 @@ func ParseGetOrderInvoiceResponse(rsp *http.Response) (*GetOrderInvoiceResponse,
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest TooManyRequests
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -33819,6 +35470,30 @@ func ParseGetOrderInvoiceResponse(rsp *http.Response) (*GetOrderInvoiceResponse,
 			headers.DonaRequestId = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers GetOrderInvoiceResponse409Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers409 = &headers
 	case rsp.StatusCode == 429:
 		var headers GetOrderInvoiceResponse429Headers
 		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
@@ -33972,6 +35647,13 @@ func ParseGetOrderLabelResponse(rsp *http.Response) (*GetOrderLabelResponse, err
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest TooManyRequests
@@ -34142,6 +35824,30 @@ func ParseGetOrderLabelResponse(rsp *http.Response) (*GetOrderLabelResponse, err
 			headers.DonaRequestId = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers GetOrderLabelResponse409Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers409 = &headers
 	case rsp.StatusCode == 429:
 		var headers GetOrderLabelResponse429Headers
 		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
@@ -37258,6 +38964,13 @@ func ParseBatchProductsResponse(rsp *http.Response) (*BatchProductsResponse, err
 			}
 			headers.DonaRequestId = &value
 		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "uri-reference"}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
@@ -37271,6 +38984,13 @@ func ParseBatchProductsResponse(rsp *http.Response) (*BatchProductsResponse, err
 				return nil, err
 			}
 			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
 		}
 		if values := rsp.Header.Values("Sunset"); len(values) > 0 {
 			var value string
@@ -38686,6 +40406,13 @@ func ParseDelistProductResponse(rsp *http.Response) (*DelistProductResponse, err
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest HeldForReview
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -38825,6 +40552,86 @@ func ParseDelistProductResponse(rsp *http.Response) (*DelistProductResponse, err
 			headers.XRateLimitReset = &value
 		}
 		response.Headers200 = &headers
+	case rsp.StatusCode == 202:
+		var headers DelistProductResponse202Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Deprecation"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Deprecation", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Deprecation = &value
+		}
+		if values := rsp.Header.Values("Dona-API-Warn"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-API-Warn", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaAPIWarn = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Sunset"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Sunset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Sunset = &value
+		}
+		if values := rsp.Header.Values("X-Dona-Key-Expires"); len(values) > 0 {
+			var value time.Time
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dona-Key-Expires", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			}
+			headers.XDonaKeyExpires = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers202 = &headers
 	case rsp.StatusCode == 400:
 		var headers DelistProductResponse400Headers
 		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
@@ -39401,6 +41208,13 @@ func ParsePublishProductResponse(rsp *http.Response) (*PublishProductResponse, e
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest HeldForReview
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -39540,6 +41354,86 @@ func ParsePublishProductResponse(rsp *http.Response) (*PublishProductResponse, e
 			headers.XRateLimitReset = &value
 		}
 		response.Headers200 = &headers
+	case rsp.StatusCode == 202:
+		var headers PublishProductResponse202Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Deprecation"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Deprecation", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Deprecation = &value
+		}
+		if values := rsp.Header.Values("Dona-API-Warn"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-API-Warn", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaAPIWarn = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Sunset"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Sunset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Sunset = &value
+		}
+		if values := rsp.Header.Values("X-Dona-Key-Expires"); len(values) > 0 {
+			var value time.Time
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dona-Key-Expires", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			}
+			headers.XDonaKeyExpires = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers202 = &headers
 	case rsp.StatusCode == 400:
 		var headers PublishProductResponse400Headers
 		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {

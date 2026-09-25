@@ -19,6 +19,7 @@ def _get_kwargs(
     body: WebhookUpdate,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -26,6 +27,9 @@ def _get_kwargs(
 
     if not isinstance(accept_language, Unset):
         headers["Accept-Language"] = accept_language
+
+    if not isinstance(dona_seller, Unset):
+        headers["Dona-Seller"] = dona_seller
 
     if not isinstance(x_dona_integration, Unset):
         headers["X-Dona-Integration"] = x_dona_integration
@@ -118,6 +122,7 @@ def sync_detailed(
     body: WebhookUpdate,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | Webhook]:
     """Change url / event types / pause
@@ -129,6 +134,7 @@ def sync_detailed(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (WebhookUpdate):
 
@@ -145,6 +151,7 @@ def sync_detailed(
         body=body,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -162,6 +169,7 @@ def sync(
     body: WebhookUpdate,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | Webhook | None:
     """Change url / event types / pause
@@ -173,6 +181,7 @@ def sync(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (WebhookUpdate):
 
@@ -190,6 +199,7 @@ def sync(
         body=body,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     ).parsed
 
@@ -201,6 +211,7 @@ async def asyncio_detailed(
     body: WebhookUpdate,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Response[Error | Webhook]:
     """Change url / event types / pause
@@ -212,6 +223,7 @@ async def asyncio_detailed(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (WebhookUpdate):
 
@@ -228,6 +240,7 @@ async def asyncio_detailed(
         body=body,
         idempotency_key=idempotency_key,
         accept_language=accept_language,
+        dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
     )
 
@@ -243,6 +256,7 @@ async def asyncio(
     body: WebhookUpdate,
     idempotency_key: str,
     accept_language: str | Unset = "uz",
+    dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
 ) -> Error | Webhook | None:
     """Change url / event types / pause
@@ -254,6 +268,7 @@ async def asyncio(
         idempotency_key (str):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
+        dona_seller (UUID | Unset):
         x_dona_integration (str | Unset):
         body (WebhookUpdate):
 
@@ -272,6 +287,7 @@ async def asyncio(
             body=body,
             idempotency_key=idempotency_key,
             accept_language=accept_language,
+            dona_seller=dona_seller,
             x_dona_integration=x_dona_integration,
         )
     ).parsed

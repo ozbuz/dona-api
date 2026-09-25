@@ -137,6 +137,7 @@ class HealthApi
      * Account health summary
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountHealth'] to see the possible values for this operation
      *
@@ -144,9 +145,9 @@ class HealthApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\HealthSummary|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function getAccountHealth($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
+    public function getAccountHealth($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
     {
-        list($response) = $this->getAccountHealthWithHttpInfo($accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->getAccountHealthWithHttpInfo($accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -156,6 +157,7 @@ class HealthApi
      * Account health summary
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountHealth'] to see the possible values for this operation
      *
@@ -163,9 +165,9 @@ class HealthApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\HealthSummary|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getAccountHealthWithHttpInfo($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
+    public function getAccountHealthWithHttpInfo($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
     {
-        $request = $this->getAccountHealthRequest($accept_language, $x_dona_integration, $contentType);
+        $request = $this->getAccountHealthRequest($accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -312,15 +314,16 @@ class HealthApi
      * Account health summary
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountHealth'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getAccountHealthAsync($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
+    public function getAccountHealthAsync($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
     {
-        return $this->getAccountHealthAsyncWithHttpInfo($accept_language, $x_dona_integration, $contentType)
+        return $this->getAccountHealthAsyncWithHttpInfo($accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -334,16 +337,17 @@ class HealthApi
      * Account health summary
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountHealth'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getAccountHealthAsyncWithHttpInfo($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
+    public function getAccountHealthAsyncWithHttpInfo($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
     {
         $returnType = '\Dona\Api\Model\HealthSummary';
-        $request = $this->getAccountHealthRequest($accept_language, $x_dona_integration, $contentType);
+        $request = $this->getAccountHealthRequest($accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -385,14 +389,16 @@ class HealthApi
      * Create request for operation 'getAccountHealth'
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountHealth'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getAccountHealthRequest($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
+    public function getAccountHealthRequest($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountHealth'][0])
     {
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -411,6 +417,10 @@ class HealthApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -487,6 +497,7 @@ class HealthApi
      *
      * @param  string $metric_id Metric id from &#x60;/account/health&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountMetric'] to see the possible values for this operation
      *
@@ -494,9 +505,9 @@ class HealthApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\MetricDetail|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function getAccountMetric($metric_id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
+    public function getAccountMetric($metric_id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
     {
-        list($response) = $this->getAccountMetricWithHttpInfo($metric_id, $accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->getAccountMetricWithHttpInfo($metric_id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -507,6 +518,7 @@ class HealthApi
      *
      * @param  string $metric_id Metric id from &#x60;/account/health&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountMetric'] to see the possible values for this operation
      *
@@ -514,9 +526,9 @@ class HealthApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\MetricDetail|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getAccountMetricWithHttpInfo($metric_id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
+    public function getAccountMetricWithHttpInfo($metric_id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
     {
-        $request = $this->getAccountMetricRequest($metric_id, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->getAccountMetricRequest($metric_id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -678,15 +690,16 @@ class HealthApi
      *
      * @param  string $metric_id Metric id from &#x60;/account/health&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountMetric'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getAccountMetricAsync($metric_id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
+    public function getAccountMetricAsync($metric_id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
     {
-        return $this->getAccountMetricAsyncWithHttpInfo($metric_id, $accept_language, $x_dona_integration, $contentType)
+        return $this->getAccountMetricAsyncWithHttpInfo($metric_id, $accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -701,16 +714,17 @@ class HealthApi
      *
      * @param  string $metric_id Metric id from &#x60;/account/health&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountMetric'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getAccountMetricAsyncWithHttpInfo($metric_id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
+    public function getAccountMetricAsyncWithHttpInfo($metric_id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
     {
         $returnType = '\Dona\Api\Model\MetricDetail';
-        $request = $this->getAccountMetricRequest($metric_id, $accept_language, $x_dona_integration, $contentType);
+        $request = $this->getAccountMetricRequest($metric_id, $accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -753,13 +767,14 @@ class HealthApi
      *
      * @param  string $metric_id Metric id from &#x60;/account/health&#x60;. (required)
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountMetric'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getAccountMetricRequest($metric_id, $accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
+    public function getAccountMetricRequest($metric_id, $accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountMetric'][0])
     {
 
         // verify the required parameter 'metric_id' is set
@@ -768,6 +783,7 @@ class HealthApi
                 'Missing the required parameter $metric_id when calling getAccountMetric'
             );
         }
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -786,6 +802,10 @@ class HealthApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {
@@ -869,6 +889,7 @@ class HealthApi
      * The three verdicts and what ADVANCED still needs
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountVerification'] to see the possible values for this operation
      *
@@ -876,9 +897,9 @@ class HealthApi
      * @throws \InvalidArgumentException
      * @return \Dona\Api\Model\Verification|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error
      */
-    public function getAccountVerification($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
+    public function getAccountVerification($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
     {
-        list($response) = $this->getAccountVerificationWithHttpInfo($accept_language, $x_dona_integration, $contentType);
+        list($response) = $this->getAccountVerificationWithHttpInfo($accept_language, $dona_seller, $x_dona_integration, $contentType);
         return $response;
     }
 
@@ -888,6 +909,7 @@ class HealthApi
      * The three verdicts and what ADVANCED still needs
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountVerification'] to see the possible values for this operation
      *
@@ -895,9 +917,9 @@ class HealthApi
      * @throws \InvalidArgumentException
      * @return array of \Dona\Api\Model\Verification|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error|\Dona\Api\Model\Error, HTTP status code, HTTP response headers (array of strings)
      */
-    public function getAccountVerificationWithHttpInfo($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
+    public function getAccountVerificationWithHttpInfo($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
     {
-        $request = $this->getAccountVerificationRequest($accept_language, $x_dona_integration, $contentType);
+        $request = $this->getAccountVerificationRequest($accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         try {
             $options = $this->createHttpClientOption();
@@ -1044,15 +1066,16 @@ class HealthApi
      * The three verdicts and what ADVANCED still needs
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountVerification'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getAccountVerificationAsync($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
+    public function getAccountVerificationAsync($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
     {
-        return $this->getAccountVerificationAsyncWithHttpInfo($accept_language, $x_dona_integration, $contentType)
+        return $this->getAccountVerificationAsyncWithHttpInfo($accept_language, $dona_seller, $x_dona_integration, $contentType)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -1066,16 +1089,17 @@ class HealthApi
      * The three verdicts and what ADVANCED still needs
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountVerification'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function getAccountVerificationAsyncWithHttpInfo($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
+    public function getAccountVerificationAsyncWithHttpInfo($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
     {
         $returnType = '\Dona\Api\Model\Verification';
-        $request = $this->getAccountVerificationRequest($accept_language, $x_dona_integration, $contentType);
+        $request = $this->getAccountVerificationRequest($accept_language, $dona_seller, $x_dona_integration, $contentType);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -1117,14 +1141,16 @@ class HealthApi
      * Create request for operation 'getAccountVerification'
      *
      * @param  string|null $accept_language Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to 'uz')
+     * @param  string|null $dona_seller Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)
      * @param  string|null $x_dona_integration &#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)
      * @param  string $contentType The value for the Content-Type header. Check self::contentTypes['getAccountVerification'] to see the possible values for this operation
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    public function getAccountVerificationRequest($accept_language = 'uz', $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
+    public function getAccountVerificationRequest($accept_language = 'uz', $dona_seller = null, $x_dona_integration = null, string $contentType = self::contentTypes['getAccountVerification'][0])
     {
+
 
 
         if ($x_dona_integration !== null && strlen($x_dona_integration) > 128) {
@@ -1143,6 +1169,10 @@ class HealthApi
         // header params
         if ($accept_language !== null) {
             $headerParams['Accept-Language'] = ObjectSerializer::toHeaderValue($accept_language);
+        }
+        // header params
+        if ($dona_seller !== null) {
+            $headerParams['Dona-Seller'] = ObjectSerializer::toHeaderValue($dona_seller);
         }
         // header params
         if ($x_dona_integration !== null) {

@@ -47,13 +47,14 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAcceptOrderApiResponse"/>&gt;</returns>
-        Task<IAcceptOrderApiResponse> AcceptOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IAcceptOrderApiResponse> AcceptOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Accept
@@ -63,13 +64,14 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAcceptOrderApiResponse"/>?&gt;</returns>
-        Task<IAcceptOrderApiResponse?> AcceptOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IAcceptOrderApiResponse?> AcceptOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Add a seller note
@@ -81,13 +83,14 @@ namespace Dona.Api.Api
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="noteRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAddOrderNoteApiResponse"/>&gt;</returns>
-        Task<IAddOrderNoteApiResponse> AddOrderNoteAsync(Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IAddOrderNoteApiResponse> AddOrderNoteAsync(Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Add a seller note
@@ -98,191 +101,204 @@ namespace Dona.Api.Api
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="noteRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAddOrderNoteApiResponse"/>?&gt;</returns>
-        Task<IAddOrderNoteApiResponse?> AddOrderNoteOrDefaultAsync(Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IAddOrderNoteApiResponse?> AddOrderNoteOrDefaultAsync(Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Labels for ≤ 100 orders (one PDF)
         /// </summary>
         /// <remarks>
-        /// A read with a body — no &#x60;Idempotency-Key&#x60;. Any foreign/missing id ⇒ &#x60;404 not_found&#x60; for the whole call. ≤ 30/min.
+        /// A read with a body — no &#x60;Idempotency-Key&#x60;. Any foreign/missing id ⇒ &#x60;404 not_found&#x60; for the whole call. Doors and 409s as &#x60;label.pdf&#x60; (C53); &#x60;no_tracking_number&#x60; names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (&#x60;429 api_busy&#x60; as &#x60;label.pdf&#x60;).
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="labelsRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IBatchOrderLabelsApiResponse"/>&gt;</returns>
-        Task<IBatchOrderLabelsApiResponse> BatchOrderLabelsAsync(LabelsRequest labelsRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IBatchOrderLabelsApiResponse> BatchOrderLabelsAsync(LabelsRequest labelsRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Labels for ≤ 100 orders (one PDF)
         /// </summary>
         /// <remarks>
-        /// A read with a body — no &#x60;Idempotency-Key&#x60;. Any foreign/missing id ⇒ &#x60;404 not_found&#x60; for the whole call. ≤ 30/min.
+        /// A read with a body — no &#x60;Idempotency-Key&#x60;. Any foreign/missing id ⇒ &#x60;404 not_found&#x60; for the whole call. Doors and 409s as &#x60;label.pdf&#x60; (C53); &#x60;no_tracking_number&#x60; names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (&#x60;429 api_busy&#x60; as &#x60;label.pdf&#x60;).
         /// </remarks>
         /// <param name="labelsRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IBatchOrderLabelsApiResponse"/>?&gt;</returns>
-        Task<IBatchOrderLabelsApiResponse?> BatchOrderLabelsOrDefaultAsync(LabelsRequest labelsRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IBatchOrderLabelsApiResponse?> BatchOrderLabelsOrDefaultAsync(LabelsRequest labelsRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Cancel (after acceptance) — money-reversing
         /// </summary>
         /// <remarks>
-        /// Same reasons and effects as &#x60;decline&#x60;, for an accepted order. 409 &#x60;order_not_cancellable&#x60; (existing estate code). Kill switch: &#x60;writes_enabled&#x60;.
+        /// An ACCEPTED order: the portal seller-cancel&#39;s own statements (&#x60;order.SellerCancelOrderTx&#x60;) — same reasons (C15) and money effects as &#x60;decline&#x60;. The reason is stored in the order&#39;s &#x60;cancel_reason&#x60; (with the comment), NOT in &#x60;decline_reason_code&#x60;, which stays &#x60;null&#x60; (C52); the &#x60;cancelled&#x60;/&#x60;seller&#x60; timeline row, the card refund and the buyer notice run after the commit. 409 &#x60;order_not_cancellable&#x60; — a delivered or cancelled order, or one NOT YET ACCEPTED (&#x60;details[{field:\&quot;status\&quot;, code:\&quot;not_accepted\&quot;}]&#x60;: decline it) — and &#x60;order_has_active_return&#x60;. Kill switch: &#x60;writes_enabled&#x60;. &#x60;503 role_unavailable&#x60; from a SERVER_ROLE&#x3D;seller-api server, as &#x60;decline&#x60;.
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="declineRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ICancelOrderApiResponse"/>&gt;</returns>
-        Task<ICancelOrderApiResponse> CancelOrderAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<ICancelOrderApiResponse> CancelOrderAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Cancel (after acceptance) — money-reversing
         /// </summary>
         /// <remarks>
-        /// Same reasons and effects as &#x60;decline&#x60;, for an accepted order. 409 &#x60;order_not_cancellable&#x60; (existing estate code). Kill switch: &#x60;writes_enabled&#x60;.
+        /// An ACCEPTED order: the portal seller-cancel&#39;s own statements (&#x60;order.SellerCancelOrderTx&#x60;) — same reasons (C15) and money effects as &#x60;decline&#x60;. The reason is stored in the order&#39;s &#x60;cancel_reason&#x60; (with the comment), NOT in &#x60;decline_reason_code&#x60;, which stays &#x60;null&#x60; (C52); the &#x60;cancelled&#x60;/&#x60;seller&#x60; timeline row, the card refund and the buyer notice run after the commit. 409 &#x60;order_not_cancellable&#x60; — a delivered or cancelled order, or one NOT YET ACCEPTED (&#x60;details[{field:\&quot;status\&quot;, code:\&quot;not_accepted\&quot;}]&#x60;: decline it) — and &#x60;order_has_active_return&#x60;. Kill switch: &#x60;writes_enabled&#x60;. &#x60;503 role_unavailable&#x60; from a SERVER_ROLE&#x3D;seller-api server, as &#x60;decline&#x60;.
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="declineRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ICancelOrderApiResponse"/>?&gt;</returns>
-        Task<ICancelOrderApiResponse?> CancelOrderOrDefaultAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<ICancelOrderApiResponse?> CancelOrderOrDefaultAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Decline (before acceptance) — money-reversing
         /// </summary>
         /// <remarks>
-        /// &#x60;declineOrderTx&#x60; on the marketplace pool. ADVANCED: a documents-waived shop is &#x60;403 tier_required&#x60;. 400 &#x60;invalid_decline_reason&#x60;; 409 &#x60;order_not_acceptable&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
+        /// An order NOT YET ACCEPTED. The portal decline&#39;s own body (&#x60;order.DeclineOrderInTx&#x60;) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer&#39;s kiwi/vouchers/delivery money back, the &#x60;declined&#x60;/&#x60;seller&#x60; timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in &#x60;decline_reason_code&#x60;. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is &#x60;403 tier_required&#x60;). 400 &#x60;invalid_decline_reason&#x60; (&#x60;details[comment: required]&#x60; for &#x60;other&#x60; without words); 409 &#x60;order_not_acceptable&#x60; (an accepted or closed order — the portal names it &#x60;order_not_decidable&#x60;; cancel an accepted one), &#x60;order_has_active_return&#x60;. Another shop&#39;s order ⇒ &#x60;404&#x60;. Kill switch: &#x60;writes_enabled&#x60;. Served by the marketplace process only: a SERVER_ROLE&#x3D;seller-api server answers &#x60;503 role_unavailable&#x60; (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="declineRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IDeclineOrderApiResponse"/>&gt;</returns>
-        Task<IDeclineOrderApiResponse> DeclineOrderAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IDeclineOrderApiResponse> DeclineOrderAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Decline (before acceptance) — money-reversing
         /// </summary>
         /// <remarks>
-        /// &#x60;declineOrderTx&#x60; on the marketplace pool. ADVANCED: a documents-waived shop is &#x60;403 tier_required&#x60;. 400 &#x60;invalid_decline_reason&#x60;; 409 &#x60;order_not_acceptable&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
+        /// An order NOT YET ACCEPTED. The portal decline&#39;s own body (&#x60;order.DeclineOrderInTx&#x60;) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer&#39;s kiwi/vouchers/delivery money back, the &#x60;declined&#x60;/&#x60;seller&#x60; timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in &#x60;decline_reason_code&#x60;. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is &#x60;403 tier_required&#x60;). 400 &#x60;invalid_decline_reason&#x60; (&#x60;details[comment: required]&#x60; for &#x60;other&#x60; without words); 409 &#x60;order_not_acceptable&#x60; (an accepted or closed order — the portal names it &#x60;order_not_decidable&#x60;; cancel an accepted one), &#x60;order_has_active_return&#x60;. Another shop&#39;s order ⇒ &#x60;404&#x60;. Kill switch: &#x60;writes_enabled&#x60;. Served by the marketplace process only: a SERVER_ROLE&#x3D;seller-api server answers &#x60;503 role_unavailable&#x60; (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="declineRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IDeclineOrderApiResponse"/>?&gt;</returns>
-        Task<IDeclineOrderApiResponse?> DeclineOrderOrDefaultAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IDeclineOrderApiResponse?> DeclineOrderOrDefaultAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get an order (PII only with orders:pii)
         /// </summary>
         /// <remarks>
-        /// &#x60;orders:read&#x60; ⇒ &#x60;Order&#x60;. A key that ALSO holds &#x60;orders:pii&#x60; (ADVANCED, &#x60;sk&#x60; only, S4) gets &#x60;OrderWithPii&#x60; (adds &#x60;recipient&#x60;) and the call is logged &#x60;pii&#x3D;true&#x60;.
+        /// &#x60;orders:read&#x60; ⇒ &#x60;Order&#x60;. A key that ALSO holds &#x60;orders:pii&#x60; (ADVANCED, &#x60;sk&#x60; only, S4) gets &#x60;OrderWithPii&#x60; (adds &#x60;recipient&#x60;) and the call is logged &#x60;pii&#x3D;true&#x60;. When the &#x60;orders:pii&#x60; door would refuse this request (the shop is not ADVANCED now, or the key&#39;s recipient is third-party — D7) the ORDER is still answered, without &#x60;recipient&#x60;, and &#x60;Dona-API-Warn: recipient withheld: &lt;tier_required|pii_third_party_pending_counsel|…&gt;&#x60; says why (C59).
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderApiResponse"/>&gt;</returns>
-        Task<IGetOrderApiResponse> GetOrderAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetOrderApiResponse> GetOrderAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get an order (PII only with orders:pii)
         /// </summary>
         /// <remarks>
-        /// &#x60;orders:read&#x60; ⇒ &#x60;Order&#x60;. A key that ALSO holds &#x60;orders:pii&#x60; (ADVANCED, &#x60;sk&#x60; only, S4) gets &#x60;OrderWithPii&#x60; (adds &#x60;recipient&#x60;) and the call is logged &#x60;pii&#x3D;true&#x60;.
+        /// &#x60;orders:read&#x60; ⇒ &#x60;Order&#x60;. A key that ALSO holds &#x60;orders:pii&#x60; (ADVANCED, &#x60;sk&#x60; only, S4) gets &#x60;OrderWithPii&#x60; (adds &#x60;recipient&#x60;) and the call is logged &#x60;pii&#x3D;true&#x60;. When the &#x60;orders:pii&#x60; door would refuse this request (the shop is not ADVANCED now, or the key&#39;s recipient is third-party — D7) the ORDER is still answered, without &#x60;recipient&#x60;, and &#x60;Dona-API-Warn: recipient withheld: &lt;tier_required|pii_third_party_pending_counsel|…&gt;&#x60; says why (C59).
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderApiResponse"/>?&gt;</returns>
-        Task<IGetOrderApiResponse?> GetOrderOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetOrderApiResponse?> GetOrderOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Invoice (PDF, contains PII)
         /// </summary>
         /// <remarks>
-        /// As the label. ≤ 30/min.
+        /// The invoice for one order, drawn as a PDF from the SAME figures as the portal&#39;s invoice page (one loader). Doors, 409s and the &#x60;429 api_busy&#x60; bound as &#x60;label.pdf&#x60; (C53, C54). ⚠ PII set WIDER than the label&#39;s: like the portal&#39;s invoice it prints the PURCHASER&#39;s account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the &#x60;recipient&#x60; block name (Form A Q12 states both).
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderInvoiceApiResponse"/>&gt;</returns>
-        Task<IGetOrderInvoiceApiResponse> GetOrderInvoiceAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetOrderInvoiceApiResponse> GetOrderInvoiceAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Invoice (PDF, contains PII)
         /// </summary>
         /// <remarks>
-        /// As the label. ≤ 30/min.
+        /// The invoice for one order, drawn as a PDF from the SAME figures as the portal&#39;s invoice page (one loader). Doors, 409s and the &#x60;429 api_busy&#x60; bound as &#x60;label.pdf&#x60; (C53, C54). ⚠ PII set WIDER than the label&#39;s: like the portal&#39;s invoice it prints the PURCHASER&#39;s account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the &#x60;recipient&#x60; block name (Form A Q12 states both).
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderInvoiceApiResponse"/>?&gt;</returns>
-        Task<IGetOrderInvoiceApiResponse?> GetOrderInvoiceOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetOrderInvoiceApiResponse?> GetOrderInvoiceOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Shipping label (PDF, contains PII)
         /// </summary>
         /// <remarks>
-        /// Prints buyer name/phone/address. &#x60;sk&#x60; keys only; logged &#x60;pii&#x3D;true&#x60;; never stored by the API. ≤ 30/min.
+        /// The portal&#39;s sticker for one order: prints the buyer&#39;s name, phone and address. &#x60;sk&#x60; keys only (&#x60;orders:pii&#x60; on any other kind ⇒ &#x60;403 insufficient_scope&#x60; + &#x60;details[scope_not_allowed_for_kind]&#x60;); ADVANCED now (&#x60;403 tier_required&#x60;); a key minted for a THIRD-PARTY recipient ⇒ &#x60;403 tier_required&#x60; + &#x60;details[pii_recipient: pii_third_party_pending_counsel]&#x60; (D7). Logged &#x60;pii&#x3D;true&#x60; (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 &#x60;no_tracking_number&#x60; (+ &#x60;orders&#x60;: the order codes without a carrier number yet — print later), &#x60;no_items_selected&#x60;, &#x60;all_items_delayed&#x60; (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that &#x60;429 api_busy&#x60; (&#x60;Dona-Rate-Limited-Reason: global&#x60;, &#x60;Retry-After: 2&#x60;) before any read, and a batch is not charged.
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderLabelApiResponse"/>&gt;</returns>
-        Task<IGetOrderLabelApiResponse> GetOrderLabelAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetOrderLabelApiResponse> GetOrderLabelAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Shipping label (PDF, contains PII)
         /// </summary>
         /// <remarks>
-        /// Prints buyer name/phone/address. &#x60;sk&#x60; keys only; logged &#x60;pii&#x3D;true&#x60;; never stored by the API. ≤ 30/min.
+        /// The portal&#39;s sticker for one order: prints the buyer&#39;s name, phone and address. &#x60;sk&#x60; keys only (&#x60;orders:pii&#x60; on any other kind ⇒ &#x60;403 insufficient_scope&#x60; + &#x60;details[scope_not_allowed_for_kind]&#x60;); ADVANCED now (&#x60;403 tier_required&#x60;); a key minted for a THIRD-PARTY recipient ⇒ &#x60;403 tier_required&#x60; + &#x60;details[pii_recipient: pii_third_party_pending_counsel]&#x60; (D7). Logged &#x60;pii&#x3D;true&#x60; (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 &#x60;no_tracking_number&#x60; (+ &#x60;orders&#x60;: the order codes without a carrier number yet — print later), &#x60;no_items_selected&#x60;, &#x60;all_items_delayed&#x60; (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that &#x60;429 api_busy&#x60; (&#x60;Dona-Rate-Limited-Reason: global&#x60;, &#x60;Retry-After: 2&#x60;) before any read, and a batch is not charged.
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderLabelApiResponse"/>?&gt;</returns>
-        Task<IGetOrderLabelApiResponse?> GetOrderLabelOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetOrderLabelApiResponse?> GetOrderLabelOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Order timeline
@@ -293,10 +309,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderTimelineApiResponse"/>&gt;</returns>
-        Task<IGetOrderTimelineApiResponse> GetOrderTimelineAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetOrderTimelineApiResponse> GetOrderTimelineAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Order timeline
@@ -306,10 +323,11 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderTimelineApiResponse"/>?&gt;</returns>
-        Task<IGetOrderTimelineApiResponse?> GetOrderTimelineOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IGetOrderTimelineApiResponse?> GetOrderTimelineOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Hand over to the courier
@@ -320,13 +338,14 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IHandoverOrderApiResponse"/>&gt;</returns>
-        Task<IHandoverOrderApiResponse> HandoverOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IHandoverOrderApiResponse> HandoverOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Hand over to the courier
@@ -336,13 +355,14 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IHandoverOrderApiResponse"/>?&gt;</returns>
-        Task<IHandoverOrderApiResponse?> HandoverOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IHandoverOrderApiResponse?> HandoverOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// List orders (no buyer PII)
@@ -360,10 +380,11 @@ namespace Dona.Api.Api
         /// <param name="from">created_at ≥ from. (optional)</param>
         /// <param name="to">created_at &lt; to. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListOrdersApiResponse"/>&gt;</returns>
-        Task<IListOrdersApiResponse> ListOrdersAsync(Option<string> cursor = default, Option<int> page = default, Option<int> limit = default, Option<string> updatedSince = default, Option<string> status = default, Option<string> scheme = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListOrdersApiResponse> ListOrdersAsync(Option<string> cursor = default, Option<int> page = default, Option<int> limit = default, Option<string> updatedSince = default, Option<string> status = default, Option<string> scheme = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// List orders (no buyer PII)
@@ -380,10 +401,11 @@ namespace Dona.Api.Api
         /// <param name="from">created_at ≥ from. (optional)</param>
         /// <param name="to">created_at &lt; to. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListOrdersApiResponse"/>?&gt;</returns>
-        Task<IListOrdersApiResponse?> ListOrdersOrDefaultAsync(Option<string> cursor = default, Option<int> page = default, Option<int> limit = default, Option<string> updatedSince = default, Option<string> status = default, Option<string> scheme = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IListOrdersApiResponse?> ListOrdersOrDefaultAsync(Option<string> cursor = default, Option<int> page = default, Option<int> limit = default, Option<string> updatedSince = default, Option<string> status = default, Option<string> scheme = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Mark ready to ship
@@ -394,13 +416,14 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IMarkOrderReadyApiResponse"/>&gt;</returns>
-        Task<IMarkOrderReadyApiResponse> MarkOrderReadyAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IMarkOrderReadyApiResponse> MarkOrderReadyAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Mark ready to ship
@@ -410,13 +433,14 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IMarkOrderReadyApiResponse"/>?&gt;</returns>
-        Task<IMarkOrderReadyApiResponse?> MarkOrderReadyOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IMarkOrderReadyApiResponse?> MarkOrderReadyOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Ship
@@ -427,13 +451,14 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IShipOrderApiResponse"/>&gt;</returns>
-        Task<IShipOrderApiResponse> ShipOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IShipOrderApiResponse> ShipOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Ship
@@ -443,13 +468,14 @@ namespace Dona.Api.Api
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IShipOrderApiResponse"/>?&gt;</returns>
-        Task<IShipOrderApiResponse?> ShipOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IShipOrderApiResponse?> ShipOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -575,7 +601,7 @@ namespace Dona.Api.Api
     /// <summary>
     /// The <see cref="IBatchOrderLabelsApiResponse"/>
     /// </summary>
-    public interface IBatchOrderLabelsApiResponse : Dona.Api.Client.IApiResponse, IOk<string?>, IBadRequest<Dona.Api.Model.Error?>, IUnauthorized<Dona.Api.Model.Error?>, IForbidden<Dona.Api.Model.Error?>, INotFound<Dona.Api.Model.Error?>, ITooManyRequests<Dona.Api.Model.Error?>, IInternalServerError<Dona.Api.Model.Error?>, IServiceUnavailable<Dona.Api.Model.Error?>
+    public interface IBatchOrderLabelsApiResponse : Dona.Api.Client.IApiResponse, IOk<string?>, IBadRequest<Dona.Api.Model.Error?>, IUnauthorized<Dona.Api.Model.Error?>, IForbidden<Dona.Api.Model.Error?>, INotFound<Dona.Api.Model.Error?>, IConflict<Dona.Api.Model.Error?>, ITooManyRequests<Dona.Api.Model.Error?>, IInternalServerError<Dona.Api.Model.Error?>, IServiceUnavailable<Dona.Api.Model.Error?>
     {
         /// <summary>
         /// Returns true if the response is 200 Ok
@@ -606,6 +632,12 @@ namespace Dona.Api.Api
         /// </summary>
         /// <returns></returns>
         bool IsNotFound { get; }
+
+        /// <summary>
+        /// Returns true if the response is 409 Conflict
+        /// </summary>
+        /// <returns></returns>
+        bool IsConflict { get; }
 
         /// <summary>
         /// Returns true if the response is 429 TooManyRequests
@@ -797,7 +829,7 @@ namespace Dona.Api.Api
     /// <summary>
     /// The <see cref="IGetOrderInvoiceApiResponse"/>
     /// </summary>
-    public interface IGetOrderInvoiceApiResponse : Dona.Api.Client.IApiResponse, IOk<string?>, IUnauthorized<Dona.Api.Model.Error?>, IForbidden<Dona.Api.Model.Error?>, INotFound<Dona.Api.Model.Error?>, ITooManyRequests<Dona.Api.Model.Error?>, IInternalServerError<Dona.Api.Model.Error?>, IServiceUnavailable<Dona.Api.Model.Error?>
+    public interface IGetOrderInvoiceApiResponse : Dona.Api.Client.IApiResponse, IOk<string?>, IUnauthorized<Dona.Api.Model.Error?>, IForbidden<Dona.Api.Model.Error?>, INotFound<Dona.Api.Model.Error?>, IConflict<Dona.Api.Model.Error?>, ITooManyRequests<Dona.Api.Model.Error?>, IInternalServerError<Dona.Api.Model.Error?>, IServiceUnavailable<Dona.Api.Model.Error?>
     {
         /// <summary>
         /// Returns true if the response is 200 Ok
@@ -822,6 +854,12 @@ namespace Dona.Api.Api
         /// </summary>
         /// <returns></returns>
         bool IsNotFound { get; }
+
+        /// <summary>
+        /// Returns true if the response is 409 Conflict
+        /// </summary>
+        /// <returns></returns>
+        bool IsConflict { get; }
 
         /// <summary>
         /// Returns true if the response is 429 TooManyRequests
@@ -845,7 +883,7 @@ namespace Dona.Api.Api
     /// <summary>
     /// The <see cref="IGetOrderLabelApiResponse"/>
     /// </summary>
-    public interface IGetOrderLabelApiResponse : Dona.Api.Client.IApiResponse, IOk<string?>, IUnauthorized<Dona.Api.Model.Error?>, IForbidden<Dona.Api.Model.Error?>, INotFound<Dona.Api.Model.Error?>, ITooManyRequests<Dona.Api.Model.Error?>, IInternalServerError<Dona.Api.Model.Error?>, IServiceUnavailable<Dona.Api.Model.Error?>
+    public interface IGetOrderLabelApiResponse : Dona.Api.Client.IApiResponse, IOk<string?>, IUnauthorized<Dona.Api.Model.Error?>, IForbidden<Dona.Api.Model.Error?>, INotFound<Dona.Api.Model.Error?>, IConflict<Dona.Api.Model.Error?>, ITooManyRequests<Dona.Api.Model.Error?>, IInternalServerError<Dona.Api.Model.Error?>, IServiceUnavailable<Dona.Api.Model.Error?>
     {
         /// <summary>
         /// Returns true if the response is 200 Ok
@@ -870,6 +908,12 @@ namespace Dona.Api.Api
         /// </summary>
         /// <returns></returns>
         bool IsNotFound { get; }
+
+        /// <summary>
+        /// Returns true if the response is 409 Conflict
+        /// </summary>
+        /// <returns></returns>
+        bool IsConflict { get; }
 
         /// <summary>
         /// Returns true if the response is 429 TooManyRequests
@@ -1473,23 +1517,27 @@ namespace Dona.Api.Api
             BearerTokenProvider = bearerTokenProvider;
         }
 
-        partial void FormatAcceptOrder(ref Guid id, ref string idempotencyKey, ref Option<string> donaDryRun, ref Option<bool> dryRun, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatAcceptOrder(ref Guid id, ref string idempotencyKey, ref Option<string> donaDryRun, ref Option<string> dryRun, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
         /// </summary>
         /// <param name="idempotencyKey"></param>
         /// <param name="donaDryRun"></param>
+        /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
         /// <param name="xDonaIntegration"></param>
         /// <returns></returns>
-        private void ValidateAcceptOrder(string idempotencyKey, Option<string> donaDryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void ValidateAcceptOrder(string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
         {
             if (idempotencyKey == null)
                 throw new ArgumentNullException(nameof(idempotencyKey));
 
             if (donaDryRun.IsSet && donaDryRun.Value == null)
                 throw new ArgumentNullException(nameof(donaDryRun));
+
+            if (dryRun.IsSet && dryRun.Value == null)
+                throw new ArgumentNullException(nameof(dryRun));
 
             if (acceptLanguage.IsSet && acceptLanguage.Value == null)
                 throw new ArgumentNullException(nameof(acceptLanguage));
@@ -1507,11 +1555,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterAcceptOrderDefaultImplementation(IAcceptOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterAcceptOrderDefaultImplementation(IAcceptOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterAcceptOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            AfterAcceptOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -1526,8 +1575,9 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterAcceptOrder(ref bool suppressDefaultLog, IAcceptOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterAcceptOrder(ref bool suppressDefaultLog, IAcceptOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -1540,11 +1590,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorAcceptOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorAcceptOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorAcceptOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            OnErrorAcceptOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -1561,25 +1612,27 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorAcceptOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorAcceptOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Accept The &#x60;intake.go&#x60; accept body, extracted. Needs a pickup address. 409: &#x60;order_not_acceptable&#x60;, &#x60;no_pickup_address&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAcceptOrderApiResponse"/>&gt;</returns>
-        public async Task<IAcceptOrderApiResponse?> AcceptOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAcceptOrderApiResponse?> AcceptOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await AcceptOrderAsync(id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await AcceptOrderAsync(id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -1593,21 +1646,22 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAcceptOrderApiResponse"/>&gt;</returns>
-        public async Task<IAcceptOrderApiResponse> AcceptOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAcceptOrderApiResponse> AcceptOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateAcceptOrder(idempotencyKey, donaDryRun, acceptLanguage, xDonaIntegration);
+                ValidateAcceptOrder(idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
 
-                FormatAcceptOrder(ref id, ref idempotencyKey, ref donaDryRun, ref dryRun, ref acceptLanguage, ref xDonaIntegration);
+                FormatAcceptOrder(ref id, ref idempotencyKey, ref donaDryRun, ref dryRun, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -1662,6 +1716,19 @@ namespace Dona.Api.Api
                       }
                     }
 
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                    }
+
                     if (xDonaIntegration.IsSet)
                     {
                       // Set client side default value of Header Param "X-Dona-Integration".                    
@@ -1710,7 +1777,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterAcceptOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                        AfterAcceptOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnAcceptOrder(apiResponseLocalVar);
 
@@ -1724,7 +1791,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorAcceptOrderDefaultImplementation(e, "/orders/{id}/accept", uriBuilderLocalVar.Path, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                OnErrorAcceptOrderDefaultImplementation(e, "/orders/{id}/accept", uriBuilderLocalVar.Path, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorAcceptOrder(e);
                 throw;
             }
@@ -2235,7 +2302,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatAddOrderNote(ref Guid id, ref string idempotencyKey, NoteRequest noteRequest, ref Option<string> donaDryRun, ref Option<bool> dryRun, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatAddOrderNote(ref Guid id, ref string idempotencyKey, NoteRequest noteRequest, ref Option<string> donaDryRun, ref Option<string> dryRun, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -2243,10 +2310,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="noteRequest"></param>
         /// <param name="donaDryRun"></param>
+        /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
         /// <param name="xDonaIntegration"></param>
         /// <returns></returns>
-        private void ValidateAddOrderNote(string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void ValidateAddOrderNote(string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
         {
             if (idempotencyKey == null)
                 throw new ArgumentNullException(nameof(idempotencyKey));
@@ -2256,6 +2324,9 @@ namespace Dona.Api.Api
 
             if (donaDryRun.IsSet && donaDryRun.Value == null)
                 throw new ArgumentNullException(nameof(donaDryRun));
+
+            if (dryRun.IsSet && dryRun.Value == null)
+                throw new ArgumentNullException(nameof(dryRun));
 
             if (acceptLanguage.IsSet && acceptLanguage.Value == null)
                 throw new ArgumentNullException(nameof(acceptLanguage));
@@ -2274,11 +2345,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterAddOrderNoteDefaultImplementation(IAddOrderNoteApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterAddOrderNoteDefaultImplementation(IAddOrderNoteApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterAddOrderNote(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            AfterAddOrderNote(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -2294,8 +2366,9 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterAddOrderNote(ref bool suppressDefaultLog, IAddOrderNoteApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterAddOrderNote(ref bool suppressDefaultLog, IAddOrderNoteApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -2309,11 +2382,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorAddOrderNoteDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorAddOrderNoteDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorAddOrderNote(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            OnErrorAddOrderNote(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -2331,8 +2405,9 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorAddOrderNote(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorAddOrderNote(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Add a seller note Appends to &#x60;order_notes&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
@@ -2340,17 +2415,18 @@ namespace Dona.Api.Api
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="noteRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAddOrderNoteApiResponse"/>&gt;</returns>
-        public async Task<IAddOrderNoteApiResponse?> AddOrderNoteOrDefaultAsync(Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAddOrderNoteApiResponse?> AddOrderNoteOrDefaultAsync(Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await AddOrderNoteAsync(id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await AddOrderNoteAsync(id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -2365,21 +2441,22 @@ namespace Dona.Api.Api
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="noteRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAddOrderNoteApiResponse"/>&gt;</returns>
-        public async Task<IAddOrderNoteApiResponse> AddOrderNoteAsync(Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAddOrderNoteApiResponse> AddOrderNoteAsync(Guid id, string idempotencyKey, NoteRequest noteRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateAddOrderNote(idempotencyKey, noteRequest, donaDryRun, acceptLanguage, xDonaIntegration);
+                ValidateAddOrderNote(idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
 
-                FormatAddOrderNote(ref id, ref idempotencyKey, noteRequest, ref donaDryRun, ref dryRun, ref acceptLanguage, ref xDonaIntegration);
+                FormatAddOrderNote(ref id, ref idempotencyKey, noteRequest, ref donaDryRun, ref dryRun, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -2435,6 +2512,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -2495,7 +2585,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterAddOrderNoteDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                        AfterAddOrderNoteDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnAddOrderNote(apiResponseLocalVar);
 
@@ -2509,7 +2599,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorAddOrderNoteDefaultImplementation(e, "/orders/{id}/notes", uriBuilderLocalVar.Path, id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                OnErrorAddOrderNoteDefaultImplementation(e, "/orders/{id}/notes", uriBuilderLocalVar.Path, id, idempotencyKey, noteRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorAddOrderNote(e);
                 throw;
             }
@@ -3020,7 +3110,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatBatchOrderLabels(LabelsRequest labelsRequest, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatBatchOrderLabels(LabelsRequest labelsRequest, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -3047,11 +3137,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="labelsRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterBatchOrderLabelsDefaultImplementation(IBatchOrderLabelsApiResponse apiResponseLocalVar, LabelsRequest labelsRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterBatchOrderLabelsDefaultImplementation(IBatchOrderLabelsApiResponse apiResponseLocalVar, LabelsRequest labelsRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterBatchOrderLabels(ref suppressDefaultLog, apiResponseLocalVar, labelsRequest, acceptLanguage, xDonaIntegration);
+            AfterBatchOrderLabels(ref suppressDefaultLog, apiResponseLocalVar, labelsRequest, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -3063,8 +3154,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="labelsRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterBatchOrderLabels(ref bool suppressDefaultLog, IBatchOrderLabelsApiResponse apiResponseLocalVar, LabelsRequest labelsRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterBatchOrderLabels(ref bool suppressDefaultLog, IBatchOrderLabelsApiResponse apiResponseLocalVar, LabelsRequest labelsRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -3074,11 +3166,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="labelsRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorBatchOrderLabelsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, LabelsRequest labelsRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorBatchOrderLabelsDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, LabelsRequest labelsRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorBatchOrderLabels(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, labelsRequest, acceptLanguage, xDonaIntegration);
+            OnErrorBatchOrderLabels(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, labelsRequest, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -3092,22 +3185,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="labelsRequest"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorBatchOrderLabels(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, LabelsRequest labelsRequest, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorBatchOrderLabels(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, LabelsRequest labelsRequest, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Labels for ≤ 100 orders (one PDF) A read with a body — no &#x60;Idempotency-Key&#x60;. Any foreign/missing id ⇒ &#x60;404 not_found&#x60; for the whole call. ≤ 30/min.
+        /// Labels for ≤ 100 orders (one PDF) A read with a body — no &#x60;Idempotency-Key&#x60;. Any foreign/missing id ⇒ &#x60;404 not_found&#x60; for the whole call. Doors and 409s as &#x60;label.pdf&#x60; (C53); &#x60;no_tracking_number&#x60; names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (&#x60;429 api_busy&#x60; as &#x60;label.pdf&#x60;).
         /// </summary>
         /// <param name="labelsRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IBatchOrderLabelsApiResponse"/>&gt;</returns>
-        public async Task<IBatchOrderLabelsApiResponse?> BatchOrderLabelsOrDefaultAsync(LabelsRequest labelsRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IBatchOrderLabelsApiResponse?> BatchOrderLabelsOrDefaultAsync(LabelsRequest labelsRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await BatchOrderLabelsAsync(labelsRequest, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await BatchOrderLabelsAsync(labelsRequest, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -3116,15 +3211,16 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Labels for ≤ 100 orders (one PDF) A read with a body — no &#x60;Idempotency-Key&#x60;. Any foreign/missing id ⇒ &#x60;404 not_found&#x60; for the whole call. ≤ 30/min.
+        /// Labels for ≤ 100 orders (one PDF) A read with a body — no &#x60;Idempotency-Key&#x60;. Any foreign/missing id ⇒ &#x60;404 not_found&#x60; for the whole call. Doors and 409s as &#x60;label.pdf&#x60; (C53); &#x60;no_tracking_number&#x60; names every offending order. Cost 10 on the key-rate bucket (C54), charged only once the batch holds a drawing slot (&#x60;429 api_busy&#x60; as &#x60;label.pdf&#x60;).
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="labelsRequest"></param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IBatchOrderLabelsApiResponse"/>&gt;</returns>
-        public async Task<IBatchOrderLabelsApiResponse> BatchOrderLabelsAsync(LabelsRequest labelsRequest, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IBatchOrderLabelsApiResponse> BatchOrderLabelsAsync(LabelsRequest labelsRequest, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -3132,7 +3228,7 @@ namespace Dona.Api.Api
             {
                 ValidateBatchOrderLabels(labelsRequest, acceptLanguage, xDonaIntegration);
 
-                FormatBatchOrderLabels(labelsRequest, ref acceptLanguage, ref xDonaIntegration);
+                FormatBatchOrderLabels(labelsRequest, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -3157,6 +3253,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -3218,7 +3327,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterBatchOrderLabelsDefaultImplementation(apiResponseLocalVar, labelsRequest, acceptLanguage, xDonaIntegration);
+                        AfterBatchOrderLabelsDefaultImplementation(apiResponseLocalVar, labelsRequest, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnBatchOrderLabels(apiResponseLocalVar);
 
@@ -3232,7 +3341,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorBatchOrderLabelsDefaultImplementation(e, "/orders/labels", uriBuilderLocalVar.Path, labelsRequest, acceptLanguage, xDonaIntegration);
+                OnErrorBatchOrderLabelsDefaultImplementation(e, "/orders/labels", uriBuilderLocalVar.Path, labelsRequest, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorBatchOrderLabels(e);
                 throw;
             }
@@ -3533,6 +3642,56 @@ namespace Dona.Api.Api
             }
 
             /// <summary>
+            /// Returns true if the response is 409 Conflict
+            /// </summary>
+            /// <returns></returns>
+            public bool IsConflict => 409 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 409 Conflict
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? Conflict()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnConflict(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultConflict();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultConflict()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsConflict
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnConflict(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 409 Conflict and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryConflict([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Conflict();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)409);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
             /// Returns true if the response is 429 TooManyRequests
             /// </summary>
             /// <returns></returns>
@@ -3693,7 +3852,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatCancelOrder(ref Guid id, ref string idempotencyKey, DeclineRequest declineRequest, ref Option<string> donaDryRun, ref Option<bool> dryRun, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatCancelOrder(ref Guid id, ref string idempotencyKey, DeclineRequest declineRequest, ref Option<string> donaDryRun, ref Option<string> dryRun, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -3701,10 +3860,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="declineRequest"></param>
         /// <param name="donaDryRun"></param>
+        /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
         /// <param name="xDonaIntegration"></param>
         /// <returns></returns>
-        private void ValidateCancelOrder(string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void ValidateCancelOrder(string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
         {
             if (idempotencyKey == null)
                 throw new ArgumentNullException(nameof(idempotencyKey));
@@ -3714,6 +3874,9 @@ namespace Dona.Api.Api
 
             if (donaDryRun.IsSet && donaDryRun.Value == null)
                 throw new ArgumentNullException(nameof(donaDryRun));
+
+            if (dryRun.IsSet && dryRun.Value == null)
+                throw new ArgumentNullException(nameof(dryRun));
 
             if (acceptLanguage.IsSet && acceptLanguage.Value == null)
                 throw new ArgumentNullException(nameof(acceptLanguage));
@@ -3732,11 +3895,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterCancelOrderDefaultImplementation(ICancelOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterCancelOrderDefaultImplementation(ICancelOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterCancelOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            AfterCancelOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -3752,8 +3916,9 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterCancelOrder(ref bool suppressDefaultLog, ICancelOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterCancelOrder(ref bool suppressDefaultLog, ICancelOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -3767,11 +3932,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorCancelOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorCancelOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorCancelOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            OnErrorCancelOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -3789,26 +3955,28 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorCancelOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorCancelOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Cancel (after acceptance) — money-reversing Same reasons and effects as &#x60;decline&#x60;, for an accepted order. 409 &#x60;order_not_cancellable&#x60; (existing estate code). Kill switch: &#x60;writes_enabled&#x60;.
+        /// Cancel (after acceptance) — money-reversing An ACCEPTED order: the portal seller-cancel&#39;s own statements (&#x60;order.SellerCancelOrderTx&#x60;) — same reasons (C15) and money effects as &#x60;decline&#x60;. The reason is stored in the order&#39;s &#x60;cancel_reason&#x60; (with the comment), NOT in &#x60;decline_reason_code&#x60;, which stays &#x60;null&#x60; (C52); the &#x60;cancelled&#x60;/&#x60;seller&#x60; timeline row, the card refund and the buyer notice run after the commit. 409 &#x60;order_not_cancellable&#x60; — a delivered or cancelled order, or one NOT YET ACCEPTED (&#x60;details[{field:\&quot;status\&quot;, code:\&quot;not_accepted\&quot;}]&#x60;: decline it) — and &#x60;order_has_active_return&#x60;. Kill switch: &#x60;writes_enabled&#x60;. &#x60;503 role_unavailable&#x60; from a SERVER_ROLE&#x3D;seller-api server, as &#x60;decline&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="declineRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ICancelOrderApiResponse"/>&gt;</returns>
-        public async Task<ICancelOrderApiResponse?> CancelOrderOrDefaultAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<ICancelOrderApiResponse?> CancelOrderOrDefaultAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await CancelOrderAsync(id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await CancelOrderAsync(id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -3817,27 +3985,28 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Cancel (after acceptance) — money-reversing Same reasons and effects as &#x60;decline&#x60;, for an accepted order. 409 &#x60;order_not_cancellable&#x60; (existing estate code). Kill switch: &#x60;writes_enabled&#x60;.
+        /// Cancel (after acceptance) — money-reversing An ACCEPTED order: the portal seller-cancel&#39;s own statements (&#x60;order.SellerCancelOrderTx&#x60;) — same reasons (C15) and money effects as &#x60;decline&#x60;. The reason is stored in the order&#39;s &#x60;cancel_reason&#x60; (with the comment), NOT in &#x60;decline_reason_code&#x60;, which stays &#x60;null&#x60; (C52); the &#x60;cancelled&#x60;/&#x60;seller&#x60; timeline row, the card refund and the buyer notice run after the commit. 409 &#x60;order_not_cancellable&#x60; — a delivered or cancelled order, or one NOT YET ACCEPTED (&#x60;details[{field:\&quot;status\&quot;, code:\&quot;not_accepted\&quot;}]&#x60;: decline it) — and &#x60;order_has_active_return&#x60;. Kill switch: &#x60;writes_enabled&#x60;. &#x60;503 role_unavailable&#x60; from a SERVER_ROLE&#x3D;seller-api server, as &#x60;decline&#x60;.
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="declineRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="ICancelOrderApiResponse"/>&gt;</returns>
-        public async Task<ICancelOrderApiResponse> CancelOrderAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<ICancelOrderApiResponse> CancelOrderAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateCancelOrder(idempotencyKey, declineRequest, donaDryRun, acceptLanguage, xDonaIntegration);
+                ValidateCancelOrder(idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
 
-                FormatCancelOrder(ref id, ref idempotencyKey, declineRequest, ref donaDryRun, ref dryRun, ref acceptLanguage, ref xDonaIntegration);
+                FormatCancelOrder(ref id, ref idempotencyKey, declineRequest, ref donaDryRun, ref dryRun, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -3893,6 +4062,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -3953,7 +4135,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterCancelOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                        AfterCancelOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnCancelOrder(apiResponseLocalVar);
 
@@ -3967,7 +4149,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorCancelOrderDefaultImplementation(e, "/orders/{id}/cancel", uriBuilderLocalVar.Path, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                OnErrorCancelOrderDefaultImplementation(e, "/orders/{id}/cancel", uriBuilderLocalVar.Path, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorCancelOrder(e);
                 throw;
             }
@@ -4478,7 +4660,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatDeclineOrder(ref Guid id, ref string idempotencyKey, DeclineRequest declineRequest, ref Option<string> donaDryRun, ref Option<bool> dryRun, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatDeclineOrder(ref Guid id, ref string idempotencyKey, DeclineRequest declineRequest, ref Option<string> donaDryRun, ref Option<string> dryRun, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -4486,10 +4668,11 @@ namespace Dona.Api.Api
         /// <param name="idempotencyKey"></param>
         /// <param name="declineRequest"></param>
         /// <param name="donaDryRun"></param>
+        /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
         /// <param name="xDonaIntegration"></param>
         /// <returns></returns>
-        private void ValidateDeclineOrder(string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void ValidateDeclineOrder(string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
         {
             if (idempotencyKey == null)
                 throw new ArgumentNullException(nameof(idempotencyKey));
@@ -4499,6 +4682,9 @@ namespace Dona.Api.Api
 
             if (donaDryRun.IsSet && donaDryRun.Value == null)
                 throw new ArgumentNullException(nameof(donaDryRun));
+
+            if (dryRun.IsSet && dryRun.Value == null)
+                throw new ArgumentNullException(nameof(dryRun));
 
             if (acceptLanguage.IsSet && acceptLanguage.Value == null)
                 throw new ArgumentNullException(nameof(acceptLanguage));
@@ -4517,11 +4703,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterDeclineOrderDefaultImplementation(IDeclineOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterDeclineOrderDefaultImplementation(IDeclineOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterDeclineOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            AfterDeclineOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -4537,8 +4724,9 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterDeclineOrder(ref bool suppressDefaultLog, IDeclineOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterDeclineOrder(ref bool suppressDefaultLog, IDeclineOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -4552,11 +4740,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorDeclineOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorDeclineOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorDeclineOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            OnErrorDeclineOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -4574,26 +4763,28 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorDeclineOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorDeclineOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Decline (before acceptance) — money-reversing &#x60;declineOrderTx&#x60; on the marketplace pool. ADVANCED: a documents-waived shop is &#x60;403 tier_required&#x60;. 400 &#x60;invalid_decline_reason&#x60;; 409 &#x60;order_not_acceptable&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
+        /// Decline (before acceptance) — money-reversing An order NOT YET ACCEPTED. The portal decline&#39;s own body (&#x60;order.DeclineOrderInTx&#x60;) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer&#39;s kiwi/vouchers/delivery money back, the &#x60;declined&#x60;/&#x60;seller&#x60; timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in &#x60;decline_reason_code&#x60;. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is &#x60;403 tier_required&#x60;). 400 &#x60;invalid_decline_reason&#x60; (&#x60;details[comment: required]&#x60; for &#x60;other&#x60; without words); 409 &#x60;order_not_acceptable&#x60; (an accepted or closed order — the portal names it &#x60;order_not_decidable&#x60;; cancel an accepted one), &#x60;order_has_active_return&#x60;. Another shop&#39;s order ⇒ &#x60;404&#x60;. Kill switch: &#x60;writes_enabled&#x60;. Served by the marketplace process only: a SERVER_ROLE&#x3D;seller-api server answers &#x60;503 role_unavailable&#x60; (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="declineRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IDeclineOrderApiResponse"/>&gt;</returns>
-        public async Task<IDeclineOrderApiResponse?> DeclineOrderOrDefaultAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IDeclineOrderApiResponse?> DeclineOrderOrDefaultAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await DeclineOrderAsync(id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await DeclineOrderAsync(id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -4602,27 +4793,28 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Decline (before acceptance) — money-reversing &#x60;declineOrderTx&#x60; on the marketplace pool. ADVANCED: a documents-waived shop is &#x60;403 tier_required&#x60;. 400 &#x60;invalid_decline_reason&#x60;; 409 &#x60;order_not_acceptable&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
+        /// Decline (before acceptance) — money-reversing An order NOT YET ACCEPTED. The portal decline&#39;s own body (&#x60;order.DeclineOrderInTx&#x60;) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer&#39;s kiwi/vouchers/delivery money back, the &#x60;declined&#x60;/&#x60;seller&#x60; timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in &#x60;decline_reason_code&#x60;. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is &#x60;403 tier_required&#x60;). 400 &#x60;invalid_decline_reason&#x60; (&#x60;details[comment: required]&#x60; for &#x60;other&#x60; without words); 409 &#x60;order_not_acceptable&#x60; (an accepted or closed order — the portal names it &#x60;order_not_decidable&#x60;; cancel an accepted one), &#x60;order_has_active_return&#x60;. Another shop&#39;s order ⇒ &#x60;404&#x60;. Kill switch: &#x60;writes_enabled&#x60;. Served by the marketplace process only: a SERVER_ROLE&#x3D;seller-api server answers &#x60;503 role_unavailable&#x60; (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="declineRequest"></param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IDeclineOrderApiResponse"/>&gt;</returns>
-        public async Task<IDeclineOrderApiResponse> DeclineOrderAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IDeclineOrderApiResponse> DeclineOrderAsync(Guid id, string idempotencyKey, DeclineRequest declineRequest, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateDeclineOrder(idempotencyKey, declineRequest, donaDryRun, acceptLanguage, xDonaIntegration);
+                ValidateDeclineOrder(idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
 
-                FormatDeclineOrder(ref id, ref idempotencyKey, declineRequest, ref donaDryRun, ref dryRun, ref acceptLanguage, ref xDonaIntegration);
+                FormatDeclineOrder(ref id, ref idempotencyKey, declineRequest, ref donaDryRun, ref dryRun, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -4678,6 +4870,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -4738,7 +4943,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterDeclineOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                        AfterDeclineOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnDeclineOrder(apiResponseLocalVar);
 
@@ -4752,7 +4957,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorDeclineOrderDefaultImplementation(e, "/orders/{id}/decline", uriBuilderLocalVar.Path, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                OnErrorDeclineOrderDefaultImplementation(e, "/orders/{id}/decline", uriBuilderLocalVar.Path, id, idempotencyKey, declineRequest, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorDeclineOrder(e);
                 throw;
             }
@@ -5263,7 +5468,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatGetOrder(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatGetOrder(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -5286,11 +5491,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterGetOrderDefaultImplementation(IGetOrderApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterGetOrderDefaultImplementation(IGetOrderApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterGetOrder(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterGetOrder(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -5302,8 +5508,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterGetOrder(ref bool suppressDefaultLog, IGetOrderApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterGetOrder(ref bool suppressDefaultLog, IGetOrderApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -5313,11 +5520,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorGetOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorGetOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorGetOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorGetOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -5331,22 +5539,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorGetOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorGetOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Get an order (PII only with orders:pii) &#x60;orders:read&#x60; ⇒ &#x60;Order&#x60;. A key that ALSO holds &#x60;orders:pii&#x60; (ADVANCED, &#x60;sk&#x60; only, S4) gets &#x60;OrderWithPii&#x60; (adds &#x60;recipient&#x60;) and the call is logged &#x60;pii&#x3D;true&#x60;.
+        /// Get an order (PII only with orders:pii) &#x60;orders:read&#x60; ⇒ &#x60;Order&#x60;. A key that ALSO holds &#x60;orders:pii&#x60; (ADVANCED, &#x60;sk&#x60; only, S4) gets &#x60;OrderWithPii&#x60; (adds &#x60;recipient&#x60;) and the call is logged &#x60;pii&#x3D;true&#x60;. When the &#x60;orders:pii&#x60; door would refuse this request (the shop is not ADVANCED now, or the key&#39;s recipient is third-party — D7) the ORDER is still answered, without &#x60;recipient&#x60;, and &#x60;Dona-API-Warn: recipient withheld: &lt;tier_required|pii_third_party_pending_counsel|…&gt;&#x60; says why (C59).
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderApiResponse"/>&gt;</returns>
-        public async Task<IGetOrderApiResponse?> GetOrderOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetOrderApiResponse?> GetOrderOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await GetOrderAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await GetOrderAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -5355,15 +5565,16 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Get an order (PII only with orders:pii) &#x60;orders:read&#x60; ⇒ &#x60;Order&#x60;. A key that ALSO holds &#x60;orders:pii&#x60; (ADVANCED, &#x60;sk&#x60; only, S4) gets &#x60;OrderWithPii&#x60; (adds &#x60;recipient&#x60;) and the call is logged &#x60;pii&#x3D;true&#x60;.
+        /// Get an order (PII only with orders:pii) &#x60;orders:read&#x60; ⇒ &#x60;Order&#x60;. A key that ALSO holds &#x60;orders:pii&#x60; (ADVANCED, &#x60;sk&#x60; only, S4) gets &#x60;OrderWithPii&#x60; (adds &#x60;recipient&#x60;) and the call is logged &#x60;pii&#x3D;true&#x60;. When the &#x60;orders:pii&#x60; door would refuse this request (the shop is not ADVANCED now, or the key&#39;s recipient is third-party — D7) the ORDER is still answered, without &#x60;recipient&#x60;, and &#x60;Dona-API-Warn: recipient withheld: &lt;tier_required|pii_third_party_pending_counsel|…&gt;&#x60; says why (C59).
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderApiResponse"/>&gt;</returns>
-        public async Task<IGetOrderApiResponse> GetOrderAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetOrderApiResponse> GetOrderAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -5371,7 +5582,7 @@ namespace Dona.Api.Api
             {
                 ValidateGetOrder(acceptLanguage, xDonaIntegration);
 
-                FormatGetOrder(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatGetOrder(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -5393,6 +5604,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -5444,7 +5668,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterGetOrderDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterGetOrderDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnGetOrder(apiResponseLocalVar);
 
@@ -5458,7 +5682,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorGetOrderDefaultImplementation(e, "/orders/{id}", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorGetOrderDefaultImplementation(e, "/orders/{id}", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorGetOrder(e);
                 throw;
             }
@@ -5869,7 +6093,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatGetOrderInvoice(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatGetOrderInvoice(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -5892,11 +6116,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterGetOrderInvoiceDefaultImplementation(IGetOrderInvoiceApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterGetOrderInvoiceDefaultImplementation(IGetOrderInvoiceApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterGetOrderInvoice(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterGetOrderInvoice(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -5908,8 +6133,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterGetOrderInvoice(ref bool suppressDefaultLog, IGetOrderInvoiceApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterGetOrderInvoice(ref bool suppressDefaultLog, IGetOrderInvoiceApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -5919,11 +6145,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorGetOrderInvoiceDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorGetOrderInvoiceDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorGetOrderInvoice(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorGetOrderInvoice(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -5937,22 +6164,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorGetOrderInvoice(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorGetOrderInvoice(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Invoice (PDF, contains PII) As the label. ≤ 30/min.
+        /// Invoice (PDF, contains PII) The invoice for one order, drawn as a PDF from the SAME figures as the portal&#39;s invoice page (one loader). Doors, 409s and the &#x60;429 api_busy&#x60; bound as &#x60;label.pdf&#x60; (C53, C54). ⚠ PII set WIDER than the label&#39;s: like the portal&#39;s invoice it prints the PURCHASER&#39;s account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the &#x60;recipient&#x60; block name (Form A Q12 states both).
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderInvoiceApiResponse"/>&gt;</returns>
-        public async Task<IGetOrderInvoiceApiResponse?> GetOrderInvoiceOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetOrderInvoiceApiResponse?> GetOrderInvoiceOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await GetOrderInvoiceAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await GetOrderInvoiceAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -5961,15 +6190,16 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Invoice (PDF, contains PII) As the label. ≤ 30/min.
+        /// Invoice (PDF, contains PII) The invoice for one order, drawn as a PDF from the SAME figures as the portal&#39;s invoice page (one loader). Doors, 409s and the &#x60;429 api_busy&#x60; bound as &#x60;label.pdf&#x60; (C53, C54). ⚠ PII set WIDER than the label&#39;s: like the portal&#39;s invoice it prints the PURCHASER&#39;s account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the &#x60;recipient&#x60; block name (Form A Q12 states both).
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderInvoiceApiResponse"/>&gt;</returns>
-        public async Task<IGetOrderInvoiceApiResponse> GetOrderInvoiceAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetOrderInvoiceApiResponse> GetOrderInvoiceAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -5977,7 +6207,7 @@ namespace Dona.Api.Api
             {
                 ValidateGetOrderInvoice(acceptLanguage, xDonaIntegration);
 
-                FormatGetOrderInvoice(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatGetOrderInvoice(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -5999,6 +6229,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -6051,7 +6294,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterGetOrderInvoiceDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterGetOrderInvoiceDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnGetOrderInvoice(apiResponseLocalVar);
 
@@ -6065,7 +6308,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorGetOrderInvoiceDefaultImplementation(e, "/orders/{id}/invoice.pdf", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorGetOrderInvoiceDefaultImplementation(e, "/orders/{id}/invoice.pdf", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorGetOrderInvoice(e);
                 throw;
             }
@@ -6316,6 +6559,56 @@ namespace Dona.Api.Api
             }
 
             /// <summary>
+            /// Returns true if the response is 409 Conflict
+            /// </summary>
+            /// <returns></returns>
+            public bool IsConflict => 409 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 409 Conflict
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? Conflict()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnConflict(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultConflict();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultConflict()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsConflict
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnConflict(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 409 Conflict and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryConflict([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Conflict();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)409);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
             /// Returns true if the response is 429 TooManyRequests
             /// </summary>
             /// <returns></returns>
@@ -6476,7 +6769,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatGetOrderLabel(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatGetOrderLabel(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -6499,11 +6792,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterGetOrderLabelDefaultImplementation(IGetOrderLabelApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterGetOrderLabelDefaultImplementation(IGetOrderLabelApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterGetOrderLabel(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterGetOrderLabel(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -6515,8 +6809,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterGetOrderLabel(ref bool suppressDefaultLog, IGetOrderLabelApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterGetOrderLabel(ref bool suppressDefaultLog, IGetOrderLabelApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -6526,11 +6821,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorGetOrderLabelDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorGetOrderLabelDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorGetOrderLabel(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorGetOrderLabel(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -6544,22 +6840,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorGetOrderLabel(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorGetOrderLabel(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Shipping label (PDF, contains PII) Prints buyer name/phone/address. &#x60;sk&#x60; keys only; logged &#x60;pii&#x3D;true&#x60;; never stored by the API. ≤ 30/min.
+        /// Shipping label (PDF, contains PII) The portal&#39;s sticker for one order: prints the buyer&#39;s name, phone and address. &#x60;sk&#x60; keys only (&#x60;orders:pii&#x60; on any other kind ⇒ &#x60;403 insufficient_scope&#x60; + &#x60;details[scope_not_allowed_for_kind]&#x60;); ADVANCED now (&#x60;403 tier_required&#x60;); a key minted for a THIRD-PARTY recipient ⇒ &#x60;403 tier_required&#x60; + &#x60;details[pii_recipient: pii_third_party_pending_counsel]&#x60; (D7). Logged &#x60;pii&#x3D;true&#x60; (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 &#x60;no_tracking_number&#x60; (+ &#x60;orders&#x60;: the order codes without a carrier number yet — print later), &#x60;no_items_selected&#x60;, &#x60;all_items_delayed&#x60; (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that &#x60;429 api_busy&#x60; (&#x60;Dona-Rate-Limited-Reason: global&#x60;, &#x60;Retry-After: 2&#x60;) before any read, and a batch is not charged.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderLabelApiResponse"/>&gt;</returns>
-        public async Task<IGetOrderLabelApiResponse?> GetOrderLabelOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetOrderLabelApiResponse?> GetOrderLabelOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await GetOrderLabelAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await GetOrderLabelAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -6568,15 +6866,16 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Shipping label (PDF, contains PII) Prints buyer name/phone/address. &#x60;sk&#x60; keys only; logged &#x60;pii&#x3D;true&#x60;; never stored by the API. ≤ 30/min.
+        /// Shipping label (PDF, contains PII) The portal&#39;s sticker for one order: prints the buyer&#39;s name, phone and address. &#x60;sk&#x60; keys only (&#x60;orders:pii&#x60; on any other kind ⇒ &#x60;403 insufficient_scope&#x60; + &#x60;details[scope_not_allowed_for_kind]&#x60;); ADVANCED now (&#x60;403 tier_required&#x60;); a key minted for a THIRD-PARTY recipient ⇒ &#x60;403 tier_required&#x60; + &#x60;details[pii_recipient: pii_third_party_pending_counsel]&#x60; (D7). Logged &#x60;pii&#x3D;true&#x60; (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 &#x60;no_tracking_number&#x60; (+ &#x60;orders&#x60;: the order codes without a carrier number yet — print later), &#x60;no_items_selected&#x60;, &#x60;all_items_delayed&#x60; (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that &#x60;429 api_busy&#x60; (&#x60;Dona-Rate-Limited-Reason: global&#x60;, &#x60;Retry-After: 2&#x60;) before any read, and a batch is not charged.
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderLabelApiResponse"/>&gt;</returns>
-        public async Task<IGetOrderLabelApiResponse> GetOrderLabelAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetOrderLabelApiResponse> GetOrderLabelAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -6584,7 +6883,7 @@ namespace Dona.Api.Api
             {
                 ValidateGetOrderLabel(acceptLanguage, xDonaIntegration);
 
-                FormatGetOrderLabel(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatGetOrderLabel(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -6606,6 +6905,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -6658,7 +6970,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterGetOrderLabelDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterGetOrderLabelDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnGetOrderLabel(apiResponseLocalVar);
 
@@ -6672,7 +6984,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorGetOrderLabelDefaultImplementation(e, "/orders/{id}/label.pdf", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorGetOrderLabelDefaultImplementation(e, "/orders/{id}/label.pdf", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorGetOrderLabel(e);
                 throw;
             }
@@ -6923,6 +7235,56 @@ namespace Dona.Api.Api
             }
 
             /// <summary>
+            /// Returns true if the response is 409 Conflict
+            /// </summary>
+            /// <returns></returns>
+            public bool IsConflict => 409 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 409 Conflict
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? Conflict()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnConflict(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultConflict();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultConflict()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsConflict
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnConflict(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 409 Conflict and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryConflict([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Conflict();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)409);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
             /// Returns true if the response is 429 TooManyRequests
             /// </summary>
             /// <returns></returns>
@@ -7083,7 +7445,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatGetOrderTimeline(ref Guid id, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatGetOrderTimeline(ref Guid id, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -7106,11 +7468,12 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterGetOrderTimelineDefaultImplementation(IGetOrderTimelineApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterGetOrderTimelineDefaultImplementation(IGetOrderTimelineApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterGetOrderTimeline(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+            AfterGetOrderTimeline(ref suppressDefaultLog, apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -7122,8 +7485,9 @@ namespace Dona.Api.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterGetOrderTimeline(ref bool suppressDefaultLog, IGetOrderTimelineApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterGetOrderTimeline(ref bool suppressDefaultLog, IGetOrderTimelineApiResponse apiResponseLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -7133,11 +7497,12 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorGetOrderTimelineDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorGetOrderTimelineDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorGetOrderTimeline(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, xDonaIntegration);
+            OnErrorGetOrderTimeline(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -7151,22 +7516,24 @@ namespace Dona.Api.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="id"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorGetOrderTimeline(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorGetOrderTimeline(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Order timeline &#x60;order_events&#x60; in order.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderTimelineApiResponse"/>&gt;</returns>
-        public async Task<IGetOrderTimelineApiResponse?> GetOrderTimelineOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetOrderTimelineApiResponse?> GetOrderTimelineOrDefaultAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await GetOrderTimelineAsync(id, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await GetOrderTimelineAsync(id, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -7180,10 +7547,11 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetOrderTimelineApiResponse"/>&gt;</returns>
-        public async Task<IGetOrderTimelineApiResponse> GetOrderTimelineAsync(Guid id, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IGetOrderTimelineApiResponse> GetOrderTimelineAsync(Guid id, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -7191,7 +7559,7 @@ namespace Dona.Api.Api
             {
                 ValidateGetOrderTimeline(acceptLanguage, xDonaIntegration);
 
-                FormatGetOrderTimeline(ref id, ref acceptLanguage, ref xDonaIntegration);
+                FormatGetOrderTimeline(ref id, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -7213,6 +7581,19 @@ namespace Dona.Api.Api
                       else
                       {
                           httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
                       }
                     }
 
@@ -7264,7 +7645,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterGetOrderTimelineDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, xDonaIntegration);
+                        AfterGetOrderTimelineDefaultImplementation(apiResponseLocalVar, id, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnGetOrderTimeline(apiResponseLocalVar);
 
@@ -7278,7 +7659,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorGetOrderTimelineDefaultImplementation(e, "/orders/{id}/timeline", uriBuilderLocalVar.Path, id, acceptLanguage, xDonaIntegration);
+                OnErrorGetOrderTimelineDefaultImplementation(e, "/orders/{id}/timeline", uriBuilderLocalVar.Path, id, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorGetOrderTimeline(e);
                 throw;
             }
@@ -7689,23 +8070,27 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatHandoverOrder(ref Guid id, ref string idempotencyKey, ref Option<string> donaDryRun, ref Option<bool> dryRun, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatHandoverOrder(ref Guid id, ref string idempotencyKey, ref Option<string> donaDryRun, ref Option<string> dryRun, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
         /// </summary>
         /// <param name="idempotencyKey"></param>
         /// <param name="donaDryRun"></param>
+        /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
         /// <param name="xDonaIntegration"></param>
         /// <returns></returns>
-        private void ValidateHandoverOrder(string idempotencyKey, Option<string> donaDryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void ValidateHandoverOrder(string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
         {
             if (idempotencyKey == null)
                 throw new ArgumentNullException(nameof(idempotencyKey));
 
             if (donaDryRun.IsSet && donaDryRun.Value == null)
                 throw new ArgumentNullException(nameof(donaDryRun));
+
+            if (dryRun.IsSet && dryRun.Value == null)
+                throw new ArgumentNullException(nameof(dryRun));
 
             if (acceptLanguage.IsSet && acceptLanguage.Value == null)
                 throw new ArgumentNullException(nameof(acceptLanguage));
@@ -7723,11 +8108,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterHandoverOrderDefaultImplementation(IHandoverOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterHandoverOrderDefaultImplementation(IHandoverOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterHandoverOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            AfterHandoverOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -7742,8 +8128,9 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterHandoverOrder(ref bool suppressDefaultLog, IHandoverOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterHandoverOrder(ref bool suppressDefaultLog, IHandoverOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -7756,11 +8143,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorHandoverOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorHandoverOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorHandoverOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            OnErrorHandoverOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -7777,25 +8165,27 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorHandoverOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorHandoverOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Hand over to the courier &#x60;sellerMayTransitionSQL&#x60; rules. 409: &#x60;order_not_shippable&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IHandoverOrderApiResponse"/>&gt;</returns>
-        public async Task<IHandoverOrderApiResponse?> HandoverOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IHandoverOrderApiResponse?> HandoverOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await HandoverOrderAsync(id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await HandoverOrderAsync(id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -7809,21 +8199,22 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IHandoverOrderApiResponse"/>&gt;</returns>
-        public async Task<IHandoverOrderApiResponse> HandoverOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IHandoverOrderApiResponse> HandoverOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateHandoverOrder(idempotencyKey, donaDryRun, acceptLanguage, xDonaIntegration);
+                ValidateHandoverOrder(idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
 
-                FormatHandoverOrder(ref id, ref idempotencyKey, ref donaDryRun, ref dryRun, ref acceptLanguage, ref xDonaIntegration);
+                FormatHandoverOrder(ref id, ref idempotencyKey, ref donaDryRun, ref dryRun, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -7878,6 +8269,19 @@ namespace Dona.Api.Api
                       }
                     }
 
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                    }
+
                     if (xDonaIntegration.IsSet)
                     {
                       // Set client side default value of Header Param "X-Dona-Integration".                    
@@ -7926,7 +8330,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterHandoverOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                        AfterHandoverOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnHandoverOrder(apiResponseLocalVar);
 
@@ -7940,7 +8344,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorHandoverOrderDefaultImplementation(e, "/orders/{id}/handover", uriBuilderLocalVar.Path, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                OnErrorHandoverOrderDefaultImplementation(e, "/orders/{id}/handover", uriBuilderLocalVar.Path, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorHandoverOrder(e);
                 throw;
             }
@@ -8451,7 +8855,7 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatListOrders(ref Option<string> cursor, ref Option<int> page, ref Option<int> limit, ref Option<string> updatedSince, ref Option<string> status, ref Option<string> scheme, ref Option<DateTimeOffset> from, ref Option<DateTimeOffset> to, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatListOrders(ref Option<string> cursor, ref Option<int> page, ref Option<int> limit, ref Option<string> updatedSince, ref Option<string> status, ref Option<string> scheme, ref Option<DateTimeOffset> from, ref Option<DateTimeOffset> to, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
@@ -8497,11 +8901,12 @@ namespace Dona.Api.Api
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterListOrdersDefaultImplementation(IListOrdersApiResponse apiResponseLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> status, Option<string> scheme, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterListOrdersDefaultImplementation(IListOrdersApiResponse apiResponseLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> status, Option<string> scheme, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterListOrders(ref suppressDefaultLog, apiResponseLocalVar, cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, xDonaIntegration);
+            AfterListOrders(ref suppressDefaultLog, apiResponseLocalVar, cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -8520,8 +8925,9 @@ namespace Dona.Api.Api
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterListOrders(ref bool suppressDefaultLog, IListOrdersApiResponse apiResponseLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> status, Option<string> scheme, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterListOrders(ref bool suppressDefaultLog, IListOrdersApiResponse apiResponseLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> status, Option<string> scheme, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -8538,11 +8944,12 @@ namespace Dona.Api.Api
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorListOrdersDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> status, Option<string> scheme, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorListOrdersDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> status, Option<string> scheme, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorListOrders(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, xDonaIntegration);
+            OnErrorListOrders(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -8563,8 +8970,9 @@ namespace Dona.Api.Api
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorListOrders(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> status, Option<string> scheme, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorListOrders(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> status, Option<string> scheme, Option<DateTimeOffset> from, Option<DateTimeOffset> to, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// List orders (no buyer PII) The &#x60;orders:read&#x60; projection. &#x60;status&#x60; takes the portal buckets (&#x60;all&#x60;, &#x60;pending&#x60;, &#x60;paid&#x60;, &#x60;ready_to_ship&#x60;, &#x60;to_ship&#x60;, &#x60;shipped&#x60;, &#x60;delivered&#x60;, &#x60;cancelled&#x60;, &#x60;return_refund&#x60;). &#x60;from&#x60;/&#x60;to&#x60; span ≤ 90 d, &#x60;to&#x60; exclusive.
@@ -8578,14 +8986,15 @@ namespace Dona.Api.Api
         /// <param name="from">created_at ≥ from. (optional)</param>
         /// <param name="to">created_at &lt; to. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListOrdersApiResponse"/>&gt;</returns>
-        public async Task<IListOrdersApiResponse?> ListOrdersOrDefaultAsync(Option<string> cursor = default, Option<int> page = default, Option<int> limit = default, Option<string> updatedSince = default, Option<string> status = default, Option<string> scheme = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListOrdersApiResponse?> ListOrdersOrDefaultAsync(Option<string> cursor = default, Option<int> page = default, Option<int> limit = default, Option<string> updatedSince = default, Option<string> status = default, Option<string> scheme = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await ListOrdersAsync(cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await ListOrdersAsync(cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -8606,10 +9015,11 @@ namespace Dona.Api.Api
         /// <param name="from">created_at ≥ from. (optional)</param>
         /// <param name="to">created_at &lt; to. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IListOrdersApiResponse"/>&gt;</returns>
-        public async Task<IListOrdersApiResponse> ListOrdersAsync(Option<string> cursor = default, Option<int> page = default, Option<int> limit = default, Option<string> updatedSince = default, Option<string> status = default, Option<string> scheme = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IListOrdersApiResponse> ListOrdersAsync(Option<string> cursor = default, Option<int> page = default, Option<int> limit = default, Option<string> updatedSince = default, Option<string> status = default, Option<string> scheme = default, Option<DateTimeOffset> from = default, Option<DateTimeOffset> to = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
@@ -8617,7 +9027,7 @@ namespace Dona.Api.Api
             {
                 ValidateListOrders(cursor, updatedSince, status, scheme, acceptLanguage, xDonaIntegration);
 
-                FormatListOrders(ref cursor, ref page, ref limit, ref updatedSince, ref status, ref scheme, ref from, ref to, ref acceptLanguage, ref xDonaIntegration);
+                FormatListOrders(ref cursor, ref page, ref limit, ref updatedSince, ref status, ref scheme, ref from, ref to, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -8669,6 +9079,19 @@ namespace Dona.Api.Api
                       }
                     }
 
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                    }
+
                     if (xDonaIntegration.IsSet)
                     {
                       // Set client side default value of Header Param "X-Dona-Integration".                    
@@ -8717,7 +9140,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterListOrdersDefaultImplementation(apiResponseLocalVar, cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, xDonaIntegration);
+                        AfterListOrdersDefaultImplementation(apiResponseLocalVar, cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnListOrders(apiResponseLocalVar);
 
@@ -8731,7 +9154,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorListOrdersDefaultImplementation(e, "/orders", uriBuilderLocalVar.Path, cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, xDonaIntegration);
+                OnErrorListOrdersDefaultImplementation(e, "/orders", uriBuilderLocalVar.Path, cursor, page, limit, updatedSince, status, scheme, from, to, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorListOrders(e);
                 throw;
             }
@@ -9142,23 +9565,27 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatMarkOrderReady(ref Guid id, ref string idempotencyKey, ref Option<string> donaDryRun, ref Option<bool> dryRun, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatMarkOrderReady(ref Guid id, ref string idempotencyKey, ref Option<string> donaDryRun, ref Option<string> dryRun, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
         /// </summary>
         /// <param name="idempotencyKey"></param>
         /// <param name="donaDryRun"></param>
+        /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
         /// <param name="xDonaIntegration"></param>
         /// <returns></returns>
-        private void ValidateMarkOrderReady(string idempotencyKey, Option<string> donaDryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void ValidateMarkOrderReady(string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
         {
             if (idempotencyKey == null)
                 throw new ArgumentNullException(nameof(idempotencyKey));
 
             if (donaDryRun.IsSet && donaDryRun.Value == null)
                 throw new ArgumentNullException(nameof(donaDryRun));
+
+            if (dryRun.IsSet && dryRun.Value == null)
+                throw new ArgumentNullException(nameof(dryRun));
 
             if (acceptLanguage.IsSet && acceptLanguage.Value == null)
                 throw new ArgumentNullException(nameof(acceptLanguage));
@@ -9176,11 +9603,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterMarkOrderReadyDefaultImplementation(IMarkOrderReadyApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterMarkOrderReadyDefaultImplementation(IMarkOrderReadyApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterMarkOrderReady(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            AfterMarkOrderReady(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -9195,8 +9623,9 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterMarkOrderReady(ref bool suppressDefaultLog, IMarkOrderReadyApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterMarkOrderReady(ref bool suppressDefaultLog, IMarkOrderReadyApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -9209,11 +9638,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorMarkOrderReadyDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorMarkOrderReadyDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorMarkOrderReady(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            OnErrorMarkOrderReady(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -9230,25 +9660,27 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorMarkOrderReady(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorMarkOrderReady(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Mark ready to ship Sets &#x60;ready_to_ship&#x60;. 409: &#x60;order_not_shippable&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IMarkOrderReadyApiResponse"/>&gt;</returns>
-        public async Task<IMarkOrderReadyApiResponse?> MarkOrderReadyOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IMarkOrderReadyApiResponse?> MarkOrderReadyOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await MarkOrderReadyAsync(id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await MarkOrderReadyAsync(id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -9262,21 +9694,22 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IMarkOrderReadyApiResponse"/>&gt;</returns>
-        public async Task<IMarkOrderReadyApiResponse> MarkOrderReadyAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IMarkOrderReadyApiResponse> MarkOrderReadyAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateMarkOrderReady(idempotencyKey, donaDryRun, acceptLanguage, xDonaIntegration);
+                ValidateMarkOrderReady(idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
 
-                FormatMarkOrderReady(ref id, ref idempotencyKey, ref donaDryRun, ref dryRun, ref acceptLanguage, ref xDonaIntegration);
+                FormatMarkOrderReady(ref id, ref idempotencyKey, ref donaDryRun, ref dryRun, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -9331,6 +9764,19 @@ namespace Dona.Api.Api
                       }
                     }
 
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                    }
+
                     if (xDonaIntegration.IsSet)
                     {
                       // Set client side default value of Header Param "X-Dona-Integration".                    
@@ -9379,7 +9825,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterMarkOrderReadyDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                        AfterMarkOrderReadyDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnMarkOrderReady(apiResponseLocalVar);
 
@@ -9393,7 +9839,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorMarkOrderReadyDefaultImplementation(e, "/orders/{id}/ready", uriBuilderLocalVar.Path, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                OnErrorMarkOrderReadyDefaultImplementation(e, "/orders/{id}/ready", uriBuilderLocalVar.Path, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorMarkOrderReady(e);
                 throw;
             }
@@ -9904,23 +10350,27 @@ namespace Dona.Api.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatShipOrder(ref Guid id, ref string idempotencyKey, ref Option<string> donaDryRun, ref Option<bool> dryRun, ref Option<string> acceptLanguage, ref Option<string> xDonaIntegration);
+        partial void FormatShipOrder(ref Guid id, ref string idempotencyKey, ref Option<string> donaDryRun, ref Option<string> dryRun, ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
 
         /// <summary>
         /// Validates the request parameters
         /// </summary>
         /// <param name="idempotencyKey"></param>
         /// <param name="donaDryRun"></param>
+        /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
         /// <param name="xDonaIntegration"></param>
         /// <returns></returns>
-        private void ValidateShipOrder(string idempotencyKey, Option<string> donaDryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void ValidateShipOrder(string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
         {
             if (idempotencyKey == null)
                 throw new ArgumentNullException(nameof(idempotencyKey));
 
             if (donaDryRun.IsSet && donaDryRun.Value == null)
                 throw new ArgumentNullException(nameof(donaDryRun));
+
+            if (dryRun.IsSet && dryRun.Value == null)
+                throw new ArgumentNullException(nameof(dryRun));
 
             if (acceptLanguage.IsSet && acceptLanguage.Value == null)
                 throw new ArgumentNullException(nameof(acceptLanguage));
@@ -9938,11 +10388,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void AfterShipOrderDefaultImplementation(IShipOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void AfterShipOrderDefaultImplementation(IShipOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLog = false;
-            AfterShipOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            AfterShipOrder(ref suppressDefaultLog, apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLog)
                 Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -9957,8 +10408,9 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void AfterShipOrder(ref bool suppressDefaultLog, IShipOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void AfterShipOrder(ref bool suppressDefaultLog, IShipOrderApiResponse apiResponseLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -9971,11 +10423,12 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        private void OnErrorShipOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        private void OnErrorShipOrderDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorShipOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+            OnErrorShipOrder(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -9992,25 +10445,27 @@ namespace Dona.Api.Api
         /// <param name="donaDryRun"></param>
         /// <param name="dryRun"></param>
         /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
         /// <param name="xDonaIntegration"></param>
-        partial void OnErrorShipOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<bool> dryRun, Option<string> acceptLanguage, Option<string> xDonaIntegration);
+        partial void OnErrorShipOrder(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
         /// Ship 409: &#x60;order_not_shippable&#x60;, &#x60;order_awaiting_courier&#x60;. Kill switch: &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IShipOrderApiResponse"/>&gt;</returns>
-        public async Task<IShipOrderApiResponse?> ShipOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IShipOrderApiResponse?> ShipOrderOrDefaultAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await ShipOrderAsync(id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+                return await ShipOrderAsync(id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -10024,21 +10479,22 @@ namespace Dona.Api.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
-        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. (optional)</param>
-        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. (optional)</param>
+        /// <param name="donaDryRun">&#x60;true&#x60; ⇒ validate + guard + compute the effect, then roll back. Zero side-effect rows (no events, no activity, no counters). Same as &#x60;?dry_run&#x3D;true&#x60;. Only the literal &#x60;true&#x60; / &#x60;false&#x60;; any other value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Dry-Run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). (optional)</param>
+        /// <param name="dryRun">Alias of the &#x60;Dona-Dry-Run&#x60; header. Only the literal strings &#x60;true&#x60; / &#x60;false&#x60; — &#x60;1&#x60;, &#x60;0&#x60;, &#x60;TRUE&#x60;, &#x60;yes&#x60;, an empty value ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;dry_run\&quot;, code:\&quot;invalid\&quot;}]&#x60; (C51). A string enum, not a boolean, so no SDK generator serialises it as &#x60;1&#x60;/&#x60;0&#x60;. (optional)</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
         /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IShipOrderApiResponse"/>&gt;</returns>
-        public async Task<IShipOrderApiResponse> ShipOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<bool> dryRun = default, Option<string> acceptLanguage = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IShipOrderApiResponse> ShipOrderAsync(Guid id, string idempotencyKey, Option<string> donaDryRun = default, Option<string> dryRun = default, Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                ValidateShipOrder(idempotencyKey, donaDryRun, acceptLanguage, xDonaIntegration);
+                ValidateShipOrder(idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
 
-                FormatShipOrder(ref id, ref idempotencyKey, ref donaDryRun, ref dryRun, ref acceptLanguage, ref xDonaIntegration);
+                FormatShipOrder(ref id, ref idempotencyKey, ref donaDryRun, ref dryRun, ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -10093,6 +10549,19 @@ namespace Dona.Api.Api
                       }
                     }
 
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                    }
+
                     if (xDonaIntegration.IsSet)
                     {
                       // Set client side default value of Header Param "X-Dona-Integration".                    
@@ -10141,7 +10610,7 @@ namespace Dona.Api.Api
                             }
                         }
 
-                        AfterShipOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                        AfterShipOrderDefaultImplementation(apiResponseLocalVar, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
 
                         Events.ExecuteOnShipOrder(apiResponseLocalVar);
 
@@ -10155,7 +10624,7 @@ namespace Dona.Api.Api
             }
             catch(Exception e)
             {
-                OnErrorShipOrderDefaultImplementation(e, "/orders/{id}/ship", uriBuilderLocalVar.Path, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, xDonaIntegration);
+                OnErrorShipOrderDefaultImplementation(e, "/orders/{id}/ship", uriBuilderLocalVar.Path, id, idempotencyKey, donaDryRun, dryRun, acceptLanguage, donaSeller, xDonaIntegration);
                 Events.ExecuteOnErrorShipOrder(e);
                 throw;
             }
