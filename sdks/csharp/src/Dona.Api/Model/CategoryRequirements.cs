@@ -25,7 +25,7 @@ using Dona.Api.Client;
 namespace Dona.Api.Model
 {
     /// <summary>
-    /// The live &#x60;GET /catalog/categories/{id}/requirements&#x60; payload (&#x60;internal/catalog/requirements.go&#x60;), resolved through the tree — one shape for the form and the API.
+    /// The live &#x60;GET /catalog/categories/{id}/requirements&#x60; payload (&#x60;internal/catalog/requirements.go&#x60;), resolved through the tree — one shape for the form and the API, plus the two per-shop commission fields.
     /// </summary>
     public partial class CategoryRequirements
     {
@@ -41,10 +41,12 @@ namespace Dona.Api.Model
         /// <param name="requiresDimensions">requiresDimensions</param>
         /// <param name="requiresBrand">requiresBrand</param>
         /// <param name="requiresSizeChart">requiresSizeChart</param>
+        /// <param name="effectiveCommissionPct">The rate a sale in this category is charged for the key&#39;s shop: the category rate (or the platform default), then the highest-ranked commission rule for this shop (a launch offer, a cohort, a shop-specific rate, a rule scoped to this category), then the shop&#39;s commission campaigns (the lowest of the general rate, each exclusive campaign alone and the stack of combinable ones — never above the general rate). A shop on a 0 % offer reads 0. Equals the seller portal&#39;s number and what checkout charges.</param>
         /// <param name="attributes">attributes</param>
-        /// <param name="commissionPct">commissionPct</param>
+        /// <param name="commissionPct">The category&#39;s own rate (nearest ancestor with a rate), the same for every shop; &#x60;null&#x60; when the tree carries none (the platform default then applies).</param>
+        /// <param name="commissionOfferEndsAt">When the rule or campaign behind &#x60;effective_commission_pct&#x60; stops applying (orders placed before it keep their rate; a campaign&#39;s is its last second). &#x60;null&#x60; when none applies, it has no end, or the offer is still promised (the shop has not opened).</param>
         [JsonConstructor]
-        public CategoryRequirements(Guid categoryId, string status, string listingPolicy, bool isLeaf, bool canList, int minImages, bool requiresDimensions, bool requiresBrand, bool requiresSizeChart, List<CategoryAttribute> attributes, decimal? commissionPct = default)
+        public CategoryRequirements(Guid categoryId, string status, string listingPolicy, bool isLeaf, bool canList, int minImages, bool requiresDimensions, bool requiresBrand, bool requiresSizeChart, decimal effectiveCommissionPct, List<CategoryAttribute> attributes, decimal? commissionPct = default, DateTimeOffset? commissionOfferEndsAt = default)
         {
             CategoryId = categoryId;
             Status = status;
@@ -55,8 +57,10 @@ namespace Dona.Api.Model
             RequiresDimensions = requiresDimensions;
             RequiresBrand = requiresBrand;
             RequiresSizeChart = requiresSizeChart;
+            EffectiveCommissionPct = effectiveCommissionPct;
             Attributes = attributes;
             CommissionPct = commissionPct;
+            CommissionOfferEndsAt = commissionOfferEndsAt;
             OnCreated();
         }
 
@@ -119,16 +123,31 @@ namespace Dona.Api.Model
         public bool RequiresSizeChart { get; set; }
 
         /// <summary>
+        /// The rate a sale in this category is charged for the key&#39;s shop: the category rate (or the platform default), then the highest-ranked commission rule for this shop (a launch offer, a cohort, a shop-specific rate, a rule scoped to this category), then the shop&#39;s commission campaigns (the lowest of the general rate, each exclusive campaign alone and the stack of combinable ones — never above the general rate). A shop on a 0 % offer reads 0. Equals the seller portal&#39;s number and what checkout charges.
+        /// </summary>
+        /// <value>The rate a sale in this category is charged for the key&#39;s shop: the category rate (or the platform default), then the highest-ranked commission rule for this shop (a launch offer, a cohort, a shop-specific rate, a rule scoped to this category), then the shop&#39;s commission campaigns (the lowest of the general rate, each exclusive campaign alone and the stack of combinable ones — never above the general rate). A shop on a 0 % offer reads 0. Equals the seller portal&#39;s number and what checkout charges.</value>
+        [JsonPropertyName("effective_commission_pct")]
+        public decimal EffectiveCommissionPct { get; set; }
+
+        /// <summary>
         /// Gets or Sets Attributes
         /// </summary>
         [JsonPropertyName("attributes")]
         public List<CategoryAttribute> Attributes { get; set; }
 
         /// <summary>
-        /// Gets or Sets CommissionPct
+        /// The category&#39;s own rate (nearest ancestor with a rate), the same for every shop; &#x60;null&#x60; when the tree carries none (the platform default then applies).
         /// </summary>
+        /// <value>The category&#39;s own rate (nearest ancestor with a rate), the same for every shop; &#x60;null&#x60; when the tree carries none (the platform default then applies).</value>
         [JsonPropertyName("commission_pct")]
         public decimal? CommissionPct { get; set; }
+
+        /// <summary>
+        /// When the rule or campaign behind &#x60;effective_commission_pct&#x60; stops applying (orders placed before it keep their rate; a campaign&#39;s is its last second). &#x60;null&#x60; when none applies, it has no end, or the offer is still promised (the shop has not opened).
+        /// </summary>
+        /// <value>When the rule or campaign behind &#x60;effective_commission_pct&#x60; stops applying (orders placed before it keep their rate; a campaign&#39;s is its last second). &#x60;null&#x60; when none applies, it has no end, or the offer is still promised (the shop has not opened).</value>
+        [JsonPropertyName("commission_offer_ends_at")]
+        public DateTimeOffset? CommissionOfferEndsAt { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -147,8 +166,10 @@ namespace Dona.Api.Model
             sb.Append("  RequiresDimensions: ").Append(RequiresDimensions).Append("\n");
             sb.Append("  RequiresBrand: ").Append(RequiresBrand).Append("\n");
             sb.Append("  RequiresSizeChart: ").Append(RequiresSizeChart).Append("\n");
+            sb.Append("  EffectiveCommissionPct: ").Append(EffectiveCommissionPct).Append("\n");
             sb.Append("  Attributes: ").Append(Attributes).Append("\n");
             sb.Append("  CommissionPct: ").Append(CommissionPct).Append("\n");
+            sb.Append("  CommissionOfferEndsAt: ").Append(CommissionOfferEndsAt).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -168,6 +189,11 @@ namespace Dona.Api.Model
         {
             OnCreated();
         }
+
+        /// <summary>
+        /// The format to use to serialize CommissionOfferEndsAt
+        /// </summary>
+        public string CommissionOfferEndsAtFormat { get; private set; } = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK";
 
         /// <summary>
         /// Deserializes json to <see cref="CategoryRequirements" />
@@ -195,8 +221,10 @@ namespace Dona.Api.Model
             Option<bool?> requiresDimensions = default;
             Option<bool?> requiresBrand = default;
             Option<bool?> requiresSizeChart = default;
+            Option<decimal?> effectiveCommissionPct = default;
             Option<List<CategoryAttribute>?> attributes = default;
             Option<decimal?> commissionPct = default;
+            Option<DateTimeOffset?> commissionOfferEndsAt = default;
 
             while (utf8JsonReader.Read())
             {
@@ -240,11 +268,17 @@ namespace Dona.Api.Model
                         case "requires_size_chart":
                             requiresSizeChart = new Option<bool?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (bool?)null : utf8JsonReader.GetBoolean());
                             break;
+                        case "effective_commission_pct":
+                            effectiveCommissionPct = new Option<decimal?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (decimal?)null : utf8JsonReader.GetDecimal());
+                            break;
                         case "attributes":
                             attributes = new Option<List<CategoryAttribute>?>(JsonSerializer.Deserialize<List<CategoryAttribute>>(ref utf8JsonReader, jsonSerializerOptions)!);
                             break;
                         case "commission_pct":
                             commissionPct = new Option<decimal?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (decimal?)null : utf8JsonReader.GetDecimal());
+                            break;
+                        case "commission_offer_ends_at":
+                            commissionOfferEndsAt = new Option<DateTimeOffset?>(JsonSerializer.Deserialize<DateTimeOffset?>(ref utf8JsonReader, jsonSerializerOptions));
                             break;
                         default:
                             break;
@@ -279,11 +313,17 @@ namespace Dona.Api.Model
             if (!requiresSizeChart.IsSet)
                 throw new ArgumentException("Property is required for class CategoryRequirements.", nameof(requiresSizeChart));
 
+            if (!effectiveCommissionPct.IsSet)
+                throw new ArgumentException("Property is required for class CategoryRequirements.", nameof(effectiveCommissionPct));
+
             if (!attributes.IsSet)
                 throw new ArgumentException("Property is required for class CategoryRequirements.", nameof(attributes));
 
             if (!commissionPct.IsSet)
                 throw new ArgumentException("Property is required for class CategoryRequirements.", nameof(commissionPct));
+
+            if (!commissionOfferEndsAt.IsSet)
+                throw new ArgumentException("Property is required for class CategoryRequirements.", nameof(commissionOfferEndsAt));
 
             if (categoryId.IsSet && categoryId.Value == null)
                 throw new ArgumentNullException(nameof(categoryId), "Property is not nullable for class CategoryRequirements.");
@@ -312,10 +352,13 @@ namespace Dona.Api.Model
             if (requiresSizeChart.IsSet && requiresSizeChart.Value == null)
                 throw new ArgumentNullException(nameof(requiresSizeChart), "Property is not nullable for class CategoryRequirements.");
 
+            if (effectiveCommissionPct.IsSet && effectiveCommissionPct.Value == null)
+                throw new ArgumentNullException(nameof(effectiveCommissionPct), "Property is not nullable for class CategoryRequirements.");
+
             if (attributes.IsSet && attributes.Value == null)
                 throw new ArgumentNullException(nameof(attributes), "Property is not nullable for class CategoryRequirements.");
 
-            return new CategoryRequirements(categoryId.Value!.Value!, status.Value!, listingPolicy.Value!, isLeaf.Value!.Value!, canList.Value!.Value!, minImages.Value!.Value!, requiresDimensions.Value!.Value!, requiresBrand.Value!.Value!, requiresSizeChart.Value!.Value!, attributes.Value!, commissionPct.Value!);
+            return new CategoryRequirements(categoryId.Value!.Value!, status.Value!, listingPolicy.Value!, isLeaf.Value!.Value!, canList.Value!.Value!, minImages.Value!.Value!, requiresDimensions.Value!.Value!, requiresBrand.Value!.Value!, requiresSizeChart.Value!.Value!, effectiveCommissionPct.Value!.Value!, attributes.Value!, commissionPct.Value!, commissionOfferEndsAt.Value!);
         }
 
         /// <summary>
@@ -369,12 +412,19 @@ namespace Dona.Api.Model
 
             writer.WriteBoolean("requires_size_chart", categoryRequirements.RequiresSizeChart);
 
+            writer.WriteNumber("effective_commission_pct", categoryRequirements.EffectiveCommissionPct);
+
             writer.WritePropertyName("attributes");
             JsonSerializer.Serialize(writer, categoryRequirements.Attributes, jsonSerializerOptions);
             if (categoryRequirements.CommissionPct != null)
                 writer.WriteNumber("commission_pct", categoryRequirements.CommissionPct.Value);
             else
                 writer.WriteNull("commission_pct");
+
+            if (categoryRequirements.CommissionOfferEndsAt != null)
+                writer.WriteString("commission_offer_ends_at", categoryRequirements.CommissionOfferEndsAt.Value.ToString(CommissionOfferEndsAtFormat));
+            else
+                writer.WriteNull("commission_offer_ends_at");
         }
     }
 }

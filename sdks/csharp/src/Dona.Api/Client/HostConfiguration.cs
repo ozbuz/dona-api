@@ -70,6 +70,11 @@ namespace Dona.Api.Client
             _jsonOptions.Converters.Add(new CategoryRequirementsJsonConverter());
             _jsonOptions.Converters.Add(new ChangelogEntryJsonConverter());
             _jsonOptions.Converters.Add(new ChangelogEntryPageJsonConverter());
+            _jsonOptions.Converters.Add(new CommissionJsonConverter());
+            _jsonOptions.Converters.Add(new CommissionCampaignJsonConverter());
+            _jsonOptions.Converters.Add(new CommissionCampaignCategoryJsonConverter());
+            _jsonOptions.Converters.Add(new CommissionOfferJsonConverter());
+            _jsonOptions.Converters.Add(new CommissionRootJsonConverter());
             _jsonOptions.Converters.Add(new DeclineRequestJsonConverter());
             _jsonOptions.Converters.Add(new DeliveryJsonConverter());
             _jsonOptions.Converters.Add(new DeliveryPageJsonConverter());

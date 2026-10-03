@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 from uuid import UUID
@@ -17,7 +18,7 @@ T = TypeVar("T", bound="CategoryRequirements")
 @_attrs_define
 class CategoryRequirements:
     """The live `GET /catalog/categories/{id}/requirements` payload (`internal/catalog/requirements.go`), resolved through
-    the tree — one shape for the form and the API.
+    the tree — one shape for the form and the API, plus the two per-shop commission fields.
 
         Attributes:
             category_id (UUID):
@@ -29,7 +30,16 @@ class CategoryRequirements:
             requires_dimensions (bool):
             requires_brand (bool):
             requires_size_chart (bool):
-            commission_pct (float | None):
+            commission_pct (float | None): The category's own rate (nearest ancestor with a rate), the same for every shop;
+                `null` when the tree carries none (the platform default then applies).
+            effective_commission_pct (float): The rate a sale in this category is charged for the key's shop: the category
+                rate (or the platform default), then the highest-ranked commission rule for this shop (a launch offer, a cohort,
+                a shop-specific rate, a rule scoped to this category), then the shop's commission campaigns (the lowest of the
+                general rate, each exclusive campaign alone and the stack of combinable ones — never above the general rate). A
+                shop on a 0 % offer reads 0. Equals the seller portal's number and what checkout charges.
+            commission_offer_ends_at (datetime.datetime | None): When the rule or campaign behind `effective_commission_pct`
+                stops applying (orders placed before it keep their rate; a campaign's is its last second). `null` when none
+                applies, it has no end, or the offer is still promised (the shop has not opened).
             attributes (list[CategoryAttribute]):
     """
 
@@ -43,6 +53,8 @@ class CategoryRequirements:
     requires_brand: bool
     requires_size_chart: bool
     commission_pct: float | None
+    effective_commission_pct: float
+    commission_offer_ends_at: datetime.datetime | None
     attributes: list[CategoryAttribute]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -68,6 +80,14 @@ class CategoryRequirements:
         commission_pct: float | None
         commission_pct = self.commission_pct
 
+        effective_commission_pct = self.effective_commission_pct
+
+        commission_offer_ends_at: None | str
+        if isinstance(self.commission_offer_ends_at, datetime.datetime):
+            commission_offer_ends_at = self.commission_offer_ends_at.isoformat()
+        else:
+            commission_offer_ends_at = self.commission_offer_ends_at
+
         attributes = []
         for attributes_item_data in self.attributes:
             attributes_item = attributes_item_data.to_dict()
@@ -87,6 +107,8 @@ class CategoryRequirements:
                 "requires_brand": requires_brand,
                 "requires_size_chart": requires_size_chart,
                 "commission_pct": commission_pct,
+                "effective_commission_pct": effective_commission_pct,
+                "commission_offer_ends_at": commission_offer_ends_at,
                 "attributes": attributes,
             }
         )
@@ -123,6 +145,23 @@ class CategoryRequirements:
 
         commission_pct = _parse_commission_pct(d.pop("commission_pct"))
 
+        effective_commission_pct = d.pop("effective_commission_pct")
+
+        def _parse_commission_offer_ends_at(data: object) -> datetime.datetime | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                commission_offer_ends_at_type_0 = datetime.datetime.fromisoformat(data)
+
+                return commission_offer_ends_at_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None, data)
+
+        commission_offer_ends_at = _parse_commission_offer_ends_at(d.pop("commission_offer_ends_at"))
+
         attributes = []
         _attributes = d.pop("attributes")
         for attributes_item_data in _attributes:
@@ -141,6 +180,8 @@ class CategoryRequirements:
             requires_brand=requires_brand,
             requires_size_chart=requires_size_chart,
             commission_pct=commission_pct,
+            effective_commission_pct=effective_commission_pct,
+            commission_offer_ends_at=commission_offer_ends_at,
             attributes=attributes,
         )
 

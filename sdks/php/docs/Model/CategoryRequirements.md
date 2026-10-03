@@ -13,7 +13,9 @@ Name | Type | Description | Notes
 **requires_dimensions** | **bool** |  |
 **requires_brand** | **bool** |  |
 **requires_size_chart** | **bool** |  |
-**commission_pct** | **float** |  |
+**commission_pct** | **float** | The category&#39;s own rate (nearest ancestor with a rate), the same for every shop; &#x60;null&#x60; when the tree carries none (the platform default then applies). |
+**effective_commission_pct** | **float** | The rate a sale in this category is charged for the key&#39;s shop: the category rate (or the platform default), then the highest-ranked commission rule for this shop (a launch offer, a cohort, a shop-specific rate, a rule scoped to this category), then the shop&#39;s commission campaigns (the lowest of the general rate, each exclusive campaign alone and the stack of combinable ones — never above the general rate). A shop on a 0 % offer reads 0. Equals the seller portal&#39;s number and what checkout charges. |
+**commission_offer_ends_at** | **\DateTime** | When the rule or campaign behind &#x60;effective_commission_pct&#x60; stops applying (orders placed before it keep their rate; a campaign&#39;s is its last second). &#x60;null&#x60; when none applies, it has no end, or the offer is still promised (the shop has not opened). |
 **attributes** | [**\Dona\Api\Model\CategoryAttribute[]**](CategoryAttribute.md) |  |
 
 [[Back to Model list]](../../README.md#models) [[Back to API list]](../../README.md#endpoints) [[Back to README]](../../README.md)

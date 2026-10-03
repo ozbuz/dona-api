@@ -20,7 +20,7 @@ getCategoryRequirements($id, $accept_language, $dona_seller, $x_dona_integration
 
 What a product in this leaf needs
 
-Per-category requirements + listing policy.
+Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at` when that rule ends.
 
 ### Example
 

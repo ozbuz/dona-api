@@ -39,6 +39,33 @@ namespace Dona.Api.Api
         AccountApiEvents Events { get; }
 
         /// <summary>
+        /// What Dona charges this shop — the rate card and the running offer
+        /// </summary>
+        /// <remarks>
+        /// The same body as the seller portal&#39;s &#x60;GET /seller/commission&#x60; (built by the same function): every active root category with the range of its leaves&#39; rates, &#x60;start_pct&#x60; (the lowest rate on the card), and &#x60;offer&#x60; — the shop-wide commission rule that prices this shop now (&#x60;running&#x60;) or will from the day it opens (&#x60;promised&#x60;), e.g. the launch offer &#x60;launch_v1&#x60; at 0 %. Since BE-C7 it also carries the shop&#39;s commission campaigns: &#x60;campaigns[]&#x60; (every promised or running grant whose campaign prices the shop), &#x60;offer.code &#x3D; campaign&#x60; when an all-categories campaign beats the offer, and &#x60;roots[].effective_min_pct / effective_max_pct&#x60; (this shop&#39;s range after its rules and campaigns). Per category, &#x60;GET /categories/{id}/requirements&#x60; answers the rate a sale is charged (&#x60;effective_commission_pct&#x60;). Read only; the key&#39;s own shop only.
+        /// </remarks>
+        /// <exception cref="ApiException">Thrown when fails to make API call</exception>
+        /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
+        /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IGetCommissionApiResponse"/>&gt;</returns>
+        Task<IGetCommissionApiResponse> GetCommissionAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// What Dona charges this shop — the rate card and the running offer
+        /// </summary>
+        /// <remarks>
+        /// The same body as the seller portal&#39;s &#x60;GET /seller/commission&#x60; (built by the same function): every active root category with the range of its leaves&#39; rates, &#x60;start_pct&#x60; (the lowest rate on the card), and &#x60;offer&#x60; — the shop-wide commission rule that prices this shop now (&#x60;running&#x60;) or will from the day it opens (&#x60;promised&#x60;), e.g. the launch offer &#x60;launch_v1&#x60; at 0 %. Since BE-C7 it also carries the shop&#39;s commission campaigns: &#x60;campaigns[]&#x60; (every promised or running grant whose campaign prices the shop), &#x60;offer.code &#x3D; campaign&#x60; when an all-categories campaign beats the offer, and &#x60;roots[].effective_min_pct / effective_max_pct&#x60; (this shop&#39;s range after its rules and campaigns). Per category, &#x60;GET /categories/{id}/requirements&#x60; answers the rate a sale is charged (&#x60;effective_commission_pct&#x60;). Read only; the key&#39;s own shop only.
+        /// </remarks>
+        /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
+        /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IGetCommissionApiResponse"/>?&gt;</returns>
+        Task<IGetCommissionApiResponse?> GetCommissionOrDefaultAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Who am I — key, shop, tier, limits
         /// </summary>
         /// <remarks>
@@ -64,6 +91,48 @@ namespace Dona.Api.Api
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IGetMeApiResponse"/>?&gt;</returns>
         Task<IGetMeApiResponse?> GetMeOrDefaultAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default);
+    }
+
+    /// <summary>
+    /// The <see cref="IGetCommissionApiResponse"/>
+    /// </summary>
+    public interface IGetCommissionApiResponse : Dona.Api.Client.IApiResponse, IOk<Dona.Api.Model.Commission?>, IUnauthorized<Dona.Api.Model.Error?>, IForbidden<Dona.Api.Model.Error?>, ITooManyRequests<Dona.Api.Model.Error?>, IInternalServerError<Dona.Api.Model.Error?>, IServiceUnavailable<Dona.Api.Model.Error?>
+    {
+        /// <summary>
+        /// Returns true if the response is 200 Ok
+        /// </summary>
+        /// <returns></returns>
+        bool IsOk { get; }
+
+        /// <summary>
+        /// Returns true if the response is 401 Unauthorized
+        /// </summary>
+        /// <returns></returns>
+        bool IsUnauthorized { get; }
+
+        /// <summary>
+        /// Returns true if the response is 403 Forbidden
+        /// </summary>
+        /// <returns></returns>
+        bool IsForbidden { get; }
+
+        /// <summary>
+        /// Returns true if the response is 429 TooManyRequests
+        /// </summary>
+        /// <returns></returns>
+        bool IsTooManyRequests { get; }
+
+        /// <summary>
+        /// Returns true if the response is 500 InternalServerError
+        /// </summary>
+        /// <returns></returns>
+        bool IsInternalServerError { get; }
+
+        /// <summary>
+        /// Returns true if the response is 503 ServiceUnavailable
+        /// </summary>
+        /// <returns></returns>
+        bool IsServiceUnavailable { get; }
     }
 
     /// <summary>
@@ -113,6 +182,26 @@ namespace Dona.Api.Api
     /// </summary>
     public class AccountApiEvents
     {
+        /// <summary>
+        /// The event raised after the server response
+        /// </summary>
+        public event EventHandler<ApiResponseEventArgs>? OnGetCommission;
+
+        /// <summary>
+        /// The event raised after an error querying the server
+        /// </summary>
+        public event EventHandler<ExceptionEventArgs>? OnErrorGetCommission;
+
+        internal void ExecuteOnGetCommission(AccountApi.GetCommissionApiResponse apiResponse)
+        {
+            OnGetCommission?.Invoke(this, new ApiResponseEventArgs(apiResponse));
+        }
+
+        internal void ExecuteOnErrorGetCommission(Exception exception)
+        {
+            OnErrorGetCommission?.Invoke(this, new ExceptionEventArgs(exception));
+        }
+
         /// <summary>
         /// The event raised after the server response
         /// </summary>
@@ -173,6 +262,574 @@ namespace Dona.Api.Api
             HttpClient = httpClient;
             Events = accountApiEvents;
             BearerTokenProvider = bearerTokenProvider;
+        }
+
+        partial void FormatGetCommission(ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);
+
+        /// <summary>
+        /// Validates the request parameters
+        /// </summary>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="xDonaIntegration"></param>
+        /// <returns></returns>
+        private void ValidateGetCommission(Option<string> acceptLanguage, Option<string> xDonaIntegration)
+        {
+            if (acceptLanguage.IsSet && acceptLanguage.Value == null)
+                throw new ArgumentNullException(nameof(acceptLanguage));
+
+            if (xDonaIntegration.IsSet && xDonaIntegration.Value == null)
+                throw new ArgumentNullException(nameof(xDonaIntegration));
+        }
+
+        /// <summary>
+        /// Processes the server response
+        /// </summary>
+        /// <param name="apiResponseLocalVar"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
+        /// <param name="xDonaIntegration"></param>
+        private void AfterGetCommissionDefaultImplementation(IGetCommissionApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
+        {
+            bool suppressDefaultLog = false;
+            AfterGetCommission(ref suppressDefaultLog, apiResponseLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
+            if (!suppressDefaultLog)
+                Logger.LogInformation(RestLogEvents.ApiRequestCompleted, "{0,-9} | {1} | {2}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
+        }
+
+        /// <summary>
+        /// Processes the server response
+        /// </summary>
+        /// <param name="suppressDefaultLog"></param>
+        /// <param name="apiResponseLocalVar"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
+        /// <param name="xDonaIntegration"></param>
+        partial void AfterGetCommission(ref bool suppressDefaultLog, IGetCommissionApiResponse apiResponseLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
+
+        /// <summary>
+        /// Logs exceptions that occur while retrieving the server response
+        /// </summary>
+        /// <param name="exceptionLocalVar"></param>
+        /// <param name="pathFormatLocalVar"></param>
+        /// <param name="pathLocalVar"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
+        /// <param name="xDonaIntegration"></param>
+        private void OnErrorGetCommissionDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration)
+        {
+            bool suppressDefaultLogLocalVar = false;
+            OnErrorGetCommission(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
+            if (!suppressDefaultLogLocalVar)
+                Logger.LogError(RestLogEvents.ApiRequestFailed, exceptionLocalVar, "An error occurred while sending the request to the server.");
+        }
+
+        /// <summary>
+        /// A partial method that gives developers a way to provide customized exception handling
+        /// </summary>
+        /// <param name="suppressDefaultLogLocalVar"></param>
+        /// <param name="exceptionLocalVar"></param>
+        /// <param name="pathFormatLocalVar"></param>
+        /// <param name="pathLocalVar"></param>
+        /// <param name="acceptLanguage"></param>
+        /// <param name="donaSeller"></param>
+        /// <param name="xDonaIntegration"></param>
+        partial void OnErrorGetCommission(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
+
+        /// <summary>
+        /// What Dona charges this shop — the rate card and the running offer The same body as the seller portal&#39;s &#x60;GET /seller/commission&#x60; (built by the same function): every active root category with the range of its leaves&#39; rates, &#x60;start_pct&#x60; (the lowest rate on the card), and &#x60;offer&#x60; — the shop-wide commission rule that prices this shop now (&#x60;running&#x60;) or will from the day it opens (&#x60;promised&#x60;), e.g. the launch offer &#x60;launch_v1&#x60; at 0 %. Since BE-C7 it also carries the shop&#39;s commission campaigns: &#x60;campaigns[]&#x60; (every promised or running grant whose campaign prices the shop), &#x60;offer.code &#x3D; campaign&#x60; when an all-categories campaign beats the offer, and &#x60;roots[].effective_min_pct / effective_max_pct&#x60; (this shop&#39;s range after its rules and campaigns). Per category, &#x60;GET /categories/{id}/requirements&#x60; answers the rate a sale is charged (&#x60;effective_commission_pct&#x60;). Read only; the key&#39;s own shop only.
+        /// </summary>
+        /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
+        /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IGetCommissionApiResponse"/>&gt;</returns>
+        public async Task<IGetCommissionApiResponse?> GetCommissionOrDefaultAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await GetCommissionAsync(acceptLanguage, donaSeller, xDonaIntegration, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// What Dona charges this shop — the rate card and the running offer The same body as the seller portal&#39;s &#x60;GET /seller/commission&#x60; (built by the same function): every active root category with the range of its leaves&#39; rates, &#x60;start_pct&#x60; (the lowest rate on the card), and &#x60;offer&#x60; — the shop-wide commission rule that prices this shop now (&#x60;running&#x60;) or will from the day it opens (&#x60;promised&#x60;), e.g. the launch offer &#x60;launch_v1&#x60; at 0 %. Since BE-C7 it also carries the shop&#39;s commission campaigns: &#x60;campaigns[]&#x60; (every promised or running grant whose campaign prices the shop), &#x60;offer.code &#x3D; campaign&#x60; when an all-categories campaign beats the offer, and &#x60;roots[].effective_min_pct / effective_max_pct&#x60; (this shop&#39;s range after its rules and campaigns). Per category, &#x60;GET /categories/{id}/requirements&#x60; answers the rate a sale is charged (&#x60;effective_commission_pct&#x60;). Read only; the key&#39;s own shop only.
+        /// </summary>
+        /// <exception cref="ApiException">Thrown when fails to make API call</exception>
+        /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
+        /// <param name="donaSeller">Vendor-app install keys only (&#x60;dona_it_live_…&#x60;, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;required\&quot;}]&#x60;; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no &#x60;urn:uuid:&#x60;, no padding) ⇒ &#x60;400 invalid_body&#x60; + &#x60;details[{field:\&quot;Dona-Seller\&quot;, code:\&quot;invalid\&quot;}]&#x60;; naming any other shop — even one that installed the same app ⇒ &#x60;404 not_found&#x60; (never 403; nothing is read). Ignored on a seller key (&#x60;dona_sk_&#x60;). (optional)</param>
+        /// <param name="xDonaIntegration">&#x60;name/version&#x60; of the calling integration; stored (≤ 128 chars) and searchable in the request journal. (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IGetCommissionApiResponse"/>&gt;</returns>
+        public async Task<IGetCommissionApiResponse> GetCommissionAsync(Option<string> acceptLanguage = default, Option<Guid> donaSeller = default, Option<string> xDonaIntegration = default, System.Threading.CancellationToken cancellationToken = default)
+        {
+            UriBuilder uriBuilderLocalVar = new UriBuilder();
+
+            try
+            {
+                ValidateGetCommission(acceptLanguage, xDonaIntegration);
+
+                FormatGetCommission(ref acceptLanguage, ref donaSeller, ref xDonaIntegration);
+
+                using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
+                {
+                    uriBuilderLocalVar.Host = HttpClient.BaseAddress!.Host;
+                    uriBuilderLocalVar.Port = HttpClient.BaseAddress.Port;
+                    uriBuilderLocalVar.Scheme = HttpClient.BaseAddress.Scheme;
+                    uriBuilderLocalVar.Path = HttpClient.BaseAddress.AbsolutePath == "/"
+                        ? "/commission"
+                        : string.Concat(HttpClient.BaseAddress.AbsolutePath.TrimEnd('/'), "/commission");
+
+                    if (acceptLanguage.IsSet)
+                    {
+                      // Set client side default value of Header Param "Accept-Language".                    
+                      if (ClientUtils.IsContentHeader("Accept-Language"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Accept-Language", ClientUtils.ParameterToString(acceptLanguage.Value));
+                      }
+                    }
+
+                    if (donaSeller.IsSet)
+                    {
+                      // Set client side default value of Header Param "Dona-Seller".                    
+                      if (ClientUtils.IsContentHeader("Dona-Seller"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("Dona-Seller", ClientUtils.ParameterToString(donaSeller.Value));
+                      }
+                    }
+
+                    if (xDonaIntegration.IsSet)
+                    {
+                      // Set client side default value of Header Param "X-Dona-Integration".                    
+                      if (ClientUtils.IsContentHeader("X-Dona-Integration"))
+                      {
+                          httpRequestMessageLocalVar.Content?.Headers.Add("X-Dona-Integration", ClientUtils.ParameterToString(xDonaIntegration.Value));
+                      }
+                      else
+                      {
+                          httpRequestMessageLocalVar.Headers.Add("X-Dona-Integration", ClientUtils.ParameterToString(xDonaIntegration.Value));
+                      }
+                    }
+
+                    List<TokenBase> tokenBaseLocalVars = new List<TokenBase>();
+                    httpRequestMessageLocalVar.RequestUri = uriBuilderLocalVar.Uri;
+
+                    BearerToken bearerTokenLocalVar1 = (BearerToken) await BearerTokenProvider.GetAsync(cancellation: cancellationToken).ConfigureAwait(false);
+
+                    tokenBaseLocalVars.Add(bearerTokenLocalVar1);
+
+                    bearerTokenLocalVar1.UseInHeader(httpRequestMessageLocalVar, "");
+
+                    string[] acceptLocalVars = new string[] {
+                        "application/json"
+                    };
+
+                    IEnumerable<MediaTypeWithQualityHeaderValue> acceptHeaderValuesLocalVar = ClientUtils.SelectHeaderAcceptArray(acceptLocalVars);
+
+                    foreach (var acceptLocalVar in acceptHeaderValuesLocalVar)
+                        httpRequestMessageLocalVar.Headers.Accept.Add(acceptLocalVar);
+
+                    httpRequestMessageLocalVar.Method = HttpMethod.Get;
+
+                    DateTime requestedAtLocalVar = DateTime.UtcNow;
+
+                    using (HttpResponseMessage httpResponseMessageLocalVar = await HttpClient.SendAsync(httpRequestMessageLocalVar, cancellationToken).ConfigureAwait(false))
+                    {
+                        GetCommissionApiResponse apiResponseLocalVar;
+
+                        switch ((int)httpResponseMessageLocalVar.StatusCode) {
+                            default: {
+                                string responseContentLocalVar = await httpResponseMessageLocalVar.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                                apiResponseLocalVar = new(Logger, httpRequestMessageLocalVar, httpResponseMessageLocalVar, responseContentLocalVar, "/commission", requestedAtLocalVar, _jsonSerializerOptions);
+
+                                break;
+                            }
+                        }
+
+                        AfterGetCommissionDefaultImplementation(apiResponseLocalVar, acceptLanguage, donaSeller, xDonaIntegration);
+
+                        Events.ExecuteOnGetCommission(apiResponseLocalVar);
+
+                        if (apiResponseLocalVar.StatusCode == (HttpStatusCode) 429)
+                            foreach(TokenBase tokenBaseLocalVar in tokenBaseLocalVars)
+                                tokenBaseLocalVar.BeginRateLimit();
+
+                        return apiResponseLocalVar;
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                OnErrorGetCommissionDefaultImplementation(e, "/commission", uriBuilderLocalVar.Path, acceptLanguage, donaSeller, xDonaIntegration);
+                Events.ExecuteOnErrorGetCommission(e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// The <see cref="GetCommissionApiResponse"/>
+        /// </summary>
+        public partial class GetCommissionApiResponse : Dona.Api.Client.ApiResponse, IGetCommissionApiResponse
+        {
+            /// <summary>
+            /// The logger
+            /// </summary>
+            public ILogger<AccountApi> Logger { get; }
+
+            /// <summary>
+            /// The <see cref="GetCommissionApiResponse"/>
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="httpRequestMessage"></param>
+            /// <param name="httpResponseMessage"></param>
+            /// <param name="rawContent"></param>
+            /// <param name="path"></param>
+            /// <param name="requestedAt"></param>
+            /// <param name="jsonSerializerOptions"></param>
+            public GetCommissionApiResponse(ILogger<AccountApi> logger, System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage, string rawContent, string path, DateTime requestedAt, System.Text.Json.JsonSerializerOptions jsonSerializerOptions) : base(httpRequestMessage, httpResponseMessage, rawContent, path, requestedAt, jsonSerializerOptions)
+            {
+                Logger = logger;
+                OnCreated(httpRequestMessage, httpResponseMessage);
+            }
+
+            /// <summary>
+            /// The <see cref="GetCommissionApiResponse"/>
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="httpRequestMessage"></param>
+            /// <param name="httpResponseMessage"></param>
+            /// <param name="contentStream"></param>
+            /// <param name="path"></param>
+            /// <param name="requestedAt"></param>
+            /// <param name="jsonSerializerOptions"></param>
+            public GetCommissionApiResponse(ILogger<AccountApi> logger, System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage, System.IO.Stream contentStream, string path, DateTime requestedAt, System.Text.Json.JsonSerializerOptions jsonSerializerOptions) : base(httpRequestMessage, httpResponseMessage, contentStream, path, requestedAt, jsonSerializerOptions)
+            {
+                Logger = logger;
+                OnCreated(httpRequestMessage, httpResponseMessage);
+            }
+
+            partial void OnCreated(global::System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage);
+
+            /// <summary>
+            /// Returns true if the response is 200 Ok
+            /// </summary>
+            /// <returns></returns>
+            public bool IsOk => 200 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 200 Ok
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Commission? Ok()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Commission? result = null;
+                OnOk(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultOk();
+                return result;
+            }
+
+            private Dona.Api.Model.Commission? DefaultOk()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsOk
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Commission>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnOk(ref bool suppressDefault, ref Dona.Api.Model.Commission? result);
+
+            /// <summary>
+            /// Returns true if the response is 200 Ok and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryOk([NotNullWhen(true)]out Dona.Api.Model.Commission? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Ok();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)200);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 401 Unauthorized
+            /// </summary>
+            /// <returns></returns>
+            public bool IsUnauthorized => 401 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 401 Unauthorized
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? Unauthorized()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnUnauthorized(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultUnauthorized();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultUnauthorized()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsUnauthorized
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnUnauthorized(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 401 Unauthorized and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryUnauthorized([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Unauthorized();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)401);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 403 Forbidden
+            /// </summary>
+            /// <returns></returns>
+            public bool IsForbidden => 403 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 403 Forbidden
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? Forbidden()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnForbidden(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultForbidden();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultForbidden()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsForbidden
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnForbidden(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 403 Forbidden and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryForbidden([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Forbidden();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)403);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 429 TooManyRequests
+            /// </summary>
+            /// <returns></returns>
+            public bool IsTooManyRequests => 429 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 429 TooManyRequests
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? TooManyRequests()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnTooManyRequests(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultTooManyRequests();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultTooManyRequests()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsTooManyRequests
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnTooManyRequests(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 429 TooManyRequests and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryTooManyRequests([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = TooManyRequests();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)429);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 500 InternalServerError
+            /// </summary>
+            /// <returns></returns>
+            public bool IsInternalServerError => 500 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 500 InternalServerError
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? InternalServerError()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnInternalServerError(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultInternalServerError();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultInternalServerError()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsInternalServerError
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnInternalServerError(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 500 InternalServerError and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryInternalServerError([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = InternalServerError();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)500);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 503 ServiceUnavailable
+            /// </summary>
+            /// <returns></returns>
+            public bool IsServiceUnavailable => 503 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 503 ServiceUnavailable
+            /// </summary>
+            /// <returns></returns>
+            public Dona.Api.Model.Error? ServiceUnavailable()
+            {
+                bool suppressDefault = false;
+                Dona.Api.Model.Error? result = null;
+                OnServiceUnavailable(ref suppressDefault, ref result);
+                if (!suppressDefault)
+                    result = DefaultServiceUnavailable();
+                return result;
+            }
+
+            private Dona.Api.Model.Error? DefaultServiceUnavailable()
+            {
+                // NOTICE: Consider this AsModel template deprecated. Implement the appropriate partial method instead
+                return IsServiceUnavailable
+                    ? System.Text.Json.JsonSerializer.Deserialize<Dona.Api.Model.Error>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            partial void OnServiceUnavailable(ref bool suppressDefault, ref Dona.Api.Model.Error? result);
+
+            /// <summary>
+            /// Returns true if the response is 503 ServiceUnavailable and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryServiceUnavailable([NotNullWhen(true)]out Dona.Api.Model.Error? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = ServiceUnavailable();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)503);
+                }
+
+                return result != null;
+            }
+
+            private void OnDeserializationErrorDefaultImplementation(Exception exception, HttpStatusCode httpStatusCode)
+            {
+                bool suppressDefaultLog = false;
+                OnDeserializationError(ref suppressDefaultLog, exception, httpStatusCode);
+                if (!suppressDefaultLog)
+                    Logger.LogError(RestLogEvents.ApiDeserializationFailed, exception, "An error occurred while deserializing the {code} response.", httpStatusCode);
+            }
+
+            partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
         partial void FormatGetMe(ref Option<string> acceptLanguage, ref Option<Guid> donaSeller, ref Option<string> xDonaIntegration);

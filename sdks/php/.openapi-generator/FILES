@@ -44,6 +44,11 @@ docs/Model/CategoryPage.md
 docs/Model/CategoryRequirements.md
 docs/Model/ChangelogEntry.md
 docs/Model/ChangelogEntryPage.md
+docs/Model/Commission.md
+docs/Model/CommissionCampaign.md
+docs/Model/CommissionCampaignCategory.md
+docs/Model/CommissionOffer.md
+docs/Model/CommissionRoot.md
 docs/Model/DeclineRequest.md
 docs/Model/Delivery.md
 docs/Model/DeliveryPage.md
@@ -212,6 +217,11 @@ lib/Model/CategoryPage.php
 lib/Model/CategoryRequirements.php
 lib/Model/ChangelogEntry.php
 lib/Model/ChangelogEntryPage.php
+lib/Model/Commission.php
+lib/Model/CommissionCampaign.php
+lib/Model/CommissionCampaignCategory.php
+lib/Model/CommissionOffer.php
+lib/Model/CommissionRoot.php
 lib/Model/DeclineRequest.php
 lib/Model/Delivery.php
 lib/Model/DeliveryPage.php

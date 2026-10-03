@@ -1,19 +1,17 @@
 from http import HTTPStatus
 from typing import Any
-from urllib.parse import quote
 from uuid import UUID
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.category_requirements import CategoryRequirements
+from ...models.commission import Commission
 from ...models.error import Error
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
-    id: UUID,
     *,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
@@ -31,20 +29,16 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/categories/{id}/requirements".format(
-            id=quote(str(id), safe=""),
-        ),
+        "url": "/commission",
     }
 
     _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> CategoryRequirements | Error | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Commission | Error | None:
     if response.status_code == 200:
-        response_200 = CategoryRequirements.from_dict(response.json())
+        response_200 = Commission.from_dict(response.json())
 
         return response_200
 
@@ -57,11 +51,6 @@ def _parse_response(
         response_403 = Error.from_dict(response.json())
 
         return response_403
-
-    if response.status_code == 404:
-        response_404 = Error.from_dict(response.json())
-
-        return response_404
 
     if response.status_code == 429:
         response_429 = Error.from_dict(response.json())
@@ -84,9 +73,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[CategoryRequirements | Error]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Commission | Error]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -96,22 +83,25 @@ def _build_response(
 
 
 def sync_detailed(
-    id: UUID,
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Response[CategoryRequirements | Error]:
-    """What a product in this leaf needs
+) -> Response[Commission | Error]:
+    """What Dona charges this shop — the rate card and the running offer
 
-     Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate
-    card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once
-    every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at`
-    when that rule ends.
+     The same body as the seller portal's `GET /seller/commission` (built by the same function): every
+    active root category with the range of its leaves' rates, `start_pct` (the lowest rate on the card),
+    and `offer` — the shop-wide commission rule that prices this shop now (`running`) or will from the
+    day it opens (`promised`), e.g. the launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the
+    shop's commission campaigns: `campaigns[]` (every promised or running grant whose campaign prices
+    the shop), `offer.code = campaign` when an all-categories campaign beats the offer, and
+    `roots[].effective_min_pct / effective_max_pct` (this shop's range after its rules and campaigns).
+    Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged
+    (`effective_commission_pct`). Read only; the key's own shop only.
 
     Args:
-        id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
         dona_seller (UUID | Unset):
@@ -122,11 +112,10 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[CategoryRequirements | Error]
+        Response[Commission | Error]
     """
 
     kwargs = _get_kwargs(
-        id=id,
         accept_language=accept_language,
         dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
@@ -140,22 +129,25 @@ def sync_detailed(
 
 
 def sync(
-    id: UUID,
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> CategoryRequirements | Error | None:
-    """What a product in this leaf needs
+) -> Commission | Error | None:
+    """What Dona charges this shop — the rate card and the running offer
 
-     Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate
-    card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once
-    every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at`
-    when that rule ends.
+     The same body as the seller portal's `GET /seller/commission` (built by the same function): every
+    active root category with the range of its leaves' rates, `start_pct` (the lowest rate on the card),
+    and `offer` — the shop-wide commission rule that prices this shop now (`running`) or will from the
+    day it opens (`promised`), e.g. the launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the
+    shop's commission campaigns: `campaigns[]` (every promised or running grant whose campaign prices
+    the shop), `offer.code = campaign` when an all-categories campaign beats the offer, and
+    `roots[].effective_min_pct / effective_max_pct` (this shop's range after its rules and campaigns).
+    Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged
+    (`effective_commission_pct`). Read only; the key's own shop only.
 
     Args:
-        id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
         dona_seller (UUID | Unset):
@@ -166,11 +158,10 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        CategoryRequirements | Error
+        Commission | Error
     """
 
     return sync_detailed(
-        id=id,
         client=client,
         accept_language=accept_language,
         dona_seller=dona_seller,
@@ -179,22 +170,25 @@ def sync(
 
 
 async def asyncio_detailed(
-    id: UUID,
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> Response[CategoryRequirements | Error]:
-    """What a product in this leaf needs
+) -> Response[Commission | Error]:
+    """What Dona charges this shop — the rate card and the running offer
 
-     Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate
-    card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once
-    every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at`
-    when that rule ends.
+     The same body as the seller portal's `GET /seller/commission` (built by the same function): every
+    active root category with the range of its leaves' rates, `start_pct` (the lowest rate on the card),
+    and `offer` — the shop-wide commission rule that prices this shop now (`running`) or will from the
+    day it opens (`promised`), e.g. the launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the
+    shop's commission campaigns: `campaigns[]` (every promised or running grant whose campaign prices
+    the shop), `offer.code = campaign` when an all-categories campaign beats the offer, and
+    `roots[].effective_min_pct / effective_max_pct` (this shop's range after its rules and campaigns).
+    Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged
+    (`effective_commission_pct`). Read only; the key's own shop only.
 
     Args:
-        id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
         dona_seller (UUID | Unset):
@@ -205,11 +199,10 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[CategoryRequirements | Error]
+        Response[Commission | Error]
     """
 
     kwargs = _get_kwargs(
-        id=id,
         accept_language=accept_language,
         dona_seller=dona_seller,
         x_dona_integration=x_dona_integration,
@@ -221,22 +214,25 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    id: UUID,
     *,
     client: AuthenticatedClient | Client,
     accept_language: str | Unset = "uz",
     dona_seller: UUID | Unset = UNSET,
     x_dona_integration: str | Unset = UNSET,
-) -> CategoryRequirements | Error | None:
-    """What a product in this leaf needs
+) -> Commission | Error | None:
+    """What Dona charges this shop — the rate card and the running offer
 
-     Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate
-    card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once
-    every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at`
-    when that rule ends.
+     The same body as the seller portal's `GET /seller/commission` (built by the same function): every
+    active root category with the range of its leaves' rates, `start_pct` (the lowest rate on the card),
+    and `offer` — the shop-wide commission rule that prices this shop now (`running`) or will from the
+    day it opens (`promised`), e.g. the launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the
+    shop's commission campaigns: `campaigns[]` (every promised or running grant whose campaign prices
+    the shop), `offer.code = campaign` when an all-categories campaign beats the offer, and
+    `roots[].effective_min_pct / effective_max_pct` (this shop's range after its rules and campaigns).
+    Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged
+    (`effective_commission_pct`). Read only; the key's own shop only.
 
     Args:
-        id (UUID):
         accept_language (str | Unset): Known values (open set — tolerate new ones): `uz`, `ru`,
             `en`. Default: 'uz'.
         dona_seller (UUID | Unset):
@@ -247,12 +243,11 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        CategoryRequirements | Error
+        Commission | Error
     """
 
     return (
         await asyncio_detailed(
-            id=id,
             client=client,
             accept_language=accept_language,
             dona_seller=dona_seller,

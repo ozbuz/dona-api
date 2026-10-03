@@ -43,6 +43,11 @@ docs/models/CategoryPage.md
 docs/models/CategoryRequirements.md
 docs/models/ChangelogEntry.md
 docs/models/ChangelogEntryPage.md
+docs/models/Commission.md
+docs/models/CommissionCampaign.md
+docs/models/CommissionCampaignCategory.md
+docs/models/CommissionOffer.md
+docs/models/CommissionRoot.md
 docs/models/DeclineRequest.md
 docs/models/Delivery.md
 docs/models/DeliveryPage.md
@@ -235,6 +240,11 @@ src/Dona.Api/Model/CategoryPage.cs
 src/Dona.Api/Model/CategoryRequirements.cs
 src/Dona.Api/Model/ChangelogEntry.cs
 src/Dona.Api/Model/ChangelogEntryPage.cs
+src/Dona.Api/Model/Commission.cs
+src/Dona.Api/Model/CommissionCampaign.cs
+src/Dona.Api/Model/CommissionCampaignCategory.cs
+src/Dona.Api/Model/CommissionOffer.cs
+src/Dona.Api/Model/CommissionRoot.cs
 src/Dona.Api/Model/DeclineRequest.cs
 src/Dona.Api/Model/Delivery.cs
 src/Dona.Api/Model/DeliveryPage.cs

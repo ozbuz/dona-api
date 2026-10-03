@@ -64,10 +64,10 @@ $dona_seller = 'dona_seller_example'; // string | Vendor-app install keys only (
 $x_dona_integration = billz-connector/2.4.1; // string | `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
 
 try {
-    $result = $apiInstance->getMe($accept_language, $dona_seller, $x_dona_integration);
+    $result = $apiInstance->getCommission($accept_language, $dona_seller, $x_dona_integration);
     print_r($result);
 } catch (Exception $e) {
-    echo 'Exception when calling AccountApi->getMe: ', $e->getMessage(), PHP_EOL;
+    echo 'Exception when calling AccountApi->getCommission: ', $e->getMessage(), PHP_EOL;
 }
 
 ```
@@ -78,6 +78,7 @@ All URIs are relative to *https://api.dona.im/seller-api/v1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AccountApi* | [**getCommission**](docs/Api/AccountApi.md#getcommission) | **GET** /commission | What Dona charges this shop — the rate card and the running offer
 *AccountApi* | [**getMe**](docs/Api/AccountApi.md#getme) | **GET** /me | Who am I — key, shop, tier, limits
 *AttentionApi* | [**ackAttention**](docs/Api/AttentionApi.md#ackattention) | **POST** /attention/{id}/ack | Acknowledge
 *AttentionApi* | [**getAttention**](docs/Api/AttentionApi.md#getattention) | **GET** /attention/{id} | One attention item
@@ -169,6 +170,11 @@ Class | Method | HTTP request | Description
 - [CategoryRequirements](docs/Model/CategoryRequirements.md)
 - [ChangelogEntry](docs/Model/ChangelogEntry.md)
 - [ChangelogEntryPage](docs/Model/ChangelogEntryPage.md)
+- [Commission](docs/Model/Commission.md)
+- [CommissionCampaign](docs/Model/CommissionCampaign.md)
+- [CommissionCampaignCategory](docs/Model/CommissionCampaignCategory.md)
+- [CommissionOffer](docs/Model/CommissionOffer.md)
+- [CommissionRoot](docs/Model/CommissionRoot.md)
 - [DeclineRequest](docs/Model/DeclineRequest.md)
 - [Delivery](docs/Model/Delivery.md)
 - [DeliveryPage](docs/Model/DeliveryPage.md)

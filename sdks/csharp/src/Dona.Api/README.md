@@ -55,8 +55,8 @@ namespace YourProject
         {
             var host = CreateHostBuilder(args).Build();
             var api = host.Services.GetRequiredService<IAccountApi>();
-            IGetMeApiResponse apiResponse = await api.GetMeAsync("todo");
-            Me? model = apiResponse.Ok();
+            IGetCommissionApiResponse apiResponse = await api.GetCommissionAsync("todo");
+            Commission? model = apiResponse.Ok();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args)

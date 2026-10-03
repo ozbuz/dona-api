@@ -1,8 +1,10 @@
 // Dona API quickstart — the portal's "Boshlash" steps 2–4, in C#.
 //
 // 1. GET /me                   who the key is: shop, tier, limits
-// 2. GET /products?limit=5     the first page of the catalogue
-// 3. POST /stock?dry_run=true  re-sends the first product's CURRENT stock as a rehearsal: validated,
+// 2. GET /commission           what Dona charges the shop: the rate card, this shop's own range per
+//                              category, the running offer and its commission campaigns
+// 3. GET /products?limit=5     the first page of the catalogue
+// 4. POST /stock?dry_run=true  re-sends the first product's CURRENT stock as a rehearsal: validated,
 //                              guarded and rolled back — nothing is written, whatever the answer.
 //
 // Optional: DONA_API_BASE_URL (defaults to production, the only environment).
@@ -51,13 +53,25 @@ public static class Quickstart
         Console.WriteLine($"shop: {meBody.Shop.Name} ({meBody.Shop.Status}) · tier {meBody.Tier} · writes_enabled {(meBody.WritesEnabled ? "true" : "false")}");
         Console.WriteLine($"rate limit: {Header(me, "X-RateLimit-Remaining")}/{Header(me, "X-RateLimit-Limit")} left · policy {Header(me, "RateLimit-Policy")}");
 
-        // 2 ─ first five products
+        // 2 ─ what Dona charges this shop (read only)
+        var commission = await host.Services.GetRequiredService<IAccountApi>().GetCommissionAsync(xDonaIntegration: Integration);
+        if (!commission.TryOk(out var commissionBody)) return Fail("GET /commission", commission);
+        var offer = commissionBody.Offer;
+        var offerText = offer is null ? "none" : $"{offer.Code} ({offer.State}, {offer.EffectPct}%)";
+        Console.WriteLine($"commission: from {commissionBody.StartPct}% · offer {offerText} · campaigns {commissionBody.Campaigns.Count}");
+        // min/max = the platform's card; effective_* = what THIS shop is charged after its rules and campaigns.
+        foreach (var r in commissionBody.Roots)
+            Console.WriteLine($"  {r.Slug}  card {r.MinPct}–{r.MaxPct}% · yours {r.EffectiveMinPct}–{r.EffectiveMaxPct}%");
+        foreach (var c in commissionBody.Campaigns)
+            Console.WriteLine($"  campaign {c.Code} ({c.Kind}, {c.State}) {c.EffectType} {c.EffectPct}%");
+
+        // 3 ─ first five products
         var page = await host.Services.GetRequiredService<ICatalogApi>().ListProductsAsync(limit: 5, xDonaIntegration: Integration);
         if (!page.TryOk(out var pageBody)) return Fail("GET /products", page);
         foreach (var p in pageBody.Items)
             Console.WriteLine($"  {p.Id}  {p.SellerSku ?? "-"}  stock {p.Stock}  {p.Title.Uz ?? p.Title.Ru}");
 
-        // 3 ─ rehearse a stock write
+        // 4 ─ rehearse a stock write
         var first = pageBody.Items.FirstOrDefault();
         if (first is null)
         {

@@ -9,7 +9,7 @@ PHP and C#**, generated from one OpenAPI 3.1 contract, plus runnable examples fo
 |---|---|
 | Contract | [`spec/openapi.yaml`](spec/openapi.yaml) — the same document the API serves at [`/seller-api/v1/openapi.json`](https://api.dona.im/seller-api/v1/openapi.json) (CI proves it) |
 | SDKs | [`sdks/`](sdks/) — **generated, never edited by hand** (CI regenerates and fails on any difference) |
-| Examples | [`examples/`](examples/) — `GET /me` → `GET /products?limit=5` → `POST /stock` (`dry_run`) + a webhook signature verifier, per language |
+| Examples | [`examples/`](examples/) — `GET /me` → `GET /commission` → `GET /products?limit=5` → `POST /stock` (`dry_run`) + a webhook signature verifier, per language |
 | Status | **Pre-release (0.1.0).** The API is deployed but not yet enabled for sellers (until then a valid key gets `503 limits_unavailable`). The contract now covers S1–S7: reads, writes (`POST /stock` etc., gated on `writes_enabled`), webhooks, an MCP door for AI agents (`dona_ak_live_…`) with write tools + owner confirmation, an OAuth 2.1 door for connectors (read-only), and vendor-app install keys (`dona_it_live_…`, `Dona-Seller` header). **The repository is public** (2026-09-26); registry packages (npm/PyPI/NuGet/Packagist) are **not yet published** — the token for each is still missing, see [`.github/workflows/publish.yml`](.github/workflows/publish.yml). Install from the repo below; Go and Python need no clone, TypeScript/PHP/C# do (their tooling has no git-subdirectory-install support) — none need auth. |
 
 ## Install · Oʻrnatish · Установка

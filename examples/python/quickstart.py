@@ -4,8 +4,10 @@
     (or: pip install ../../sdks/python && python quickstart.py)
 
 1. GET /me                   who the key is: shop, tier, limits
-2. GET /products?limit=5     the first page of the catalogue
-3. POST /stock?dry_run=true  re-sends the first product's CURRENT stock as a rehearsal: validated,
+2. GET /commission           what Dona charges the shop: the rate card, this shop's own range per
+                             category, the running offer and its commission campaigns
+3. GET /products?limit=5     the first page of the catalogue
+4. POST /stock?dry_run=true  re-sends the first product's CURRENT stock as a rehearsal: validated,
                              guarded and rolled back — nothing is written, whatever the answer.
 
 Optional: DONA_API_BASE_URL (defaults to production, the only environment).
@@ -17,7 +19,7 @@ import uuid
 from typing import Any, NoReturn
 
 from dona_api import AuthenticatedClient
-from dona_api.api.account import get_me
+from dona_api.api.account import get_commission, get_me
 from dona_api.api.catalog import list_products
 from dona_api.api.stock_prices import set_stock
 from dona_api.models import BulkResult, Error, HeldForReview, StockLine, StockRequest
@@ -63,7 +65,25 @@ def main() -> None:
             f" left · policy {me.headers.get('RateLimit-Policy', '?')}"
         )
 
-        # 2 ─ first five products
+        # 2 ─ what Dona charges this shop (read only)
+        com = get_commission.sync_detailed(client=client)
+        if int(com.status_code) != 200 or com.parsed is None or isinstance(com.parsed, Error):
+            fail("GET /commission", com)
+        offer = com.parsed.offer
+        offer_text = f"{offer.code} ({offer.state}, {offer.effect_pct:g}%)" if offer else "none"
+        print(
+            f"commission: from {com.parsed.start_pct:g}% · offer {offer_text} · campaigns {len(com.parsed.campaigns)}"
+        )
+        for r in com.parsed.roots:
+            # min/max = the platform's card; effective_* = what THIS shop is charged after its rules and campaigns.
+            print(
+                f"  {r.slug}  card {r.min_pct:g}–{r.max_pct:g}%"
+                f" · yours {r.effective_min_pct:g}–{r.effective_max_pct:g}%"
+            )
+        for c in com.parsed.campaigns:
+            print(f"  campaign {c.code} ({c.kind}, {c.state}) {c.effect_type} {c.effect_pct:g}%")
+
+        # 3 ─ first five products
         page = list_products.sync_detailed(client=client, limit=5)
         if int(page.status_code) != 200 or page.parsed is None or isinstance(page.parsed, Error):
             fail("GET /products", page)
@@ -71,7 +91,7 @@ def main() -> None:
             title = p.title.uz if p.title.uz is not UNSET else p.title.ru
             print(f"  {p.id}  {p.seller_sku or '-'}  stock {p.stock}  {title}")
 
-        # 3 ─ rehearse a stock write
+        # 4 ─ rehearse a stock write
         if not page.parsed.items:
             print("no products yet — skipping the POST /stock rehearsal")
             return
