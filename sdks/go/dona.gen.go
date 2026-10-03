@@ -1608,15 +1608,23 @@ type CategoryPage struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
-// CategoryRequirements The live `GET /catalog/categories/{id}/requirements` payload (`internal/catalog/requirements.go`), resolved through the tree — one shape for the form and the API.
+// CategoryRequirements The live `GET /catalog/categories/{id}/requirements` payload (`internal/catalog/requirements.go`), resolved through the tree — one shape for the form and the API, plus the two per-shop commission fields.
 type CategoryRequirements struct {
 	Attributes []CategoryAttribute `json:"attributes"`
 
 	// CanList `status=active AND is_leaf AND listing_policy <> prohibited`.
-	CanList       bool               `json:"can_list"`
-	CategoryId    openapi_types.UUID `json:"category_id"`
-	CommissionPct *float32           `json:"commission_pct"`
-	IsLeaf        bool               `json:"is_leaf"`
+	CanList    bool               `json:"can_list"`
+	CategoryId openapi_types.UUID `json:"category_id"`
+
+	// CommissionOfferEndsAt When the rule or campaign behind `effective_commission_pct` stops applying (orders placed before it keep their rate; a campaign's is its last second). `null` when none applies, it has no end, or the offer is still promised (the shop has not opened).
+	CommissionOfferEndsAt *time.Time `json:"commission_offer_ends_at"`
+
+	// CommissionPct The category's own rate (nearest ancestor with a rate), the same for every shop; `null` when the tree carries none (the platform default then applies).
+	CommissionPct *float32 `json:"commission_pct"`
+
+	// EffectiveCommissionPct The rate a sale in this category is charged for the key's shop: the category rate (or the platform default), then the highest-ranked commission rule for this shop (a launch offer, a cohort, a shop-specific rate, a rule scoped to this category), then the shop's commission campaigns (the lowest of the general rate, each exclusive campaign alone and the stack of combinable ones — never above the general rate). A shop on a 0 % offer reads 0. Equals the seller portal's number and what checkout charges.
+	EffectiveCommissionPct float32 `json:"effective_commission_pct"`
+	IsLeaf                 bool    `json:"is_leaf"`
 
 	// ListingPolicy `open` default; `approval_required`, `licensed`, `restricted`, `prohibited`.
 	ListingPolicy      string `json:"listing_policy"`
@@ -1657,6 +1665,129 @@ type ChangelogEntryPage struct {
 
 	// NextCursor Pass back as `?cursor=`. `null` when `has_more` is false.
 	NextCursor *string `json:"next_cursor"`
+}
+
+// Commission The seller portal's `GET /seller/commission` body, byte for byte.
+type Commission struct {
+	// Campaigns Every promised or running grant whose campaign prices this shop now (a paused campaign disappears at once). Empty while campaigns do not apply to the shop.
+	Campaigns []CommissionCampaign `json:"campaigns"`
+
+	// DefaultPct The platform rate when a category tree carries none.
+	DefaultPct float32          `json:"default_pct"`
+	Offer      *CommissionOffer `json:"offer"`
+	Roots      []CommissionRoot `json:"roots"`
+
+	// SavedUzs What the launch offer and the commission campaigns spared this shop so far (orders not cancelled), in som, from the order-line snapshots only. A number while `offer.code` is `launch_v1` or the shop has a campaign-priced line; otherwise `null`.
+	SavedUzs *int64             `json:"saved_uzs"`
+	SellerId openapi_types.UUID `json:"seller_id"`
+
+	// StartPct The lowest rate on the card (MIN of `roots[].min_pct`; `default_pct` when there are no roots).
+	StartPct float32 `json:"start_pct"`
+}
+
+// CommissionCampaign defines model for CommissionCampaign.
+type CommissionCampaign struct {
+	CampaignId openapi_types.UUID `json:"campaign_id"`
+
+	// Categories Every category-scoped rate of the campaign (each covers its category's subtree).
+	Categories []CommissionCampaignCategory `json:"categories"`
+
+	// Code The campaign's handle (e.g. `LAUNCH-0`).
+	Code       string `json:"code"`
+	Combinable bool   `json:"combinable"`
+
+	// Days The whole days the grant runs (a promise — the days it will run from the shop's opening).
+	Days *int `json:"days"`
+
+	// DaysLeft Whole days left, counted to the grant's anchor + `days` (the count a cohort offer shows), never past `ends_at`; `null` for a promise.
+	DaysLeft *int `json:"days_left"`
+
+	// EffectPct The all-categories rate when `scope` is `all`, else the first category's.
+	EffectPct float32 `json:"effect_pct"`
+
+	// EffectType Known values (open set — tolerate new ones): `absolute_pct`, `relative_discount_pct`.
+	EffectType string `json:"effect_type"`
+
+	// EndsAt The last second the grant prices (23:59:59 Tashkent on its last day); `null` = until the campaign closes, or a promise.
+	EndsAt  *time.Time         `json:"ends_at"`
+	GrantId openapi_types.UUID `json:"grant_id"`
+
+	// Kind Known values (open set — tolerate new ones): `new_registration`, `existing_seller`, `invite`, `sales_target`.
+	Kind string `json:"kind"`
+
+	// Name `jsonb {uz,ru,en}`; readers fall back uz → ru → en.
+	Name LocalizedText `json:"name"`
+
+	// Progress Invite or sales-target progress; `null` until those campaign types ship.
+	Progress *map[string]interface{} `json:"progress"`
+
+	// Scope Known values (open set — tolerate new ones): `all`, `categories`.
+	Scope    string     `json:"scope"`
+	StartsAt *time.Time `json:"starts_at"`
+
+	// State `running`: the grant prices the shop now (a grant that starts later is listed from its start). `promised`: it opens the day the shop opens; nothing is dated until then. Known values (open set — tolerate new ones): `running`, `promised`.
+	State string `json:"state"`
+}
+
+// CommissionCampaignCategory defines model for CommissionCampaignCategory.
+type CommissionCampaignCategory struct {
+	EffectPct float32 `json:"effect_pct"`
+
+	// EffectType Known values (open set — tolerate new ones): `absolute_pct`, `relative_discount_pct`.
+	EffectType string             `json:"effect_type"`
+	Id         openapi_types.UUID `json:"id"`
+
+	// Name `jsonb {uz,ru,en}`; readers fall back uz → ru → en.
+	Name LocalizedText `json:"name"`
+}
+
+// CommissionOffer defines model for CommissionOffer.
+type CommissionOffer struct {
+	// CampaignId Only when `code` is `campaign`.
+	CampaignId *openapi_types.UUID `json:"campaign_id,omitempty"`
+
+	// Code `campaign` · `launch_v1` · `cohort_new` · `cohort_existing` · `seller` · `seller_group` · `country` · `platform`.
+	Code     string `json:"code"`
+	Days     *int   `json:"days"`
+	DaysLeft *int   `json:"days_left"`
+
+	// EffectPct `absolute_pct`: the rate. `relative_discount_pct`: the share taken off each category rate.
+	EffectPct float32 `json:"effect_pct"`
+
+	// EffectType Known values (open set — tolerate new ones): `absolute_pct`, `relative_discount_pct`.
+	EffectType string `json:"effect_type"`
+
+	// EndsAt Every `code` but `campaign`: exclusive — orders placed before it keep the offer's rate. `campaign`: the LAST second the campaign's grant prices (23:59:59 Tashkent on its last day — the grant ends at the 00:00 after it), the same instant as that grant's `campaigns[].ends_at`.
+	EndsAt *time.Time `json:"ends_at"`
+
+	// Name The campaign's name; only when `code` is `campaign`.
+	Name *LocalizedText `json:"name,omitempty"`
+
+	// RuleId The commission rule; empty while a launch offer is promised (its rule is created the day the shop opens) and for a `campaign` (a campaign is not a rule).
+	RuleId   string     `json:"rule_id"`
+	StartsAt *time.Time `json:"starts_at"`
+
+	// State Known values (open set — tolerate new ones): `running`, `promised`.
+	State string `json:"state"`
+}
+
+// CommissionRoot One active top-level category and the range of its active leaves' rates.
+type CommissionRoot struct {
+	// EffectiveMaxPct This shop's highest rate in the category after its commission rules and campaigns.
+	EffectiveMaxPct float32 `json:"effective_max_pct"`
+
+	// EffectiveMinPct This shop's lowest rate in the category after its commission rules and campaigns (what a sale is charged). `min_pct` / `max_pct` stay the platform's card.
+	EffectiveMinPct float32            `json:"effective_min_pct"`
+	Id              openapi_types.UUID `json:"id"`
+	L2Names         []LocalizedText    `json:"l2_names"`
+	LeafCount       int64              `json:"leaf_count"`
+	MaxPct          float32            `json:"max_pct"`
+	MinPct          float32            `json:"min_pct"`
+
+	// Name `jsonb {uz,ru,en}`; readers fall back uz → ru → en.
+	Name     LocalizedText `json:"name"`
+	Slug     string        `json:"slug"`
+	ThumbUrl *string       `json:"thumb_url"`
 }
 
 // DeclineRequest defines model for DeclineRequest.
@@ -3246,6 +3377,18 @@ type GetChangelogParams struct {
 
 	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
 	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+}
+
+// GetCommissionParams defines parameters for GetCommission.
+type GetCommissionParams struct {
+	// AcceptLanguage Localises `message` in error bodies and single-language renderings. Default `uz`.
+	AcceptLanguage *AcceptLanguage `json:"Accept-Language,omitempty"`
+
+	// DonaSeller Vendor-app install keys only (`dona_it_live_…`, S6) — and then REQUIRED on every request, public routes included: the id of the shop the install key belongs to. Missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent more than once, or not ONE id in the canonical form the API prints (lower-case, 36 characters — no braces, no `urn:uuid:`, no padding) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; naming any other shop — even one that installed the same app ⇒ `404 not_found` (never 403; nothing is read). Ignored on a seller key (`dona_sk_`).
+	DonaSeller *DonaSeller `json:"Dona-Seller,omitempty"`
+
+	// XDonaIntegration `name/version` of the calling integration; stored (≤ 128 chars) and searchable in the request journal.
+	XDonaIntegration *XDonaIntegration `json:"X-Dona-Integration,omitempty"`
 }
 
 // ListEventsParams defines parameters for ListEvents.
@@ -6179,7 +6322,7 @@ type ClientInterface interface {
 
 	// GetCategoryRequirements What a product in this leaf needs
 	//
-	// Per-category requirements + listing policy.
+	// Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at` when that rule ends.
 	//
 	// Corresponds with GET /categories/{id}/requirements (the `GetCategoryRequirements` operationId).
 	GetCategoryRequirements(ctx context.Context, id IdPath, params *GetCategoryRequirementsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6190,6 +6333,13 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /changelog (the `GetChangelog` operationId).
 	GetChangelog(ctx context.Context, params *GetChangelogParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCommission What Dona charges this shop — the rate card and the running offer
+	//
+	// The same body as the seller portal's `GET /seller/commission` (built by the same function): every active root category with the range of its leaves' rates, `start_pct` (the lowest rate on the card), and `offer` — the shop-wide commission rule that prices this shop now (`running`) or will from the day it opens (`promised`), e.g. the launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the shop's commission campaigns: `campaigns[]` (every promised or running grant whose campaign prices the shop), `offer.code = campaign` when an all-categories campaign beats the offer, and `roots[].effective_min_pct / effective_max_pct` (this shop's range after its rules and campaigns). Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged (`effective_commission_pct`). Read only; the key's own shop only.
+	//
+	// Corresponds with GET /commission (the `GetCommission` operationId).
+	GetCommission(ctx context.Context, params *GetCommissionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListEvents The change feed (primary channel)
 	//
@@ -6841,7 +6991,7 @@ func (c *Client) ListCategories(ctx context.Context, params *ListCategoriesParam
 
 // GetCategoryRequirements What a product in this leaf needs
 //
-// Per-category requirements + listing policy.
+// Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at` when that rule ends.
 //
 // Corresponds with GET /categories/{id}/requirements (the `GetCategoryRequirements` operationId).
 func (c *Client) GetCategoryRequirements(ctx context.Context, id IdPath, params *GetCategoryRequirementsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -6863,6 +7013,23 @@ func (c *Client) GetCategoryRequirements(ctx context.Context, id IdPath, params 
 // Corresponds with GET /changelog (the `GetChangelog` operationId).
 func (c *Client) GetChangelog(ctx context.Context, params *GetChangelogParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetChangelogRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCommission What Dona charges this shop — the rate card and the running offer
+//
+// The same body as the seller portal's `GET /seller/commission` (built by the same function): every active root category with the range of its leaves' rates, `start_pct` (the lowest rate on the card), and `offer` — the shop-wide commission rule that prices this shop now (`running`) or will from the day it opens (`promised`), e.g. the launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the shop's commission campaigns: `campaigns[]` (every promised or running grant whose campaign prices the shop), `offer.code = campaign` when an all-categories campaign beats the offer, and `roots[].effective_min_pct / effective_max_pct` (this shop's range after its rules and campaigns). Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged (`effective_commission_pct`). Read only; the key's own shop only.
+//
+// Corresponds with GET /commission (the `GetCommission` operationId).
+func (c *Client) GetCommission(ctx context.Context, params *GetCommissionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCommissionRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -8947,6 +9114,70 @@ func NewGetChangelogRequest(server string, params *GetChangelogParams) (*http.Re
 			}
 
 			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetCommissionRequest constructs an http.Request for the GetCommission method
+func NewGetCommissionRequest(server string, params *GetCommissionParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/commission")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.AcceptLanguage != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Accept-Language", *params.AcceptLanguage, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Accept-Language", headerParam0)
+		}
+
+		if params.DonaSeller != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Dona-Seller", *params.DonaSeller, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: "uuid"})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Dona-Seller", headerParam1)
+		}
+
+		if params.XDonaIntegration != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithOptions("simple", false, "X-Dona-Integration", *params.XDonaIntegration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Dona-Integration", headerParam2)
 		}
 
 	}
@@ -14110,7 +14341,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetCategoryRequirementsWithResponse What a product in this leaf needs
 	//
-	// Per-category requirements + listing policy.
+	// Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at` when that rule ends.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -14125,6 +14356,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /changelog (the `GetChangelog` operationId).
 	GetChangelogWithResponse(ctx context.Context, params *GetChangelogParams, reqEditors ...RequestEditorFn) (*GetChangelogResponse, error)
+
+	// GetCommissionWithResponse What Dona charges this shop — the rate card and the running offer
+	//
+	// The same body as the seller portal's `GET /seller/commission` (built by the same function): every active root category with the range of its leaves' rates, `start_pct` (the lowest rate on the card), and `offer` — the shop-wide commission rule that prices this shop now (`running`) or will from the day it opens (`promised`), e.g. the launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the shop's commission campaigns: `campaigns[]` (every promised or running grant whose campaign prices the shop), `offer.code = campaign` when an all-categories campaign beats the offer, and `roots[].effective_min_pct / effective_max_pct` (this shop's range after its rules and campaigns). Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged (`effective_commission_pct`). Read only; the key's own shop only.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /commission (the `GetCommission` operationId).
+	GetCommissionWithResponse(ctx context.Context, params *GetCommissionParams, reqEditors ...RequestEditorFn) (*GetCommissionResponse, error)
 
 	// ListEventsWithResponse The change feed (primary channel)
 	//
@@ -16181,6 +16421,150 @@ func (r GetChangelogResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetChangelogResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetCommissionResponse200Headers the declared response headers of an HTTP 200 response for GetCommission
+type GetCommissionResponse200Headers struct {
+	CacheControl        *string
+	Deprecation         *string
+	DonaAPIWarn         *string
+	DonaRequestId       *string
+	RateLimit           *string
+	RateLimitPolicy     *string
+	Sunset              *string
+	XDonaKeyExpires     *time.Time
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetCommissionResponse401Headers the declared response headers of an HTTP 401 response for GetCommission
+type GetCommissionResponse401Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+}
+
+// GetCommissionResponse403Headers the declared response headers of an HTTP 403 response for GetCommission
+type GetCommissionResponse403Headers struct {
+	CacheControl          *string
+	DonaRateLimitedReason *string
+	DonaRequestId         *string
+	RetryAfter            *int
+}
+
+// GetCommissionResponse429Headers the declared response headers of an HTTP 429 response for GetCommission
+type GetCommissionResponse429Headers struct {
+	CacheControl          *string
+	DonaRateLimitedReason *string
+	DonaRequestId         *string
+	RateLimit             *string
+	RateLimitPolicy       *string
+	RetryAfter            *int
+	XRateLimitLimit       *int
+	XRateLimitRemaining   *int
+	XRateLimitReset       *int
+}
+
+// GetCommissionResponse500Headers the declared response headers of an HTTP 500 response for GetCommission
+type GetCommissionResponse500Headers struct {
+	CacheControl  *string
+	DonaRequestId *string
+}
+
+// GetCommissionResponse503Headers the declared response headers of an HTTP 503 response for GetCommission
+type GetCommissionResponse503Headers struct {
+	CacheControl          *string
+	DonaRateLimitedReason *string
+	DonaRequestId         *string
+	RetryAfter            *int
+}
+
+type GetCommissionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Commission
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *Unauthorized
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *Forbidden
+	// JSON429 the response for an HTTP 429 `application/json` response
+	JSON429 *TooManyRequests
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *InternalError
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetCommissionResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetCommissionResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetCommissionResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetCommissionResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetCommissionResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetCommissionResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCommissionResponse) GetJSON200() *Commission {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetCommissionResponse) GetJSON401() *Unauthorized {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetCommissionResponse) GetJSON403() *Forbidden {
+	return r.JSON403
+}
+
+// GetJSON429 returns the response for an HTTP 429 `application/json` response
+func (r GetCommissionResponse) GetJSON429() *TooManyRequests {
+	return r.JSON429
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetCommissionResponse) GetJSON500() *InternalError {
+	return r.JSON500
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r GetCommissionResponse) GetJSON503() *ServiceUnavailable {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCommissionResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCommissionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCommissionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCommissionResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -24839,7 +25223,7 @@ func (c *ClientWithResponses) ListCategoriesWithResponse(ctx context.Context, pa
 
 // GetCategoryRequirementsWithResponse What a product in this leaf needs
 //
-// Per-category requirements + listing policy.
+// Per-category requirements + listing policy. `commission_pct` is the category's own rate (the rate card); `effective_commission_pct` is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at` when that rule ends.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -24865,6 +25249,21 @@ func (c *ClientWithResponses) GetChangelogWithResponse(ctx context.Context, para
 		return nil, err
 	}
 	return ParseGetChangelogResponse(rsp)
+}
+
+// GetCommissionWithResponse What Dona charges this shop — the rate card and the running offer
+//
+// The same body as the seller portal's `GET /seller/commission` (built by the same function): every active root category with the range of its leaves' rates, `start_pct` (the lowest rate on the card), and `offer` — the shop-wide commission rule that prices this shop now (`running`) or will from the day it opens (`promised`), e.g. the launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the shop's commission campaigns: `campaigns[]` (every promised or running grant whose campaign prices the shop), `offer.code = campaign` when an all-categories campaign beats the offer, and `roots[].effective_min_pct / effective_max_pct` (this shop's range after its rules and campaigns). Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged (`effective_commission_pct`). Read only; the key's own shop only.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /commission (the `GetCommission` operationId).
+func (c *ClientWithResponses) GetCommissionWithResponse(ctx context.Context, params *GetCommissionParams, reqEditors ...RequestEditorFn) (*GetCommissionResponse, error) {
+	rsp, err := c.GetCommission(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCommissionResponse(rsp)
 }
 
 // ListEventsWithResponse The change feed (primary channel)
@@ -28869,6 +29268,312 @@ func ParseGetChangelogResponse(rsp *http.Response) (*GetChangelogResponse, error
 			headers.DonaRequestId = &value
 		}
 		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetCommissionResponse parses an HTTP response from a GetCommissionWithResponse call
+func ParseGetCommissionResponse(rsp *http.Response) (*GetCommissionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCommissionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Commission
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest TooManyRequests
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetCommissionResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Deprecation"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Deprecation", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Deprecation = &value
+		}
+		if values := rsp.Header.Values("Dona-API-Warn"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-API-Warn", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaAPIWarn = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Sunset"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Sunset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Sunset = &value
+		}
+		if values := rsp.Header.Values("X-Dona-Key-Expires"); len(values) > 0 {
+			var value time.Time
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dona-Key-Expires", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			}
+			headers.XDonaKeyExpires = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetCommissionResponse401Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetCommissionResponse403Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Rate-Limited-Reason"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Rate-Limited-Reason", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRateLimitedReason = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetCommissionResponse429Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Rate-Limited-Reason"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Rate-Limited-Reason", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRateLimitedReason = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetCommissionResponse500Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetCommissionResponse503Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Dona-Rate-Limited-Reason"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Rate-Limited-Reason", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRateLimitedReason = &value
+		}
+		if values := rsp.Header.Values("Dona-Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Dona-Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.DonaRequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil

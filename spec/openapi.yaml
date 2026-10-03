@@ -3100,6 +3100,103 @@ paths:
         bucket: key-rate
         cost: 1
       x-dona-since: S1
+  /commission:
+    get:
+      operationId: getCommission
+      summary: What Dona charges this shop — the rate card and the running offer
+      tags:
+      - Account
+      description: 'The same body as the seller portal''s `GET /seller/commission` (built by the same function): every active
+        root category with the range of its leaves'' rates, `start_pct` (the lowest rate on the card), and `offer` — the
+        shop-wide commission rule that prices this shop now (`running`) or will from the day it opens (`promised`), e.g. the
+        launch offer `launch_v1` at 0 %. Since BE-C7 it also carries the shop''s commission campaigns: `campaigns[]` (every
+        promised or running grant whose campaign prices the shop), `offer.code = campaign` when an all-categories campaign
+        beats the offer, and `roots[].effective_min_pct / effective_max_pct` (this shop''s range after its rules and
+        campaigns). Per category, `GET /categories/{id}/requirements` answers the rate a sale is charged
+        (`effective_commission_pct`). Read only; the key''s own shop only.'
+      parameters:
+      - $ref: '#/components/parameters/AcceptLanguage'
+      - $ref: '#/components/parameters/DonaSeller'
+      - $ref: '#/components/parameters/XDonaIntegration'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Dona-Request-Id:
+              $ref: '#/components/headers/Dona-Request-Id'
+            RateLimit-Policy:
+              $ref: '#/components/headers/RateLimit-Policy'
+            RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+            X-Dona-Key-Expires:
+              $ref: '#/components/headers/X-Dona-Key-Expires'
+            Dona-API-Warn:
+              $ref: '#/components/headers/Dona-API-Warn'
+            Deprecation:
+              $ref: '#/components/headers/Deprecation'
+            Sunset:
+              $ref: '#/components/headers/Sunset'
+            Cache-Control:
+              $ref: '#/components/headers/Cache-Control'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commission'
+              example:
+                seller_id: 01972a10-2222-7aaa-8bbb-0123456789ab
+                default_pct: 10.0
+                start_pct: 10.0
+                roots:
+                - id: 01972a10-1111-7aaa-8bbb-0123456789ab
+                  slug: kiyim
+                  name:
+                    uz: Kiyim
+                    ru: Одежда
+                    en: Clothing
+                  min_pct: 10.0
+                  max_pct: 20.0
+                  leaf_count: 65
+                  l2_names:
+                  - uz: Ayollar kiyimi
+                    ru: Женская одежда
+                    en: Women's clothing
+                  thumb_url: https://media.dona.im/categories/kiyim.webp
+                  effective_min_pct: 10.0
+                  effective_max_pct: 20.0
+                offer:
+                  code: launch_v1
+                  rule_id: 01972a10-3333-7aaa-8bbb-0123456789ab
+                  state: running
+                  effect_type: absolute_pct
+                  effect_pct: 0.0
+                  days: 30
+                  starts_at: '2026-10-01T06:12:00Z'
+                  ends_at: '2026-10-31T19:00:00Z'
+                  days_left: 30
+                saved_uzs: 0
+                campaigns: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-dona-scope: any
+      x-dona-tier: basic
+      x-dona-limit:
+        bucket: key-rate
+        cost: 1
+      x-dona-since: S1
   /attention:
     get:
       operationId: listAttention
@@ -4385,7 +4482,9 @@ paths:
       summary: What a product in this leaf needs
       tags:
       - Taxonomy
-      description: Per-category requirements + listing policy.
+      description: 'Per-category requirements + listing policy. `commission_pct` is the category''s own rate (the rate card);
+        `effective_commission_pct` is what a sale in this category is charged for THIS shop once every commission rule is
+        applied (a shop on a 0 % offer reads 0), and `commission_offer_ends_at` when that rule ends.'
       parameters:
       - $ref: '#/components/parameters/IdPath'
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -4432,6 +4531,8 @@ paths:
                 requires_brand: false
                 requires_size_chart: true
                 commission_pct: 12.0
+                effective_commission_pct: 0.0
+                commission_offer_ends_at: '2026-10-31T19:00:00Z'
                 attributes:
                 - key: size
                   label:
@@ -10903,6 +11004,25 @@ components:
           type:
           - number
           - 'null'
+          description: The category's own rate (nearest ancestor with a rate), the same for every shop; `null` when the tree
+            carries none (the platform default then applies).
+        effective_commission_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: 'The rate a sale in this category is charged for the key''s shop: the category rate (or the platform
+            default), then the highest-ranked commission rule for this shop (a launch offer, a cohort, a shop-specific rate,
+            a rule scoped to this category), then the shop''s commission campaigns (the lowest of the general rate, each
+            exclusive campaign alone and the stack of combinable ones — never above the general rate). A shop on a 0 % offer
+            reads 0. Equals the seller portal''s number and what checkout charges.'
+        commission_offer_ends_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the rule or campaign behind `effective_commission_pct` stops applying (orders placed before it
+            keep their rate; a campaign's is its last second). `null` when none applies, it has no end, or the offer is still
+            promised (the shop has not opened).
         attributes:
           type: array
           items:
@@ -10918,9 +11038,278 @@ components:
       - requires_brand
       - requires_size_chart
       - commission_pct
+      - effective_commission_pct
+      - commission_offer_ends_at
       - attributes
       description: The live `GET /catalog/categories/{id}/requirements` payload (`internal/catalog/requirements.go`), resolved through
-        the tree — one shape for the form and the API.
+        the tree — one shape for the form and the API, plus the two per-shop commission fields.
+    Commission:
+      type: object
+      properties:
+        seller_id:
+          type: string
+          format: uuid
+        default_pct:
+          type: number
+          description: The platform rate when a category tree carries none.
+        start_pct:
+          type: number
+          description: The lowest rate on the card (MIN of `roots[].min_pct`; `default_pct` when there are no roots).
+        roots:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommissionRoot'
+        offer:
+          anyOf:
+          - $ref: '#/components/schemas/CommissionOffer'
+          - type: 'null'
+        saved_uzs:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          description: What the launch offer and the commission campaigns spared this shop so far (orders not cancelled),
+            in som, from the order-line snapshots only. A number while `offer.code` is `launch_v1` or the shop has a
+            campaign-priced line; otherwise `null`.
+        campaigns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommissionCampaign'
+          description: Every promised or running grant whose campaign prices this shop now (a paused campaign disappears at
+            once). Empty while campaigns do not apply to the shop.
+      required:
+      - seller_id
+      - default_pct
+      - start_pct
+      - roots
+      - offer
+      - saved_uzs
+      - campaigns
+      description: The seller portal's `GET /seller/commission` body, byte for byte.
+    CommissionRoot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          $ref: '#/components/schemas/LocalizedText'
+        min_pct:
+          type: number
+        max_pct:
+          type: number
+        leaf_count:
+          type: integer
+          format: int64
+          minimum: 0
+        l2_names:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/LocalizedText'
+        thumb_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        effective_min_pct:
+          type: number
+          description: This shop's lowest rate in the category after its commission rules and campaigns (what a sale is
+            charged). `min_pct` / `max_pct` stay the platform's card.
+        effective_max_pct:
+          type: number
+          description: This shop's highest rate in the category after its commission rules and campaigns.
+      required:
+      - id
+      - slug
+      - name
+      - min_pct
+      - max_pct
+      - leaf_count
+      - l2_names
+      - thumb_url
+      - effective_min_pct
+      - effective_max_pct
+      description: One active top-level category and the range of its active leaves' rates.
+    CommissionOffer:
+      type: object
+      properties:
+        code:
+          type: string
+          description: '`campaign` · `launch_v1` · `cohort_new` · `cohort_existing` · `seller` · `seller_group` · `country`
+            · `platform`.'
+        rule_id:
+          type: string
+          description: The commission rule; empty while a launch offer is promised (its rule is created the day the shop opens)
+            and for a `campaign` (a campaign is not a rule).
+        campaign_id:
+          type: string
+          format: uuid
+          description: Only when `code` is `campaign`.
+        name:
+          $ref: '#/components/schemas/LocalizedText'
+          description: The campaign's name; only when `code` is `campaign`.
+        state:
+          type: string
+          enum:
+          - running
+          - promised
+        effect_type:
+          type: string
+          enum:
+          - absolute_pct
+          - relative_discount_pct
+        effect_pct:
+          type: number
+          description: '`absolute_pct`: the rate. `relative_discount_pct`: the share taken off each category rate.'
+        days:
+          type:
+          - integer
+          - 'null'
+        starts_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        ends_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: 'Every `code` but `campaign`: exclusive — orders placed before it keep the offer''s rate. `campaign`:
+            the LAST second the campaign''s grant prices (23:59:59 Tashkent on its last day — the grant ends at the
+            00:00 after it), the same instant as that grant''s `campaigns[].ends_at`.'
+        days_left:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      required:
+      - code
+      - rule_id
+      - state
+      - effect_type
+      - effect_pct
+      - days
+      - starts_at
+      - ends_at
+      - days_left
+    CommissionCampaign:
+      type: object
+      properties:
+        campaign_id:
+          type: string
+          format: uuid
+        grant_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          description: The campaign's handle (e.g. `LAUNCH-0`).
+        name:
+          $ref: '#/components/schemas/LocalizedText'
+        kind:
+          type: string
+          enum:
+          - new_registration
+          - existing_seller
+          - invite
+          - sales_target
+        state:
+          type: string
+          enum:
+          - running
+          - promised
+          description: '`running`: the grant prices the shop now (a grant that starts later is listed from its start).
+            `promised`: it opens the day the shop opens; nothing is dated until then.'
+        scope:
+          type: string
+          enum:
+          - all
+          - categories
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommissionCampaignCategory'
+          description: Every category-scoped rate of the campaign (each covers its category's subtree).
+        effect_type:
+          type: string
+          enum:
+          - absolute_pct
+          - relative_discount_pct
+        effect_pct:
+          type: number
+          description: The all-categories rate when `scope` is `all`, else the first category's.
+        combinable:
+          type: boolean
+        days:
+          type:
+          - integer
+          - 'null'
+          description: The whole days the grant runs (a promise — the days it will run from the shop's opening).
+        starts_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        ends_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The last second the grant prices (23:59:59 Tashkent on its last day); `null` = until the campaign
+            closes, or a promise.
+        days_left:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Whole days left, counted to the grant's anchor + `days` (the count a cohort offer shows), never
+            past `ends_at`; `null` for a promise.
+        progress:
+          type:
+          - object
+          - 'null'
+          description: Invite or sales-target progress; `null` until those campaign types ship.
+      required:
+      - campaign_id
+      - grant_id
+      - code
+      - name
+      - kind
+      - state
+      - scope
+      - categories
+      - effect_type
+      - effect_pct
+      - combinable
+      - days
+      - starts_at
+      - ends_at
+      - days_left
+      - progress
+    CommissionCampaignCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          $ref: '#/components/schemas/LocalizedText'
+        effect_type:
+          type: string
+          enum:
+          - absolute_pct
+          - relative_discount_pct
+        effect_pct:
+          type: number
+      required:
+      - id
+      - name
+      - effect_type
+      - effect_pct
     Brand:
       type: object
       properties:
