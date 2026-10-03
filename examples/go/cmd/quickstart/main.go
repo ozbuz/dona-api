@@ -1,7 +1,9 @@
 // Command quickstart runs the Dona API portal's "Boshlash" steps 2–4 in Go:
-// GET /me (who the key is: shop, tier, limits), GET /products?limit=5 (the first page of the
-// catalogue), then POST /stock?dry_run=true, which re-sends the first product's CURRENT stock as a
-// rehearsal — validated, guarded and rolled back, so nothing is written whatever the answer.
+// GET /me (who the key is: shop, tier, limits), GET /commission (what Dona charges the shop: the
+// rate card, this shop's own range per category, the running offer and its commission campaigns),
+// GET /products?limit=5 (the first page of the catalogue), then POST /stock?dry_run=true, which
+// re-sends the first product's CURRENT stock as a rehearsal — validated, guarded and rolled back, so
+// nothing is written whatever the answer.
 //
 // Usage:
 //
@@ -54,7 +56,26 @@ func main() {
 	fmt.Printf("rate limit: %s/%s left · policy %s\n",
 		h.Get("X-RateLimit-Remaining"), h.Get("X-RateLimit-Limit"), h.Get("RateLimit-Policy"))
 
-	// 2 ─ first five products
+	// 2 ─ what Dona charges this shop (read only)
+	com, err := c.GetCommissionWithResponse(ctx, &dona.GetCommissionParams{})
+	check("GET /commission", err)
+	if com.JSON200 == nil {
+		fail("GET /commission", com.HTTPResponse, com.Body)
+	}
+	offer := "none"
+	if o := com.JSON200.Offer; o != nil {
+		offer = fmt.Sprintf("%s (%s, %g%%)", o.Code, o.State, o.EffectPct)
+	}
+	fmt.Printf("commission: from %g%% · offer %s · campaigns %d\n", com.JSON200.StartPct, offer, len(com.JSON200.Campaigns))
+	for _, r := range com.JSON200.Roots {
+		// min/max = the platform's card; effective_* = what THIS shop is charged after its rules and campaigns.
+		fmt.Printf("  %s  card %g–%g%% · yours %g–%g%%\n", r.Slug, r.MinPct, r.MaxPct, r.EffectiveMinPct, r.EffectiveMaxPct)
+	}
+	for _, cp := range com.JSON200.Campaigns {
+		fmt.Printf("  campaign %s (%s, %s) %s %g%%\n", cp.Code, cp.Kind, cp.State, cp.EffectType, cp.EffectPct)
+	}
+
+	// 3 ─ first five products
 	limit := dona.Limit(5)
 	page, err := c.ListProductsWithResponse(ctx, &dona.ListProductsParams{Limit: &limit})
 	check("GET /products", err)
@@ -65,7 +86,7 @@ func main() {
 		fmt.Printf("  %s  %s  stock %d  %s\n", p.Id, deref(p.SellerSku, "-"), p.Stock, deref(p.Title.Uz, deref(p.Title.Ru, "")))
 	}
 
-	// 3 ─ rehearse a stock write
+	// 4 ─ rehearse a stock write
 	if len(page.JSON200.Items) == 0 {
 		fmt.Println("no products yet — skipping the POST /stock rehearsal")
 		return

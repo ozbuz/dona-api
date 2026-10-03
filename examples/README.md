@@ -4,7 +4,7 @@ One folder per language. Each has the **same two programs**:
 
 | Program | What it does |
 |---|---|
-| **quickstart** | `GET /me` → `GET /products?limit=5` → `POST /stock?dry_run=true` with an `Idempotency-Key`, re-sending the first product's **current** stock (a rehearsal: validated, guarded, rolled back — nothing is written). Prints the rate-limit headers, and the error envelope (`error` code) on failure. |
+| **quickstart** | `GET /me` → `GET /commission` (the rate card, this shop's own range per category — `roots[].effective_min_pct/max_pct` — the running offer and its commission `campaigns[]`) → `GET /products?limit=5` → `POST /stock?dry_run=true` with an `Idempotency-Key`, re-sending the first product's **current** stock (a rehearsal: validated, guarded, rolled back — nothing is written). Prints the rate-limit headers, and the error envelope (`error` code) on failure. |
 | **webhook verifier** | Standard Webhooks signature check (`webhook-id` · `webhook-timestamp` · `webhook-signature`, 300 s tolerance, rotation) + a self-test over the shared vectors in [`testdata/webhook-vectors.json`](testdata/webhook-vectors.json), which include the Standard Webhooks reference vector. |
 
 Every quickstart reads `DONA_API_KEY` (required, `dona_sk_live_…`, minted by the shop owner in

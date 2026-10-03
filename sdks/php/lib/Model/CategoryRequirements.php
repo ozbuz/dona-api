@@ -35,7 +35,7 @@ use \Dona\Api\ObjectSerializer;
  * CategoryRequirements Class Doc Comment
  *
  * @category Class
- * @description The live &#x60;GET /catalog/categories/{id}/requirements&#x60; payload (&#x60;internal/catalog/requirements.go&#x60;), resolved through the tree — one shape for the form and the API.
+ * @description The live &#x60;GET /catalog/categories/{id}/requirements&#x60; payload (&#x60;internal/catalog/requirements.go&#x60;), resolved through the tree — one shape for the form and the API, plus the two per-shop commission fields.
  * @package  Dona\Api
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
@@ -68,6 +68,8 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
         'requires_brand' => 'bool',
         'requires_size_chart' => 'bool',
         'commission_pct' => 'float',
+        'effective_commission_pct' => 'float',
+        'commission_offer_ends_at' => '\DateTime',
         'attributes' => '\Dona\Api\Model\CategoryAttribute[]'
     ];
 
@@ -89,6 +91,8 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
         'requires_brand' => null,
         'requires_size_chart' => null,
         'commission_pct' => null,
+        'effective_commission_pct' => null,
+        'commission_offer_ends_at' => 'date-time',
         'attributes' => null
     ];
 
@@ -108,6 +112,8 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
         'requires_brand' => false,
         'requires_size_chart' => false,
         'commission_pct' => true,
+        'effective_commission_pct' => false,
+        'commission_offer_ends_at' => true,
         'attributes' => false
     ];
 
@@ -207,6 +213,8 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
         'requires_brand' => 'requires_brand',
         'requires_size_chart' => 'requires_size_chart',
         'commission_pct' => 'commission_pct',
+        'effective_commission_pct' => 'effective_commission_pct',
+        'commission_offer_ends_at' => 'commission_offer_ends_at',
         'attributes' => 'attributes'
     ];
 
@@ -226,6 +234,8 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
         'requires_brand' => 'setRequiresBrand',
         'requires_size_chart' => 'setRequiresSizeChart',
         'commission_pct' => 'setCommissionPct',
+        'effective_commission_pct' => 'setEffectiveCommissionPct',
+        'commission_offer_ends_at' => 'setCommissionOfferEndsAt',
         'attributes' => 'setAttributes'
     ];
 
@@ -245,6 +255,8 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
         'requires_brand' => 'getRequiresBrand',
         'requires_size_chart' => 'getRequiresSizeChart',
         'commission_pct' => 'getCommissionPct',
+        'effective_commission_pct' => 'getEffectiveCommissionPct',
+        'commission_offer_ends_at' => 'getCommissionOfferEndsAt',
         'attributes' => 'getAttributes'
     ];
 
@@ -315,6 +327,8 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
         $this->setIfExists('requires_brand', $data ?? [], null);
         $this->setIfExists('requires_size_chart', $data ?? [], null);
         $this->setIfExists('commission_pct', $data ?? [], null);
+        $this->setIfExists('effective_commission_pct', $data ?? [], null);
+        $this->setIfExists('commission_offer_ends_at', $data ?? [], null);
         $this->setIfExists('attributes', $data ?? [], null);
     }
 
@@ -378,6 +392,20 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
         }
         if ($this->container['commission_pct'] === null && !$this->isNullableSetToNull('commission_pct')) {
             $invalidProperties[] = "'commission_pct' is required";
+        }
+        if ($this->container['effective_commission_pct'] === null) {
+            $invalidProperties[] = "'effective_commission_pct' can't be null";
+        }
+        if (($this->container['effective_commission_pct'] > 100)) {
+            $invalidProperties[] = "invalid value for 'effective_commission_pct', must be smaller than or equal to 100.";
+        }
+
+        if (($this->container['effective_commission_pct'] < 0)) {
+            $invalidProperties[] = "invalid value for 'effective_commission_pct', must be bigger than or equal to 0.";
+        }
+
+        if ($this->container['commission_offer_ends_at'] === null && !$this->isNullableSetToNull('commission_offer_ends_at')) {
+            $invalidProperties[] = "'commission_offer_ends_at' is required";
         }
         if ($this->container['attributes'] === null) {
             $invalidProperties[] = "'attributes' can't be null";
@@ -657,7 +685,7 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
     /**
      * Sets commission_pct
      *
-     * @param float|null $commission_pct commission_pct
+     * @param float|null $commission_pct The category's own rate (nearest ancestor with a rate), the same for every shop; `null` when the tree carries none (the platform default then applies).
      *
      * @return self
      */
@@ -674,6 +702,74 @@ class CategoryRequirements implements ModelInterface, ArrayAccess, \JsonSerializ
             }
         }
         $this->container['commission_pct'] = $commission_pct;
+
+        return $this;
+    }
+
+    /**
+     * Gets effective_commission_pct
+     *
+     * @return float
+     */
+    public function getEffectiveCommissionPct()
+    {
+        return $this->container['effective_commission_pct'];
+    }
+
+    /**
+     * Sets effective_commission_pct
+     *
+     * @param float $effective_commission_pct The rate a sale in this category is charged for the key's shop: the category rate (or the platform default), then the highest-ranked commission rule for this shop (a launch offer, a cohort, a shop-specific rate, a rule scoped to this category), then the shop's commission campaigns (the lowest of the general rate, each exclusive campaign alone and the stack of combinable ones — never above the general rate). A shop on a 0 % offer reads 0. Equals the seller portal's number and what checkout charges.
+     *
+     * @return self
+     */
+    public function setEffectiveCommissionPct($effective_commission_pct)
+    {
+        if (is_null($effective_commission_pct)) {
+            throw new \InvalidArgumentException('non-nullable effective_commission_pct cannot be null');
+        }
+        if (($effective_commission_pct > 100)) {
+            throw new \InvalidArgumentException('invalid value for $effective_commission_pct when calling CategoryRequirements., must be smaller than or equal to 100.');
+        }
+        if (($effective_commission_pct < 0)) {
+            throw new \InvalidArgumentException('invalid value for $effective_commission_pct when calling CategoryRequirements., must be bigger than or equal to 0.');
+        }
+
+        $this->container['effective_commission_pct'] = $effective_commission_pct;
+
+        return $this;
+    }
+
+    /**
+     * Gets commission_offer_ends_at
+     *
+     * @return \DateTime|null
+     */
+    public function getCommissionOfferEndsAt()
+    {
+        return $this->container['commission_offer_ends_at'];
+    }
+
+    /**
+     * Sets commission_offer_ends_at
+     *
+     * @param \DateTime|null $commission_offer_ends_at When the rule or campaign behind `effective_commission_pct` stops applying (orders placed before it keep their rate; a campaign's is its last second). `null` when none applies, it has no end, or the offer is still promised (the shop has not opened).
+     *
+     * @return self
+     */
+    public function setCommissionOfferEndsAt($commission_offer_ends_at)
+    {
+        if (is_null($commission_offer_ends_at)) {
+            array_push($this->openAPINullablesSetToNull, 'commission_offer_ends_at');
+        } else {
+            $nullablesSetToNull = $this->getOpenAPINullablesSetToNull();
+            $index = array_search('commission_offer_ends_at', $nullablesSetToNull);
+            if ($index !== FALSE) {
+                unset($nullablesSetToNull[$index]);
+                $this->setOpenAPINullablesSetToNull($nullablesSetToNull);
+            }
+        }
+        $this->container['commission_offer_ends_at'] = $commission_offer_ends_at;
 
         return $this;
     }

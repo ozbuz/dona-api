@@ -3,8 +3,10 @@
 //   DONA_API_KEY=dona_sk_live_… npm run quickstart
 //
 // 1. GET /me                  who the key is: shop, tier, limits
-// 2. GET /products?limit=5    the first page of the catalogue
-// 3. POST /stock?dry_run=true re-sends the first product's CURRENT stock as a rehearsal: validated,
+// 2. GET /commission          what Dona charges the shop: the rate card, this shop's own range per
+//                             category, the running offer and its commission campaigns
+// 3. GET /products?limit=5    the first page of the catalogue
+// 4. POST /stock?dry_run=true re-sends the first product's CURRENT stock as a rehearsal: validated,
 //                             guarded and rolled back — nothing is written, whatever the answer.
 //
 // Optional: DONA_API_BASE_URL (defaults to production, the only environment).
@@ -39,14 +41,28 @@ console.log(`shop: ${shop.name} (${shop.status}) · tier ${tier} · writes_enabl
 const rl = rateLimit(me.response);
 console.log(`rate limit: ${rl.remaining ?? "?"}/${rl.limit ?? "?"} left · policy ${rl.policy ?? "?"}`);
 
-// 2 ─ first five products
+// 2 ─ what Dona charges this shop (read only)
+const commission = await dona.GET("/commission");
+if (!commission.data) fail("GET /commission", commission.response, commission.error);
+const { offer, start_pct, roots, campaigns } = commission.data;
+const offerText = offer ? `${offer.code} (${offer.state}, ${offer.effect_pct}%)` : "none";
+console.log(`commission: from ${start_pct}% · offer ${offerText} · campaigns ${campaigns.length}`);
+for (const r of roots) {
+  // min/max = the platform's card; effective_* = what THIS shop is charged after its rules and campaigns.
+  console.log(`  ${r.slug}  card ${r.min_pct}–${r.max_pct}% · yours ${r.effective_min_pct}–${r.effective_max_pct}%`);
+}
+for (const c of campaigns) {
+  console.log(`  campaign ${c.code} (${c.kind}, ${c.state}) ${c.effect_type} ${c.effect_pct}%`);
+}
+
+// 3 ─ first five products
 const products = await dona.GET("/products", { params: { query: { limit: 5 } } });
 if (!products.data) fail("GET /products", products.response, products.error);
 for (const p of products.data.items) {
   console.log(`  ${p.id}  ${p.seller_sku ?? "-"}  stock ${p.stock}  ${p.title.uz ?? p.title.ru ?? ""}`);
 }
 
-// 3 ─ rehearse a stock write
+// 4 ─ rehearse a stock write
 const first = products.data.items[0];
 if (!first) {
   console.log("no products yet — skipping the POST /stock rehearsal");

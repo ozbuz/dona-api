@@ -4,8 +4,10 @@
 //   composer install && DONA_API_KEY=dona_sk_live_… php quickstart.php
 //
 // 1. GET /me                   who the key is: shop, tier, limits
-// 2. GET /products?limit=5     the first page of the catalogue
-// 3. POST /stock?dry_run=true  re-sends the first product's CURRENT stock as a rehearsal: validated,
+// 2. GET /commission           what Dona charges the shop: the rate card, this shop's own range per
+//                              category, the running offer and its commission campaigns
+// 3. GET /products?limit=5     the first page of the catalogue
+// 4. POST /stock?dry_run=true  re-sends the first product's CURRENT stock as a rehearsal: validated,
 //                              guarded and rolled back — nothing is written, whatever the answer.
 //
 // Optional: DONA_API_BASE_URL (defaults to production, the only environment).
@@ -65,7 +67,25 @@ printf("shop: %s (%s) · tier %s · writes_enabled %s\n", $me->getShop()->getNam
 printf("rate limit: %s/%s left · policy %s\n", $headers['x-ratelimit-remaining'][0] ?? '?',
     $headers['x-ratelimit-limit'][0] ?? '?', $headers['ratelimit-policy'][0] ?? '?');
 
-// 2 ─ first five products
+// 2 ─ what Dona charges this shop (read only)
+try {
+    $commission = (new AccountApi($http, $config))->getCommission(x_dona_integration: INTEGRATION);
+} catch (ApiException $e) {
+    fail('GET /commission', $e);
+}
+$offer = $commission->getOffer();
+$offerText = $offer !== null ? sprintf('%s (%s, %s%%)', $offer->getCode(), $offer->getState(), $offer->getEffectPct()) : 'none';
+printf("commission: from %s%% · offer %s · campaigns %d\n", $commission->getStartPct(), $offerText, count($commission->getCampaigns()));
+foreach ($commission->getRoots() as $r) {
+    // min/max = the platform's card; effective_* = what THIS shop is charged after its rules and campaigns.
+    printf("  %s  card %s–%s%% · yours %s–%s%%\n", $r->getSlug(), $r->getMinPct(), $r->getMaxPct(),
+        $r->getEffectiveMinPct(), $r->getEffectiveMaxPct());
+}
+foreach ($commission->getCampaigns() as $c) {
+    printf("  campaign %s (%s, %s) %s %s%%\n", $c->getCode(), $c->getKind(), $c->getState(), $c->getEffectType(), $c->getEffectPct());
+}
+
+// 3 ─ first five products
 try {
     $page = (new CatalogApi($http, $config))->listProducts(limit: 5, x_dona_integration: INTEGRATION);
 } catch (ApiException $e) {
@@ -76,7 +96,7 @@ foreach ($page->getItems() as $p) {
     printf("  %s  %s  stock %d  %s\n", $p->getId(), $p->getSellerSku() ?? '-', $p->getStock(), $title);
 }
 
-// 3 ─ rehearse a stock write
+// 4 ─ rehearse a stock write
 $first = $page->getItems()[0] ?? null;
 if ($first === null) {
     echo "no products yet — skipping the POST /stock rehearsal\n";

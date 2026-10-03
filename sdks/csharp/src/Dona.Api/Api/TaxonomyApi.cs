@@ -42,7 +42,7 @@ namespace Dona.Api.Api
         /// What a product in this leaf needs
         /// </summary>
         /// <remarks>
-        /// Per-category requirements + listing policy.
+        /// Per-category requirements + listing policy. &#x60;commission_pct&#x60; is the category&#39;s own rate (the rate card); &#x60;effective_commission_pct&#x60; is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and &#x60;commission_offer_ends_at&#x60; when that rule ends.
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
@@ -57,7 +57,7 @@ namespace Dona.Api.Api
         /// What a product in this leaf needs
         /// </summary>
         /// <remarks>
-        /// Per-category requirements + listing policy.
+        /// Per-category requirements + listing policy. &#x60;commission_pct&#x60; is the category&#39;s own rate (the rate card); &#x60;effective_commission_pct&#x60; is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and &#x60;commission_offer_ends_at&#x60; when that rule ends.
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
@@ -562,7 +562,7 @@ namespace Dona.Api.Api
         partial void OnErrorGetCategoryRequirements(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// What a product in this leaf needs Per-category requirements + listing policy.
+        /// What a product in this leaf needs Per-category requirements + listing policy. &#x60;commission_pct&#x60; is the category&#39;s own rate (the rate card); &#x60;effective_commission_pct&#x60; is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and &#x60;commission_offer_ends_at&#x60; when that rule ends.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="acceptLanguage">Localises &#x60;message&#x60; in error bodies and single-language renderings. Default &#x60;uz&#x60;. (optional, default to &quot;uz&quot;)</param>
@@ -583,7 +583,7 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// What a product in this leaf needs Per-category requirements + listing policy.
+        /// What a product in this leaf needs Per-category requirements + listing policy. &#x60;commission_pct&#x60; is the category&#39;s own rate (the rate card); &#x60;effective_commission_pct&#x60; is what a sale in this category is charged for THIS shop once every commission rule is applied (a shop on a 0 % offer reads 0), and &#x60;commission_offer_ends_at&#x60; when that rule ends.
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
