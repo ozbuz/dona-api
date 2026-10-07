@@ -16,9 +16,10 @@ Name | Type | Description | Notes
 **PriceUzs** | **long** |  | [optional] 
 **CompareAtUzs** | **long** |  | [optional] 
 **VarVersion** | **string** | New version after an &#x60;ok&#x60; line. | [optional] 
-**Error** | **string** | On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;invalid_body&#x60;, … | [optional] 
+**Error** | **string** | On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;invalid_body&#x60;, … | [optional] 
 **Message** | **string** |  | [optional] 
 **RetryAfterSeconds** | **int** | On &#x60;object_cooldown&#x60;. | [optional] 
+**LockedUntil** | **DateTimeOffset** | On &#x60;error: stock_locked&#x60; — the product (or variation) was declared out of stock on an order and its stock cannot be raised until this instant (RFC 3339, UTC, rounded UP to the whole second — never early). The other lines are unaffected. | [optional] 
 **ApprovalId** | **Guid** |  | [optional] 
 **Rule** | **string** | Known values (open set — tolerate new ones): &#x60;price_floor&#x60;, &#x60;drop_100x&#x60;, &#x60;stock_jump_10x&#x60;, &#x60;mass_zero_50pct&#x60;, &#x60;delist_30pct&#x60;, &#x60;confirmation_required&#x60;. | [optional] 
 

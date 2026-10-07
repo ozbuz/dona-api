@@ -43,13 +43,14 @@ namespace Dona.Api.Model
         /// <param name="priceUzs">priceUzs</param>
         /// <param name="compareAtUzs">compareAtUzs</param>
         /// <param name="varVersion">New version after an &#x60;ok&#x60; line.</param>
-        /// <param name="error">On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;invalid_body&#x60;, …</param>
+        /// <param name="error">On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;invalid_body&#x60;, …</param>
         /// <param name="message">message</param>
         /// <param name="retryAfterSeconds">On &#x60;object_cooldown&#x60;.</param>
+        /// <param name="lockedUntil">On &#x60;error: stock_locked&#x60; — the product (or variation) was declared out of stock on an order and its stock cannot be raised until this instant (RFC 3339, UTC, rounded UP to the whole second — never early). The other lines are unaffected.</param>
         /// <param name="approvalId">approvalId</param>
         /// <param name="rule">Known values (open set — tolerate new ones): &#x60;price_floor&#x60;, &#x60;drop_100x&#x60;, &#x60;stock_jump_10x&#x60;, &#x60;mass_zero_50pct&#x60;, &#x60;delist_30pct&#x60;, &#x60;confirmation_required&#x60;.</param>
         [JsonConstructor]
-        public LineResult(int index, string status, Option<Guid?> productId = default, Option<Guid?> variantId = default, Option<string?> sellerSku = default, Option<string?> barcode = default, Option<string?> externalId = default, Option<int?> quantity = default, Option<long?> priceUzs = default, Option<long?> compareAtUzs = default, Option<string?> varVersion = default, Option<string?> error = default, Option<string?> message = default, Option<int?> retryAfterSeconds = default, Option<Guid?> approvalId = default, Option<string?> rule = default)
+        public LineResult(int index, string status, Option<Guid?> productId = default, Option<Guid?> variantId = default, Option<string?> sellerSku = default, Option<string?> barcode = default, Option<string?> externalId = default, Option<int?> quantity = default, Option<long?> priceUzs = default, Option<long?> compareAtUzs = default, Option<string?> varVersion = default, Option<string?> error = default, Option<string?> message = default, Option<int?> retryAfterSeconds = default, Option<DateTimeOffset?> lockedUntil = default, Option<Guid?> approvalId = default, Option<string?> rule = default)
         {
             Index = index;
             Status = status;
@@ -65,6 +66,7 @@ namespace Dona.Api.Model
             ErrorOption = error;
             MessageOption = message;
             RetryAfterSecondsOption = retryAfterSeconds;
+            LockedUntilOption = lockedUntil;
             ApprovalIdOption = approvalId;
             RuleOption = rule;
             OnCreated();
@@ -211,9 +213,9 @@ namespace Dona.Api.Model
         public Option<string?> ErrorOption { get; private set; }
 
         /// <summary>
-        /// On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;invalid_body&#x60;, …
+        /// On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;invalid_body&#x60;, …
         /// </summary>
-        /// <value>On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;invalid_body&#x60;, …</value>
+        /// <value>On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;invalid_body&#x60;, …</value>
         [JsonPropertyName("error")]
         public string? Error { get { return this.ErrorOption.Value; } set { this.ErrorOption = new(value); } }
 
@@ -243,6 +245,20 @@ namespace Dona.Api.Model
         /// <value>On &#x60;object_cooldown&#x60;.</value>
         [JsonPropertyName("retry_after_seconds")]
         public int? RetryAfterSeconds { get { return this.RetryAfterSecondsOption.Value; } set { this.RetryAfterSecondsOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of LockedUntil
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<DateTimeOffset?> LockedUntilOption { get; private set; }
+
+        /// <summary>
+        /// On &#x60;error: stock_locked&#x60; — the product (or variation) was declared out of stock on an order and its stock cannot be raised until this instant (RFC 3339, UTC, rounded UP to the whole second — never early). The other lines are unaffected.
+        /// </summary>
+        /// <value>On &#x60;error: stock_locked&#x60; — the product (or variation) was declared out of stock on an order and its stock cannot be raised until this instant (RFC 3339, UTC, rounded UP to the whole second — never early). The other lines are unaffected.</value>
+        [JsonPropertyName("locked_until")]
+        public DateTimeOffset? LockedUntil { get { return this.LockedUntilOption.Value; } set { this.LockedUntilOption = new(value); } }
 
         /// <summary>
         /// Used to track the state of ApprovalId
@@ -293,6 +309,7 @@ namespace Dona.Api.Model
             sb.Append("  Error: ").Append(Error).Append("\n");
             sb.Append("  Message: ").Append(Message).Append("\n");
             sb.Append("  RetryAfterSeconds: ").Append(RetryAfterSeconds).Append("\n");
+            sb.Append("  LockedUntil: ").Append(LockedUntil).Append("\n");
             sb.Append("  ApprovalId: ").Append(ApprovalId).Append("\n");
             sb.Append("  Rule: ").Append(Rule).Append("\n");
             sb.Append("}\n");
@@ -314,6 +331,11 @@ namespace Dona.Api.Model
         {
             OnCreated();
         }
+
+        /// <summary>
+        /// The format to use to serialize LockedUntil
+        /// </summary>
+        public string LockedUntilFormat { get; private set; } = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK";
 
         /// <summary>
         /// Deserializes json to <see cref="LineResult" />
@@ -346,6 +368,7 @@ namespace Dona.Api.Model
             Option<string?> error = default;
             Option<string?> message = default;
             Option<int?> retryAfterSeconds = default;
+            Option<DateTimeOffset?> lockedUntil = default;
             Option<Guid?> approvalId = default;
             Option<string?> rule = default;
 
@@ -406,6 +429,9 @@ namespace Dona.Api.Model
                         case "retry_after_seconds":
                             retryAfterSeconds = new Option<int?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (int?)null : utf8JsonReader.GetInt32());
                             break;
+                        case "locked_until":
+                            lockedUntil = new Option<DateTimeOffset?>(JsonSerializer.Deserialize<DateTimeOffset>(ref utf8JsonReader, jsonSerializerOptions));
+                            break;
                         case "approval_id":
                             approvalId = new Option<Guid?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (Guid?)null : utf8JsonReader.GetGuid());
                             break;
@@ -463,13 +489,16 @@ namespace Dona.Api.Model
             if (retryAfterSeconds.IsSet && retryAfterSeconds.Value == null)
                 throw new ArgumentNullException(nameof(retryAfterSeconds), "Property is not nullable for class LineResult.");
 
+            if (lockedUntil.IsSet && lockedUntil.Value == null)
+                throw new ArgumentNullException(nameof(lockedUntil), "Property is not nullable for class LineResult.");
+
             if (approvalId.IsSet && approvalId.Value == null)
                 throw new ArgumentNullException(nameof(approvalId), "Property is not nullable for class LineResult.");
 
             if (rule.IsSet && rule.Value == null)
                 throw new ArgumentNullException(nameof(rule), "Property is not nullable for class LineResult.");
 
-            return new LineResult(index.Value!.Value!, status.Value!, productId, variantId, sellerSku, barcode, externalId, quantity, priceUzs, compareAtUzs, varVersion, error, message, retryAfterSeconds, approvalId, rule);
+            return new LineResult(index.Value!.Value!, status.Value!, productId, variantId, sellerSku, barcode, externalId, quantity, priceUzs, compareAtUzs, varVersion, error, message, retryAfterSeconds, lockedUntil, approvalId, rule);
         }
 
         /// <summary>
@@ -562,6 +591,9 @@ namespace Dona.Api.Model
 
             if (lineResult.RetryAfterSecondsOption.IsSet)
                 writer.WriteNumber("retry_after_seconds", lineResult.RetryAfterSecondsOption.Value!.Value);
+
+            if (lineResult.LockedUntilOption.IsSet)
+                writer.WriteString("locked_until", lineResult.LockedUntilOption.Value!.Value.ToString(LockedUntilFormat));
 
             if (lineResult.ApprovalIdOption.IsSet)
                 writer.WriteString("approval_id", lineResult.ApprovalIdOption.Value!.Value);

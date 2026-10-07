@@ -60,7 +60,8 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
         'index' => 'int',
         'field' => 'string',
         'code' => 'string',
-        'message' => 'string'
+        'message' => 'string',
+        'locked_until' => '\DateTime'
     ];
 
     /**
@@ -74,7 +75,8 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
         'index' => null,
         'field' => null,
         'code' => null,
-        'message' => null
+        'message' => null,
+        'locked_until' => 'date-time'
     ];
 
     /**
@@ -86,7 +88,8 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
         'index' => false,
         'field' => false,
         'code' => false,
-        'message' => false
+        'message' => false,
+        'locked_until' => false
     ];
 
     /**
@@ -178,7 +181,8 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
         'index' => 'index',
         'field' => 'field',
         'code' => 'code',
-        'message' => 'message'
+        'message' => 'message',
+        'locked_until' => 'locked_until'
     ];
 
     /**
@@ -190,7 +194,8 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
         'index' => 'setIndex',
         'field' => 'setField',
         'code' => 'setCode',
-        'message' => 'setMessage'
+        'message' => 'setMessage',
+        'locked_until' => 'setLockedUntil'
     ];
 
     /**
@@ -202,7 +207,8 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
         'index' => 'getIndex',
         'field' => 'getField',
         'code' => 'getCode',
-        'message' => 'getMessage'
+        'message' => 'getMessage',
+        'locked_until' => 'getLockedUntil'
     ];
 
     /**
@@ -266,6 +272,7 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
         $this->setIfExists('field', $data ?? [], null);
         $this->setIfExists('code', $data ?? [], null);
         $this->setIfExists('message', $data ?? [], null);
+        $this->setIfExists('locked_until', $data ?? [], null);
     }
 
     /**
@@ -383,7 +390,7 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets code
      *
-     * @param string $code Stable field-level code, e.g. `required`, `ikpu_required`, `cursor_expired`.
+     * @param string $code Stable field-level code, e.g. `required`, `ikpu_required`, `cursor_expired`, `stock_locked`.
      *
      * @return self
      */
@@ -420,6 +427,33 @@ class ErrorDetail implements ModelInterface, ArrayAccess, \JsonSerializable
             throw new \InvalidArgumentException('non-nullable message cannot be null');
         }
         $this->container['message'] = $message;
+
+        return $this;
+    }
+
+    /**
+     * Gets locked_until
+     *
+     * @return \DateTime|null
+     */
+    public function getLockedUntil()
+    {
+        return $this->container['locked_until'];
+    }
+
+    /**
+     * Sets locked_until
+     *
+     * @param \DateTime|null $locked_until With `code: stock_locked` — the line of an atomic `POST /stock` that the 24-hour out-of-stock lock refused: when that lock ends (the same wire shape as `Error.locked_until`).
+     *
+     * @return self
+     */
+    public function setLockedUntil($locked_until)
+    {
+        if (is_null($locked_until)) {
+            throw new \InvalidArgumentException('non-nullable locked_until cannot be null');
+        }
+        $this->container['locked_until'] = $locked_until;
 
         return $this;
     }

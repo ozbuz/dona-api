@@ -69,6 +69,9 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'accept_url' => 'string',
         'suspended_until' => '\DateTime',
         'reason' => 'string',
+        'locked_until' => '\DateTime',
+        'product_id' => 'string',
+        'variant_id' => 'string',
         'meta' => '\Dona\Api\Model\ErrorMeta'
     ];
 
@@ -91,6 +94,9 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'accept_url' => 'uri',
         'suspended_until' => 'date-time',
         'reason' => null,
+        'locked_until' => 'date-time',
+        'product_id' => 'uuid',
+        'variant_id' => 'uuid',
         'meta' => null
     ];
 
@@ -111,6 +117,9 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'accept_url' => false,
         'suspended_until' => false,
         'reason' => false,
+        'locked_until' => false,
+        'product_id' => false,
+        'variant_id' => false,
         'meta' => false
     ];
 
@@ -211,6 +220,9 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'accept_url' => 'accept_url',
         'suspended_until' => 'suspended_until',
         'reason' => 'reason',
+        'locked_until' => 'locked_until',
+        'product_id' => 'product_id',
+        'variant_id' => 'variant_id',
         'meta' => 'meta'
     ];
 
@@ -231,6 +243,9 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'accept_url' => 'setAcceptUrl',
         'suspended_until' => 'setSuspendedUntil',
         'reason' => 'setReason',
+        'locked_until' => 'setLockedUntil',
+        'product_id' => 'setProductId',
+        'variant_id' => 'setVariantId',
         'meta' => 'setMeta'
     ];
 
@@ -251,6 +266,9 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         'accept_url' => 'getAcceptUrl',
         'suspended_until' => 'getSuspendedUntil',
         'reason' => 'getReason',
+        'locked_until' => 'getLockedUntil',
+        'product_id' => 'getProductId',
+        'variant_id' => 'getVariantId',
         'meta' => 'getMeta'
     ];
 
@@ -322,6 +340,9 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
         $this->setIfExists('accept_url', $data ?? [], null);
         $this->setIfExists('suspended_until', $data ?? [], null);
         $this->setIfExists('reason', $data ?? [], null);
+        $this->setIfExists('locked_until', $data ?? [], null);
+        $this->setIfExists('product_id', $data ?? [], null);
+        $this->setIfExists('variant_id', $data ?? [], null);
         $this->setIfExists('meta', $data ?? [], null);
     }
 
@@ -684,6 +705,87 @@ class Error implements ModelInterface, ArrayAccess, \JsonSerializable
             throw new \InvalidArgumentException('non-nullable reason cannot be null');
         }
         $this->container['reason'] = $reason;
+
+        return $this;
+    }
+
+    /**
+     * Gets locked_until
+     *
+     * @return \DateTime|null
+     */
+    public function getLockedUntil()
+    {
+        return $this->container['locked_until'];
+    }
+
+    /**
+     * Sets locked_until
+     *
+     * @param \DateTime|null $locked_until On `409 stock_locked`: when the product's 24-hour re-enable lock ends — RFC 3339, UTC (`…Z`), rounded UP to the whole second, never early. Retry the stock raise after it; a person at Dona can lift the lock sooner.
+     *
+     * @return self
+     */
+    public function setLockedUntil($locked_until)
+    {
+        if (is_null($locked_until)) {
+            throw new \InvalidArgumentException('non-nullable locked_until cannot be null');
+        }
+        $this->container['locked_until'] = $locked_until;
+
+        return $this;
+    }
+
+    /**
+     * Gets product_id
+     *
+     * @return string|null
+     */
+    public function getProductId()
+    {
+        return $this->container['product_id'];
+    }
+
+    /**
+     * Sets product_id
+     *
+     * @param string|null $product_id On `409 stock_locked`: the product the lock names — always for the database's refusal of one line of a non-atomic `POST /stock` (the whole request is that one 409), which is how you know which line it was.
+     *
+     * @return self
+     */
+    public function setProductId($product_id)
+    {
+        if (is_null($product_id)) {
+            throw new \InvalidArgumentException('non-nullable product_id cannot be null');
+        }
+        $this->container['product_id'] = $product_id;
+
+        return $this;
+    }
+
+    /**
+     * Gets variant_id
+     *
+     * @return string|null
+     */
+    public function getVariantId()
+    {
+        return $this->container['variant_id'];
+    }
+
+    /**
+     * Sets variant_id
+     *
+     * @param string|null $variant_id On `409 stock_locked`: the variation the lock names, when the lock is one variation's (absent: the whole product is locked).
+     *
+     * @return self
+     */
+    public function setVariantId($variant_id)
+    {
+        if (is_null($variant_id)) {
+            throw new \InvalidArgumentException('non-nullable variant_id cannot be null');
+        }
+        $this->container['variant_id'] = $variant_id;
 
         return $this;
     }

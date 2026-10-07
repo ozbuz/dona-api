@@ -129,6 +129,7 @@ docs/Model/OrderTimeline.md
 docs/Model/OrderTimelineEntry.md
 docs/Model/OrderTransition.md
 docs/Model/OrderWithPii.md
+docs/Model/OtherOpenOrder.md
 docs/Model/Ping.md
 docs/Model/PingEventData.md
 docs/Model/PriceLine.md
@@ -153,6 +154,7 @@ docs/Model/SettlementPage.md
 docs/Model/Status.md
 docs/Model/StatusComponents.md
 docs/Model/StatusIncidentsInner.md
+docs/Model/StockEffect.md
 docs/Model/StockEventData.md
 docs/Model/StockLine.md
 docs/Model/StockLineView.md
@@ -303,6 +305,7 @@ lib/Model/OrderTimeline.php
 lib/Model/OrderTimelineEntry.php
 lib/Model/OrderTransition.php
 lib/Model/OrderWithPii.php
+lib/Model/OtherOpenOrder.php
 lib/Model/Ping.php
 lib/Model/PingEventData.php
 lib/Model/PriceLine.php
@@ -327,6 +330,7 @@ lib/Model/SettlementPage.php
 lib/Model/Status.php
 lib/Model/StatusComponents.php
 lib/Model/StatusIncidentsInner.php
+lib/Model/StockEffect.php
 lib/Model/StockEventData.php
 lib/Model/StockLine.php
 lib/Model/StockLineView.php

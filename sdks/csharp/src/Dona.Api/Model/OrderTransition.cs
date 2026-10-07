@@ -25,7 +25,7 @@ using Dona.Api.Client;
 namespace Dona.Api.Model
 {
     /// <summary>
-    /// OrderTransition
+    /// The order as a decline / cancel left it. &#x60;refund_uzs&#x60;, &#x60;stock_effects&#x60;, &#x60;other_open_orders&#x60; and &#x60;marking_needed&#x60; are optional and additive: they appear only for a shop where Dona applies the out-of-stock rule (see &#x60;declineOrder&#x60;) — every other shop gets exactly the eight required keys.
     /// </summary>
     public partial class OrderTransition
     {
@@ -40,8 +40,12 @@ namespace Dona.Api.Model
         /// <param name="shippedAt">shippedAt</param>
         /// <param name="cancelledBy">Known values (open set — tolerate new ones): &#x60;seller&#x60;, &#x60;buyer&#x60;, &#x60;system&#x60;.</param>
         /// <param name="declineReasonCode">declineReasonCode</param>
+        /// <param name="refundUzs">Only on a decline / cancel, only where the stock effect applies to the shop (it comes with the three keys below): the integer soʻm the buyer gets back — 0 for a cash-on-delivery or unpaid order, never null.</param>
+        /// <param name="stockEffects">Only on a decline / cancel, only where the stock effect applies to the shop: one entry per line the move was about (&#x60;unavailable_item_ids&#x60;, or the one live line) — what became of its product. &#x60;[]&#x60; for a reason that takes nothing off sale.</param>
+        /// <param name="otherOpenOrders">The shop&#39;s OTHER open orders (not cancelled, shipped or delivered; at most 50) holding a product or variation the move took off sale — to review; nothing cancels them. Read right AFTER the commit: if that read fails the key is absent, which means \&quot;not known\&quot;, never \&quot;none\&quot;. Absent on a dry run.</param>
+        /// <param name="markingNeeded">true when the reason takes stock off sale, the order had SEVERAL live lines and &#x60;unavailable_item_ids&#x60; was not sent: no product was taken off sale (the units went back on the shelf as before) and the question \&quot;which line was it?\&quot; stays open for 24 hours on Dona&#39;s side. Send &#x60;unavailable_item_ids&#x60; with the call to name the lines.</param>
         [JsonConstructor]
-        public OrderTransition(Guid id, string status, string paymentStatus, DateTimeOffset updatedAt, DateTimeOffset? acceptedAt = default, DateTimeOffset? shippedAt = default, string? cancelledBy = default, string? declineReasonCode = default)
+        public OrderTransition(Guid id, string status, string paymentStatus, DateTimeOffset updatedAt, DateTimeOffset? acceptedAt = default, DateTimeOffset? shippedAt = default, string? cancelledBy = default, string? declineReasonCode = default, Option<long?> refundUzs = default, Option<List<StockEffect>?> stockEffects = default, Option<List<OtherOpenOrder>?> otherOpenOrders = default, Option<bool?> markingNeeded = default)
         {
             Id = id;
             Status = status;
@@ -51,6 +55,10 @@ namespace Dona.Api.Model
             ShippedAt = shippedAt;
             CancelledBy = cancelledBy;
             DeclineReasonCode = declineReasonCode;
+            RefundUzsOption = refundUzs;
+            StockEffectsOption = stockEffects;
+            OtherOpenOrdersOption = otherOpenOrders;
+            MarkingNeededOption = markingNeeded;
             OnCreated();
         }
 
@@ -107,6 +115,62 @@ namespace Dona.Api.Model
         public string? DeclineReasonCode { get; set; }
 
         /// <summary>
+        /// Used to track the state of RefundUzs
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<long?> RefundUzsOption { get; private set; }
+
+        /// <summary>
+        /// Only on a decline / cancel, only where the stock effect applies to the shop (it comes with the three keys below): the integer soʻm the buyer gets back — 0 for a cash-on-delivery or unpaid order, never null.
+        /// </summary>
+        /// <value>Only on a decline / cancel, only where the stock effect applies to the shop (it comes with the three keys below): the integer soʻm the buyer gets back — 0 for a cash-on-delivery or unpaid order, never null.</value>
+        [JsonPropertyName("refund_uzs")]
+        public long? RefundUzs { get { return this.RefundUzsOption.Value; } set { this.RefundUzsOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of StockEffects
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<List<StockEffect>?> StockEffectsOption { get; private set; }
+
+        /// <summary>
+        /// Only on a decline / cancel, only where the stock effect applies to the shop: one entry per line the move was about (&#x60;unavailable_item_ids&#x60;, or the one live line) — what became of its product. &#x60;[]&#x60; for a reason that takes nothing off sale.
+        /// </summary>
+        /// <value>Only on a decline / cancel, only where the stock effect applies to the shop: one entry per line the move was about (&#x60;unavailable_item_ids&#x60;, or the one live line) — what became of its product. &#x60;[]&#x60; for a reason that takes nothing off sale.</value>
+        [JsonPropertyName("stock_effects")]
+        public List<StockEffect>? StockEffects { get { return this.StockEffectsOption.Value; } set { this.StockEffectsOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of OtherOpenOrders
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<List<OtherOpenOrder>?> OtherOpenOrdersOption { get; private set; }
+
+        /// <summary>
+        /// The shop&#39;s OTHER open orders (not cancelled, shipped or delivered; at most 50) holding a product or variation the move took off sale — to review; nothing cancels them. Read right AFTER the commit: if that read fails the key is absent, which means \&quot;not known\&quot;, never \&quot;none\&quot;. Absent on a dry run.
+        /// </summary>
+        /// <value>The shop&#39;s OTHER open orders (not cancelled, shipped or delivered; at most 50) holding a product or variation the move took off sale — to review; nothing cancels them. Read right AFTER the commit: if that read fails the key is absent, which means \&quot;not known\&quot;, never \&quot;none\&quot;. Absent on a dry run.</value>
+        [JsonPropertyName("other_open_orders")]
+        public List<OtherOpenOrder>? OtherOpenOrders { get { return this.OtherOpenOrdersOption.Value; } set { this.OtherOpenOrdersOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of MarkingNeeded
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<bool?> MarkingNeededOption { get; private set; }
+
+        /// <summary>
+        /// true when the reason takes stock off sale, the order had SEVERAL live lines and &#x60;unavailable_item_ids&#x60; was not sent: no product was taken off sale (the units went back on the shelf as before) and the question \&quot;which line was it?\&quot; stays open for 24 hours on Dona&#39;s side. Send &#x60;unavailable_item_ids&#x60; with the call to name the lines.
+        /// </summary>
+        /// <value>true when the reason takes stock off sale, the order had SEVERAL live lines and &#x60;unavailable_item_ids&#x60; was not sent: no product was taken off sale (the units went back on the shelf as before) and the question \&quot;which line was it?\&quot; stays open for 24 hours on Dona&#39;s side. Send &#x60;unavailable_item_ids&#x60; with the call to name the lines.</value>
+        [JsonPropertyName("marking_needed")]
+        public bool? MarkingNeeded { get { return this.MarkingNeededOption.Value; } set { this.MarkingNeededOption = new(value); } }
+
+        /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
         /// <returns>String presentation of the object</returns>
@@ -122,6 +186,10 @@ namespace Dona.Api.Model
             sb.Append("  ShippedAt: ").Append(ShippedAt).Append("\n");
             sb.Append("  CancelledBy: ").Append(CancelledBy).Append("\n");
             sb.Append("  DeclineReasonCode: ").Append(DeclineReasonCode).Append("\n");
+            sb.Append("  RefundUzs: ").Append(RefundUzs).Append("\n");
+            sb.Append("  StockEffects: ").Append(StockEffects).Append("\n");
+            sb.Append("  OtherOpenOrders: ").Append(OtherOpenOrders).Append("\n");
+            sb.Append("  MarkingNeeded: ").Append(MarkingNeeded).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -182,6 +250,10 @@ namespace Dona.Api.Model
             Option<DateTimeOffset?> shippedAt = default;
             Option<string?> cancelledBy = default;
             Option<string?> declineReasonCode = default;
+            Option<long?> refundUzs = default;
+            Option<List<StockEffect>?> stockEffects = default;
+            Option<List<OtherOpenOrder>?> otherOpenOrders = default;
+            Option<bool?> markingNeeded = default;
 
             while (utf8JsonReader.Read())
             {
@@ -221,6 +293,18 @@ namespace Dona.Api.Model
                             break;
                         case "decline_reason_code":
                             declineReasonCode = new Option<string?>(utf8JsonReader.GetString());
+                            break;
+                        case "refund_uzs":
+                            refundUzs = new Option<long?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (long?)null : utf8JsonReader.GetInt64());
+                            break;
+                        case "stock_effects":
+                            stockEffects = new Option<List<StockEffect>?>(JsonSerializer.Deserialize<List<StockEffect>>(ref utf8JsonReader, jsonSerializerOptions)!);
+                            break;
+                        case "other_open_orders":
+                            otherOpenOrders = new Option<List<OtherOpenOrder>?>(JsonSerializer.Deserialize<List<OtherOpenOrder>>(ref utf8JsonReader, jsonSerializerOptions)!);
+                            break;
+                        case "marking_needed":
+                            markingNeeded = new Option<bool?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (bool?)null : utf8JsonReader.GetBoolean());
                             break;
                         default:
                             break;
@@ -264,7 +348,19 @@ namespace Dona.Api.Model
             if (updatedAt.IsSet && updatedAt.Value == null)
                 throw new ArgumentNullException(nameof(updatedAt), "Property is not nullable for class OrderTransition.");
 
-            return new OrderTransition(id.Value!.Value!, status.Value!, paymentStatus.Value!, updatedAt.Value!.Value!, acceptedAt.Value!, shippedAt.Value!, cancelledBy.Value!, declineReasonCode.Value!);
+            if (refundUzs.IsSet && refundUzs.Value == null)
+                throw new ArgumentNullException(nameof(refundUzs), "Property is not nullable for class OrderTransition.");
+
+            if (stockEffects.IsSet && stockEffects.Value == null)
+                throw new ArgumentNullException(nameof(stockEffects), "Property is not nullable for class OrderTransition.");
+
+            if (otherOpenOrders.IsSet && otherOpenOrders.Value == null)
+                throw new ArgumentNullException(nameof(otherOpenOrders), "Property is not nullable for class OrderTransition.");
+
+            if (markingNeeded.IsSet && markingNeeded.Value == null)
+                throw new ArgumentNullException(nameof(markingNeeded), "Property is not nullable for class OrderTransition.");
+
+            return new OrderTransition(id.Value!.Value!, status.Value!, paymentStatus.Value!, updatedAt.Value!.Value!, acceptedAt.Value!, shippedAt.Value!, cancelledBy.Value!, declineReasonCode.Value!, refundUzs, stockEffects, otherOpenOrders, markingNeeded);
         }
 
         /// <summary>
@@ -297,6 +393,12 @@ namespace Dona.Api.Model
             if (orderTransition.PaymentStatus == null)
                 throw new ArgumentNullException(nameof(orderTransition.PaymentStatus), "Property is required for class OrderTransition.");
 
+            if (orderTransition.StockEffectsOption.IsSet && orderTransition.StockEffects == null)
+                throw new ArgumentNullException(nameof(orderTransition.StockEffects), "Property is required for class OrderTransition.");
+
+            if (orderTransition.OtherOpenOrdersOption.IsSet && orderTransition.OtherOpenOrders == null)
+                throw new ArgumentNullException(nameof(orderTransition.OtherOpenOrders), "Property is required for class OrderTransition.");
+
             writer.WriteString("id", orderTransition.Id);
 
             writer.WriteString("status", orderTransition.Status);
@@ -324,6 +426,22 @@ namespace Dona.Api.Model
                 writer.WriteString("decline_reason_code", orderTransition.DeclineReasonCode);
             else
                 writer.WriteNull("decline_reason_code");
+
+            if (orderTransition.RefundUzsOption.IsSet)
+                writer.WriteNumber("refund_uzs", orderTransition.RefundUzsOption.Value!.Value);
+
+            if (orderTransition.StockEffectsOption.IsSet)
+            {
+                writer.WritePropertyName("stock_effects");
+                JsonSerializer.Serialize(writer, orderTransition.StockEffects, jsonSerializerOptions);
+            }
+            if (orderTransition.OtherOpenOrdersOption.IsSet)
+            {
+                writer.WritePropertyName("other_open_orders");
+                JsonSerializer.Serialize(writer, orderTransition.OtherOpenOrders, jsonSerializerOptions);
+            }
+            if (orderTransition.MarkingNeededOption.IsSet)
+                writer.WriteBoolean("marking_needed", orderTransition.MarkingNeededOption.Value!.Value);
         }
     }
 }

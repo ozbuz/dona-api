@@ -26,7 +26,7 @@ batchProducts($idempotency_key, $batch_request, $dona_dry_run, $dry_run, $accept
 
 Batch create/update (async job)
 
-≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 
 ### Example
 
@@ -664,7 +664,7 @@ updateProduct($id, $idempotency_key, $product_update, $dona_dry_run, $dry_run, $
 
 Update a product
 
-`ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+`ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 
 ### Example
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * DeclineRequest
+ * OtherOpenOrder
  *
  * PHP version 8.1
  *
@@ -32,15 +32,16 @@ use \ArrayAccess;
 use \Dona\Api\ObjectSerializer;
 
 /**
- * DeclineRequest Class Doc Comment
+ * OtherOpenOrder Class Doc Comment
  *
  * @category Class
+ * @description Another open order of the shop with a live line on a product or variation the move took off sale.
  * @package  Dona\Api
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
  * @implements \ArrayAccess<string, mixed>
  */
-class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
+class OtherOpenOrder implements ModelInterface, ArrayAccess, \JsonSerializable
 {
     public const DISCRIMINATOR = null;
 
@@ -49,7 +50,7 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
      *
      * @var string
      */
-    protected static $openAPIModelName = 'DeclineRequest';
+    protected static $openAPIModelName = 'OtherOpenOrder';
 
     /**
      * Array of property to type mappings. Used for (de)serialization
@@ -57,9 +58,9 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var string[]
      */
     protected static $openAPITypes = [
-        'reason' => 'string',
-        'comment' => 'string',
-        'unavailable_item_ids' => 'string[]'
+        'order_id' => 'string',
+        'order_code' => 'string',
+        'order_item_id' => 'string'
     ];
 
     /**
@@ -70,9 +71,9 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
      * @psalm-var array<string, string|null>
      */
     protected static $openAPIFormats = [
-        'reason' => null,
-        'comment' => null,
-        'unavailable_item_ids' => 'uuid'
+        'order_id' => 'uuid',
+        'order_code' => null,
+        'order_item_id' => 'uuid'
     ];
 
     /**
@@ -81,9 +82,9 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var boolean[]
      */
     protected static array $openAPINullables = [
-        'reason' => false,
-        'comment' => false,
-        'unavailable_item_ids' => false
+        'order_id' => false,
+        'order_code' => false,
+        'order_item_id' => false
     ];
 
     /**
@@ -172,9 +173,9 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var string[]
      */
     protected static $attributeMap = [
-        'reason' => 'reason',
-        'comment' => 'comment',
-        'unavailable_item_ids' => 'unavailable_item_ids'
+        'order_id' => 'order_id',
+        'order_code' => 'order_code',
+        'order_item_id' => 'order_item_id'
     ];
 
     /**
@@ -183,9 +184,9 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var string[]
      */
     protected static $setters = [
-        'reason' => 'setReason',
-        'comment' => 'setComment',
-        'unavailable_item_ids' => 'setUnavailableItemIds'
+        'order_id' => 'setOrderId',
+        'order_code' => 'setOrderCode',
+        'order_item_id' => 'setOrderItemId'
     ];
 
     /**
@@ -194,9 +195,9 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var string[]
      */
     protected static $getters = [
-        'reason' => 'getReason',
-        'comment' => 'getComment',
-        'unavailable_item_ids' => 'getUnavailableItemIds'
+        'order_id' => 'getOrderId',
+        'order_code' => 'getOrderCode',
+        'order_item_id' => 'getOrderItemId'
     ];
 
     /**
@@ -256,9 +257,9 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
      */
     public function __construct(?array $data = null)
     {
-        $this->setIfExists('reason', $data ?? [], null);
-        $this->setIfExists('comment', $data ?? [], null);
-        $this->setIfExists('unavailable_item_ids', $data ?? [], null);
+        $this->setIfExists('order_id', $data ?? [], null);
+        $this->setIfExists('order_code', $data ?? [], null);
+        $this->setIfExists('order_item_id', $data ?? [], null);
     }
 
     /**
@@ -288,13 +289,15 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
     {
         $invalidProperties = [];
 
-        if ($this->container['reason'] === null) {
-            $invalidProperties[] = "'reason' can't be null";
+        if ($this->container['order_id'] === null) {
+            $invalidProperties[] = "'order_id' can't be null";
         }
-        if (!is_null($this->container['comment']) && (mb_strlen($this->container['comment']) > 500)) {
-            $invalidProperties[] = "invalid value for 'comment', the character length must be smaller than or equal to 500.";
+        if ($this->container['order_code'] === null) {
+            $invalidProperties[] = "'order_code' can't be null";
         }
-
+        if ($this->container['order_item_id'] === null) {
+            $invalidProperties[] = "'order_item_id' can't be null";
+        }
         return $invalidProperties;
     }
 
@@ -311,86 +314,82 @@ class DeclineRequest implements ModelInterface, ArrayAccess, \JsonSerializable
 
 
     /**
-     * Gets reason
+     * Gets order_id
      *
      * @return string
      */
-    public function getReason()
+    public function getOrderId()
     {
-        return $this->container['reason'];
+        return $this->container['order_id'];
     }
 
     /**
-     * Sets reason
+     * Sets order_id
      *
-     * @param string $reason The seller vocabulary — `out_of_stock`, `inventory_mismatch`, `product_damaged`, `store_unavailable`, `cannot_fulfill_in_time`, `duplicate_order`, `fraud_suspected`, `buyer_requested` (the buyer asked), `other` — OR Uzum's four (`OUT_OF_STOCK`, `OUT_OF_PACKAGE`, `OUT_OF_TIME`, `OTHER`) mapped onto them (`OUT_OF_PACKAGE` is stored as `other`). `OTHER`/`other` needs `comment`. Unknown ⇒ `400 invalid_decline_reason`. **Only `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` carry the stock effect** (see `declineOrder`); every other reason cancels and the units go back on the shelf. Known values (open set — tolerate new ones): `OUT_OF_STOCK`, `OUT_OF_PACKAGE`, `OUT_OF_TIME`, `OTHER`, `out_of_stock`, `inventory_mismatch`, `product_damaged`, `store_unavailable`, `cannot_fulfill_in_time`, `duplicate_order`, `fraud_suspected`, `buyer_requested`, `other`.
+     * @param string $order_id order_id
      *
      * @return self
      */
-    public function setReason($reason)
+    public function setOrderId($order_id)
     {
-        if (is_null($reason)) {
-            throw new \InvalidArgumentException('non-nullable reason cannot be null');
+        if (is_null($order_id)) {
+            throw new \InvalidArgumentException('non-nullable order_id cannot be null');
         }
-        $this->container['reason'] = $reason;
+        $this->container['order_id'] = $order_id;
 
         return $this;
     }
 
     /**
-     * Gets comment
+     * Gets order_code
      *
-     * @return string|null
+     * @return string
      */
-    public function getComment()
+    public function getOrderCode()
     {
-        return $this->container['comment'];
+        return $this->container['order_code'];
     }
 
     /**
-     * Sets comment
+     * Sets order_code
      *
-     * @param string|null $comment comment
+     * @param string $order_code order_code
      *
      * @return self
      */
-    public function setComment($comment)
+    public function setOrderCode($order_code)
     {
-        if (is_null($comment)) {
-            throw new \InvalidArgumentException('non-nullable comment cannot be null');
+        if (is_null($order_code)) {
+            throw new \InvalidArgumentException('non-nullable order_code cannot be null');
         }
-        if ((mb_strlen($comment) > 500)) {
-            throw new \InvalidArgumentException('invalid length for $comment when calling DeclineRequest., must be smaller than or equal to 500.');
-        }
-
-        $this->container['comment'] = $comment;
+        $this->container['order_code'] = $order_code;
 
         return $this;
     }
 
     /**
-     * Gets unavailable_item_ids
+     * Gets order_item_id
      *
-     * @return string[]|null
+     * @return string
      */
-    public function getUnavailableItemIds()
+    public function getOrderItemId()
     {
-        return $this->container['unavailable_item_ids'];
+        return $this->container['order_item_id'];
     }
 
     /**
-     * Sets unavailable_item_ids
+     * Sets order_item_id
      *
-     * @param string[]|null $unavailable_item_ids Which lines of the order are out of stock — `items[].id` of `GET /orders/{id}` (a line is live while `quantity − cancelled_quantity > 0`). Read only with `out_of_stock`, `inventory_mismatch` or `OUT_OF_STOCK`, and only where Dona applies the stock effect to the shop — for any other shop it is accepted and ignored, even malformed. An order with ONE live line needs none (that line is the line). With several: send the ids that are out of stock — an empty list ⇒ `400 unavailable_items_required`; an id that is not a live line of this order, or not an array of ids ⇒ `400 invalid_unavailable_items`; any id with a reason that takes nothing off sale ⇒ `400 unavailable_items_not_allowed`. Leaving the field out on a multi-line order changes no stock and answers `marking_needed: true`.
+     * @param string $order_item_id order_item_id
      *
      * @return self
      */
-    public function setUnavailableItemIds($unavailable_item_ids)
+    public function setOrderItemId($order_item_id)
     {
-        if (is_null($unavailable_item_ids)) {
-            throw new \InvalidArgumentException('non-nullable unavailable_item_ids cannot be null');
+        if (is_null($order_item_id)) {
+            throw new \InvalidArgumentException('non-nullable order_item_id cannot be null');
         }
-        $this->container['unavailable_item_ids'] = $unavailable_item_ids;
+        $this->container['order_item_id'] = $order_item_id;
 
         return $this;
     }

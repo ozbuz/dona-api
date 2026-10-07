@@ -16,6 +16,9 @@ Name | Type | Description | Notes
 **AcceptUrl** | **string** | On &#x60;403 agreement_required&#x60;: the portal page where the shop owner accepts Annex 2. | [optional] 
 **SuspendedUntil** | **DateTimeOffset** | On &#x60;403 key_suspended&#x60;. | [optional] 
 **Reason** | **string** | On &#x60;403 key_suspended&#x60; / &#x60;403 api_blocked&#x60;: why (&#x60;error_storm&#x60;, &#x60;unauthorized_storm&#x60;, &#x60;ip_blocked&#x60;, &#x60;credential_stuffing&#x60;, &#x60;leak_reported&#x60;, &#x60;staff&#x60;). | [optional] 
+**LockedUntil** | **DateTimeOffset** | On &#x60;409 stock_locked&#x60;: when the product&#39;s 24-hour re-enable lock ends — RFC 3339, UTC (&#x60;…Z&#x60;), rounded UP to the whole second, never early. Retry the stock raise after it; a person at Dona can lift the lock sooner. | [optional] 
+**ProductId** | **Guid** | On &#x60;409 stock_locked&#x60;: the product the lock names — always for the database&#39;s refusal of one line of a non-atomic &#x60;POST /stock&#x60; (the whole request is that one 409), which is how you know which line it was. | [optional] 
+**VariantId** | **Guid** | On &#x60;409 stock_locked&#x60;: the variation the lock names, when the lock is one variation&#39;s (absent: the whole product is locked). | [optional] 
 **Meta** | [**ErrorMeta**](ErrorMeta.md) |  | [optional] 
 
 [[Back to Model list]](../../README.md#documentation-for-models) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to README]](../../README.md)

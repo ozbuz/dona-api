@@ -32,22 +32,24 @@ namespace Dona.Api.Model
         /// <summary>
         /// Initializes a new instance of the <see cref="DeclineRequest" /> class.
         /// </summary>
-        /// <param name="reason">Uzum subset (&#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;) mapped onto the native &#x60;declineReasons&#x60;, OR a native lowercase code. &#x60;OTHER&#x60;/&#x60;other&#x60; needs &#x60;comment&#x60;. Unknown ⇒ &#x60;400 invalid_decline_reason&#x60;. Known values (open set — tolerate new ones): &#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;, &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;other&#x60;.</param>
+        /// <param name="reason">The seller vocabulary — &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;buyer_requested&#x60; (the buyer asked), &#x60;other&#x60; — OR Uzum&#39;s four (&#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;) mapped onto them (&#x60;OUT_OF_PACKAGE&#x60; is stored as &#x60;other&#x60;). &#x60;OTHER&#x60;/&#x60;other&#x60; needs &#x60;comment&#x60;. Unknown ⇒ &#x60;400 invalid_decline_reason&#x60;. **Only &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60; and &#x60;OUT_OF_STOCK&#x60; carry the stock effect** (see &#x60;declineOrder&#x60;); every other reason cancels and the units go back on the shelf. Known values (open set — tolerate new ones): &#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;, &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;buyer_requested&#x60;, &#x60;other&#x60;.</param>
         /// <param name="comment">comment</param>
+        /// <param name="unavailableItemIds">Which lines of the order are out of stock — &#x60;items[].id&#x60; of &#x60;GET /orders/{id}&#x60; (a line is live while &#x60;quantity − cancelled_quantity &gt; 0&#x60;). Read only with &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60; or &#x60;OUT_OF_STOCK&#x60;, and only where Dona applies the stock effect to the shop — for any other shop it is accepted and ignored, even malformed. An order with ONE live line needs none (that line is the line). With several: send the ids that are out of stock — an empty list ⇒ &#x60;400 unavailable_items_required&#x60;; an id that is not a live line of this order, or not an array of ids ⇒ &#x60;400 invalid_unavailable_items&#x60;; any id with a reason that takes nothing off sale ⇒ &#x60;400 unavailable_items_not_allowed&#x60;. Leaving the field out on a multi-line order changes no stock and answers &#x60;marking_needed: true&#x60;.</param>
         [JsonConstructor]
-        public DeclineRequest(string reason, Option<string?> comment = default)
+        public DeclineRequest(string reason, Option<string?> comment = default, Option<List<Guid>?> unavailableItemIds = default)
         {
             Reason = reason;
             CommentOption = comment;
+            UnavailableItemIdsOption = unavailableItemIds;
             OnCreated();
         }
 
         partial void OnCreated();
 
         /// <summary>
-        /// Uzum subset (&#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;) mapped onto the native &#x60;declineReasons&#x60;, OR a native lowercase code. &#x60;OTHER&#x60;/&#x60;other&#x60; needs &#x60;comment&#x60;. Unknown ⇒ &#x60;400 invalid_decline_reason&#x60;. Known values (open set — tolerate new ones): &#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;, &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;other&#x60;.
+        /// The seller vocabulary — &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;buyer_requested&#x60; (the buyer asked), &#x60;other&#x60; — OR Uzum&#39;s four (&#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;) mapped onto them (&#x60;OUT_OF_PACKAGE&#x60; is stored as &#x60;other&#x60;). &#x60;OTHER&#x60;/&#x60;other&#x60; needs &#x60;comment&#x60;. Unknown ⇒ &#x60;400 invalid_decline_reason&#x60;. **Only &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60; and &#x60;OUT_OF_STOCK&#x60; carry the stock effect** (see &#x60;declineOrder&#x60;); every other reason cancels and the units go back on the shelf. Known values (open set — tolerate new ones): &#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;, &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;buyer_requested&#x60;, &#x60;other&#x60;.
         /// </summary>
-        /// <value>Uzum subset (&#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;) mapped onto the native &#x60;declineReasons&#x60;, OR a native lowercase code. &#x60;OTHER&#x60;/&#x60;other&#x60; needs &#x60;comment&#x60;. Unknown ⇒ &#x60;400 invalid_decline_reason&#x60;. Known values (open set — tolerate new ones): &#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;, &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;other&#x60;.</value>
+        /// <value>The seller vocabulary — &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;buyer_requested&#x60; (the buyer asked), &#x60;other&#x60; — OR Uzum&#39;s four (&#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;) mapped onto them (&#x60;OUT_OF_PACKAGE&#x60; is stored as &#x60;other&#x60;). &#x60;OTHER&#x60;/&#x60;other&#x60; needs &#x60;comment&#x60;. Unknown ⇒ &#x60;400 invalid_decline_reason&#x60;. **Only &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60; and &#x60;OUT_OF_STOCK&#x60; carry the stock effect** (see &#x60;declineOrder&#x60;); every other reason cancels and the units go back on the shelf. Known values (open set — tolerate new ones): &#x60;OUT_OF_STOCK&#x60;, &#x60;OUT_OF_PACKAGE&#x60;, &#x60;OUT_OF_TIME&#x60;, &#x60;OTHER&#x60;, &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60;, &#x60;product_damaged&#x60;, &#x60;store_unavailable&#x60;, &#x60;cannot_fulfill_in_time&#x60;, &#x60;duplicate_order&#x60;, &#x60;fraud_suspected&#x60;, &#x60;buyer_requested&#x60;, &#x60;other&#x60;.</value>
         [JsonPropertyName("reason")]
         public string Reason { get; set; }
 
@@ -65,6 +67,20 @@ namespace Dona.Api.Model
         public string? Comment { get { return this.CommentOption.Value; } set { this.CommentOption = new(value); } }
 
         /// <summary>
+        /// Used to track the state of UnavailableItemIds
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<List<Guid>?> UnavailableItemIdsOption { get; private set; }
+
+        /// <summary>
+        /// Which lines of the order are out of stock — &#x60;items[].id&#x60; of &#x60;GET /orders/{id}&#x60; (a line is live while &#x60;quantity − cancelled_quantity &gt; 0&#x60;). Read only with &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60; or &#x60;OUT_OF_STOCK&#x60;, and only where Dona applies the stock effect to the shop — for any other shop it is accepted and ignored, even malformed. An order with ONE live line needs none (that line is the line). With several: send the ids that are out of stock — an empty list ⇒ &#x60;400 unavailable_items_required&#x60;; an id that is not a live line of this order, or not an array of ids ⇒ &#x60;400 invalid_unavailable_items&#x60;; any id with a reason that takes nothing off sale ⇒ &#x60;400 unavailable_items_not_allowed&#x60;. Leaving the field out on a multi-line order changes no stock and answers &#x60;marking_needed: true&#x60;.
+        /// </summary>
+        /// <value>Which lines of the order are out of stock — &#x60;items[].id&#x60; of &#x60;GET /orders/{id}&#x60; (a line is live while &#x60;quantity − cancelled_quantity &gt; 0&#x60;). Read only with &#x60;out_of_stock&#x60;, &#x60;inventory_mismatch&#x60; or &#x60;OUT_OF_STOCK&#x60;, and only where Dona applies the stock effect to the shop — for any other shop it is accepted and ignored, even malformed. An order with ONE live line needs none (that line is the line). With several: send the ids that are out of stock — an empty list ⇒ &#x60;400 unavailable_items_required&#x60;; an id that is not a live line of this order, or not an array of ids ⇒ &#x60;400 invalid_unavailable_items&#x60;; any id with a reason that takes nothing off sale ⇒ &#x60;400 unavailable_items_not_allowed&#x60;. Leaving the field out on a multi-line order changes no stock and answers &#x60;marking_needed: true&#x60;.</value>
+        [JsonPropertyName("unavailable_item_ids")]
+        public List<Guid>? UnavailableItemIds { get { return this.UnavailableItemIdsOption.Value; } set { this.UnavailableItemIdsOption = new(value); } }
+
+        /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
         /// <returns>String presentation of the object</returns>
@@ -74,6 +90,7 @@ namespace Dona.Api.Model
             sb.Append("class DeclineRequest {\n");
             sb.Append("  Reason: ").Append(Reason).Append("\n");
             sb.Append("  Comment: ").Append(Comment).Append("\n");
+            sb.Append("  UnavailableItemIds: ").Append(UnavailableItemIds).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -113,6 +130,7 @@ namespace Dona.Api.Model
 
             Option<string?> reason = default;
             Option<string?> comment = default;
+            Option<List<Guid>?> unavailableItemIds = default;
 
             while (utf8JsonReader.Read())
             {
@@ -135,6 +153,9 @@ namespace Dona.Api.Model
                         case "comment":
                             comment = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
+                        case "unavailable_item_ids":
+                            unavailableItemIds = new Option<List<Guid>?>(JsonSerializer.Deserialize<List<Guid>>(ref utf8JsonReader, jsonSerializerOptions)!);
+                            break;
                         default:
                             break;
                     }
@@ -150,7 +171,10 @@ namespace Dona.Api.Model
             if (comment.IsSet && comment.Value == null)
                 throw new ArgumentNullException(nameof(comment), "Property is not nullable for class DeclineRequest.");
 
-            return new DeclineRequest(reason.Value!, comment);
+            if (unavailableItemIds.IsSet && unavailableItemIds.Value == null)
+                throw new ArgumentNullException(nameof(unavailableItemIds), "Property is not nullable for class DeclineRequest.");
+
+            return new DeclineRequest(reason.Value!, comment, unavailableItemIds);
         }
 
         /// <summary>
@@ -183,10 +207,19 @@ namespace Dona.Api.Model
             if (declineRequest.CommentOption.IsSet && declineRequest.Comment == null)
                 throw new ArgumentNullException(nameof(declineRequest.Comment), "Property is required for class DeclineRequest.");
 
+            if (declineRequest.UnavailableItemIdsOption.IsSet && declineRequest.UnavailableItemIds == null)
+                throw new ArgumentNullException(nameof(declineRequest.UnavailableItemIds), "Property is required for class DeclineRequest.");
+
             writer.WriteString("reason", declineRequest.Reason);
 
             if (declineRequest.CommentOption.IsSet)
                 writer.WriteString("comment", declineRequest.Comment);
+
+            if (declineRequest.UnavailableItemIdsOption.IsSet)
+            {
+                writer.WritePropertyName("unavailable_item_ids");
+                JsonSerializer.Serialize(writer, declineRequest.UnavailableItemIds, jsonSerializerOptions);
+            }
         }
     }
 }

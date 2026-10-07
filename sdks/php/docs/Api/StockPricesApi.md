@@ -169,7 +169,7 @@ setStock($idempotency_key, $stock_request, $atomic, $dona_dry_run, $dry_run, $ac
 
 Set absolute stock (≤ 1 000 lines)
 
-Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 
 ### Example
 
