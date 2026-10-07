@@ -1794,8 +1794,11 @@ type CommissionRoot struct {
 type DeclineRequest struct {
 	Comment *string `json:"comment,omitempty"`
 
-	// Reason Uzum subset (`OUT_OF_STOCK`, `OUT_OF_PACKAGE`, `OUT_OF_TIME`, `OTHER`) mapped onto the native `declineReasons`, OR a native lowercase code. `OTHER`/`other` needs `comment`. Unknown ⇒ `400 invalid_decline_reason`. Known values (open set — tolerate new ones): `OUT_OF_STOCK`, `OUT_OF_PACKAGE`, `OUT_OF_TIME`, `OTHER`, `out_of_stock`, `inventory_mismatch`, `product_damaged`, `store_unavailable`, `cannot_fulfill_in_time`, `duplicate_order`, `fraud_suspected`, `other`.
+	// Reason The seller vocabulary — `out_of_stock`, `inventory_mismatch`, `product_damaged`, `store_unavailable`, `cannot_fulfill_in_time`, `duplicate_order`, `fraud_suspected`, `buyer_requested` (the buyer asked), `other` — OR Uzum's four (`OUT_OF_STOCK`, `OUT_OF_PACKAGE`, `OUT_OF_TIME`, `OTHER`) mapped onto them (`OUT_OF_PACKAGE` is stored as `other`). `OTHER`/`other` needs `comment`. Unknown ⇒ `400 invalid_decline_reason`. **Only `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` carry the stock effect** (see `declineOrder`); every other reason cancels and the units go back on the shelf. Known values (open set — tolerate new ones): `OUT_OF_STOCK`, `OUT_OF_PACKAGE`, `OUT_OF_TIME`, `OTHER`, `out_of_stock`, `inventory_mismatch`, `product_damaged`, `store_unavailable`, `cannot_fulfill_in_time`, `duplicate_order`, `fraud_suspected`, `buyer_requested`, `other`.
 	Reason string `json:"reason"`
+
+	// UnavailableItemIds Which lines of the order are out of stock — `items[].id` of `GET /orders/{id}` (a line is live while `quantity − cancelled_quantity > 0`). Read only with `out_of_stock`, `inventory_mismatch` or `OUT_OF_STOCK`, and only where Dona applies the stock effect to the shop — for any other shop it is accepted and ignored, even malformed. An order with ONE live line needs none (that line is the line). With several: send the ids that are out of stock — an empty list ⇒ `400 unavailable_items_required`; an id that is not a live line of this order, or not an array of ids ⇒ `400 invalid_unavailable_items`; any id with a reason that takes nothing off sale ⇒ `400 unavailable_items_not_allowed`. Leaving the field out on a multi-line order changes no stock and answers `marking_needed: true`.
+	UnavailableItemIds *[]openapi_types.UUID `json:"unavailable_item_ids,omitempty"`
 }
 
 // Delivery defines model for Delivery.
@@ -1846,11 +1849,17 @@ type Error struct {
 	// Error Stable code (glossary / docs/error-codes.md). Clients branch on this, never on `message`.
 	Error string `json:"error"`
 
+	// LockedUntil On `409 stock_locked`: when the product's 24-hour re-enable lock ends — RFC 3339, UTC (`…Z`), rounded UP to the whole second, never early. Retry the stock raise after it; a person at Dona can lift the lock sooner.
+	LockedUntil *time.Time `json:"locked_until,omitempty"`
+
 	// Message Localised by `Accept-Language` (uz default).
 	Message string `json:"message"`
 
 	// Meta Code-specific facts, e.g. `oldest_event_id` with `cursor_expired`.
 	Meta *Error_Meta `json:"meta,omitempty"`
+
+	// ProductId On `409 stock_locked`: the product the lock names — always for the database's refusal of one line of a non-atomic `POST /stock` (the whole request is that one 409), which is how you know which line it was.
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
 
 	// Reason On `403 key_suspended` / `403 api_blocked`: why (`error_storm`, `unauthorized_storm`, `ip_blocked`, `credential_stuffing`, `leak_reported`, `staff`).
 	Reason    *string `json:"reason,omitempty"`
@@ -1867,6 +1876,9 @@ type Error struct {
 
 	// SuspendedUntil On `403 key_suspended`.
 	SuspendedUntil *time.Time `json:"suspended_until,omitempty"`
+
+	// VariantId On `409 stock_locked`: the variation the lock names, when the lock is one variation's (absent: the whole product is locked).
+	VariantId *openapi_types.UUID `json:"variant_id,omitempty"`
 }
 
 // Error_Meta Code-specific facts, e.g. `oldest_event_id` with `cursor_expired`.
@@ -1877,7 +1889,7 @@ type Error_Meta struct {
 
 // ErrorDetail defines model for ErrorDetail.
 type ErrorDetail struct {
-	// Code Stable field-level code, e.g. `required`, `ikpu_required`, `cursor_expired`.
+	// Code Stable field-level code, e.g. `required`, `ikpu_required`, `cursor_expired`, `stock_locked`.
 	Code string `json:"code"`
 
 	// Field Field or header name.
@@ -1885,6 +1897,9 @@ type ErrorDetail struct {
 
 	// Index Line index in a bulk body.
 	Index *int `json:"index,omitempty"`
+
+	// LockedUntil With `code: stock_locked` — the line of an atomic `POST /stock` that the 24-hour out-of-stock lock refused: when that lock ends (the same wire shape as `Error.locked_until`).
+	LockedUntil *time.Time `json:"locked_until,omitempty"`
 
 	// Message Localised by `Accept-Language`.
 	Message string `json:"message"`
@@ -2171,14 +2186,17 @@ type LineResult struct {
 	Barcode      *string             `json:"barcode,omitempty"`
 	CompareAtUzs *int64              `json:"compare_at_uzs,omitempty"`
 
-	// Error On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `invalid_body`, …
-	Error      *string             `json:"error,omitempty"`
-	ExternalId *string             `json:"external_id,omitempty"`
-	Index      int                 `json:"index"`
-	Message    *string             `json:"message,omitempty"`
-	PriceUzs   *int64              `json:"price_uzs,omitempty"`
-	ProductId  *openapi_types.UUID `json:"product_id,omitempty"`
-	Quantity   *int                `json:"quantity,omitempty"`
+	// Error On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `stock_locked` (+ `locked_until`), `invalid_body`, …
+	Error      *string `json:"error,omitempty"`
+	ExternalId *string `json:"external_id,omitempty"`
+	Index      int     `json:"index"`
+
+	// LockedUntil On `error: stock_locked` — the product (or variation) was declared out of stock on an order and its stock cannot be raised until this instant (RFC 3339, UTC, rounded UP to the whole second — never early). The other lines are unaffected.
+	LockedUntil *time.Time          `json:"locked_until,omitempty"`
+	Message     *string             `json:"message,omitempty"`
+	PriceUzs    *int64              `json:"price_uzs,omitempty"`
+	ProductId   *openapi_types.UUID `json:"product_id,omitempty"`
+	Quantity    *int                `json:"quantity,omitempty"`
 
 	// RetryAfterSeconds On `object_cooldown`.
 	RetryAfterSeconds *int `json:"retry_after_seconds,omitempty"`
@@ -2484,7 +2502,7 @@ type OrderTimelineEntry struct {
 	Type string `json:"type"`
 }
 
-// OrderTransition defines model for OrderTransition.
+// OrderTransition The order as a decline / cancel left it. `refund_uzs`, `stock_effects`, `other_open_orders` and `marking_needed` are optional and additive: they appear only for a shop where Dona applies the out-of-stock rule (see `declineOrder`) — every other shop gets exactly the eight required keys.
 type OrderTransition struct {
 	AcceptedAt *time.Time `json:"accepted_at"`
 
@@ -2492,9 +2510,21 @@ type OrderTransition struct {
 	CancelledBy       *string            `json:"cancelled_by"`
 	DeclineReasonCode *string            `json:"decline_reason_code"`
 	Id                openapi_types.UUID `json:"id"`
-	PaymentStatus     string             `json:"payment_status"`
-	ShippedAt         *time.Time         `json:"shipped_at"`
-	Status            string             `json:"status"`
+
+	// MarkingNeeded true when the reason takes stock off sale, the order had SEVERAL live lines and `unavailable_item_ids` was not sent: no product was taken off sale (the units went back on the shelf as before) and the question "which line was it?" stays open for 24 hours on Dona's side. Send `unavailable_item_ids` with the call to name the lines.
+	MarkingNeeded *bool `json:"marking_needed,omitempty"`
+
+	// OtherOpenOrders The shop's OTHER open orders (not cancelled, shipped or delivered; at most 50) holding a product or variation the move took off sale — to review; nothing cancels them. Read right AFTER the commit: if that read fails the key is absent, which means "not known", never "none". Absent on a dry run.
+	OtherOpenOrders *[]OtherOpenOrder `json:"other_open_orders,omitempty"`
+	PaymentStatus   string            `json:"payment_status"`
+
+	// RefundUzs Only on a decline / cancel, only where the stock effect applies to the shop (it comes with the three keys below): the integer soʻm the buyer gets back — 0 for a cash-on-delivery or unpaid order, never null.
+	RefundUzs *int64     `json:"refund_uzs,omitempty"`
+	ShippedAt *time.Time `json:"shipped_at"`
+	Status    string     `json:"status"`
+
+	// StockEffects Only on a decline / cancel, only where the stock effect applies to the shop: one entry per line the move was about (`unavailable_item_ids`, or the one live line) — what became of its product. `[]` for a reason that takes nothing off sale.
+	StockEffects *[]StockEffect `json:"stock_effects,omitempty"`
 
 	// UpdatedAt ISO 8601 with offset (Tashkent `+05:00` on output).
 	UpdatedAt time.Time `json:"updated_at"`
@@ -2539,6 +2569,13 @@ type OrderWithPii struct {
 
 	// UpdatedAt ISO 8601 with offset (Tashkent `+05:00` on output).
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// OtherOpenOrder Another open order of the shop with a live line on a product or variation the move took off sale.
+type OtherOpenOrder struct {
+	OrderCode   string             `json:"order_code"`
+	OrderId     openapi_types.UUID `json:"order_id"`
+	OrderItemId openapi_types.UUID `json:"order_item_id"`
 }
 
 // PageMeta Endpoint-specific facts; clients must tolerate unknown keys.
@@ -2874,6 +2911,32 @@ type Status struct {
 
 	// UpdatedAt ISO 8601 with offset (Tashkent `+05:00` on output).
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// StockEffect What a decline / cancel did to one line's product, under the 24-hour out-of-stock rule.
+type StockEffect struct {
+	// LockedUntil When the product (or variation) may be put back on sale: RFC 3339, UTC (`…Z`), whole seconds. `null` when nothing was locked.
+	LockedUntil *time.Time `json:"locked_until"`
+
+	// OrderItemId The order line (`items[].id`) the entry is about.
+	OrderItemId openapi_types.UUID `json:"order_item_id"`
+	ProductId   openapi_types.UUID `json:"product_id"`
+
+	// Result `zeroed` — taken to stock 0 and locked; `already_zero` — it was at 0, now locked; `variant_not_found` — no variation of this shop matched the line, nothing zeroed or locked; `not_applied` — see `why`. Known values (open set — tolerate new ones): `zeroed`, `already_zero`, `variant_not_found`, `not_applied`.
+	Result string `json:"result"`
+
+	// Scope `variant`: one variation is out of stock and locked; `product`: the whole product is (it has no variations, or only one active variation). Known values (open set — tolerate new ones): `variant`, `product`.
+	Scope string `json:"scope"`
+
+	// UnitsRemoved Units taken off sale by this entry.
+	UnitsRemoved int `json:"units_removed"`
+
+	// VariantId The variation the line resolved to when the lock is one variation's (`scope: variant`), else `null`.
+	VariantId    *openapi_types.UUID `json:"variant_id"`
+	VariantLabel *string             `json:"variant_label"`
+
+	// Why Only with `result: not_applied`: `shipped` (a shipped order — the goods come back) or `legacy_multi_line` (an order with several lines and no `unavailable_item_ids`). Known values (open set — tolerate new ones): `shipped`, `legacy_multi_line`.
+	Why *string `json:"why"`
 }
 
 // StockEventData defines model for StockEventData.
@@ -6506,7 +6569,7 @@ type ClientInterface interface {
 
 	// CancelOrderWithBody Cancel (after acceptance) — money-reversing
 	//
-	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -6515,7 +6578,7 @@ type ClientInterface interface {
 
 	// CancelOrder Cancel (after acceptance) — money-reversing
 	//
-	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -6524,7 +6587,7 @@ type ClientInterface interface {
 
 	// DeclineOrderWithBody Decline (before acceptance) — money-reversing
 	//
-	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
+	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -6533,7 +6596,7 @@ type ClientInterface interface {
 
 	// DeclineOrder Decline (before acceptance) — money-reversing
 	//
-	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
+	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -6652,7 +6715,7 @@ type ClientInterface interface {
 
 	// BatchProductsWithBody Batch create/update (async job)
 	//
-	// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+	// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -6661,7 +6724,7 @@ type ClientInterface interface {
 
 	// BatchProducts Batch create/update (async job)
 	//
-	// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+	// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -6684,7 +6747,7 @@ type ClientInterface interface {
 
 	// UpdateProductWithBody Update a product
 	//
-	// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+	// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -6693,7 +6756,7 @@ type ClientInterface interface {
 
 	// UpdateProduct Update a product
 	//
-	// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+	// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -6751,7 +6814,7 @@ type ClientInterface interface {
 
 	// SetStockWithBody Set absolute stock (≤ 1 000 lines)
 	//
-	// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+	// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -6760,7 +6823,7 @@ type ClientInterface interface {
 
 	// SetStock Set absolute stock (≤ 1 000 lines)
 	//
-	// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+	// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -7415,7 +7478,7 @@ func (c *Client) AcceptOrder(ctx context.Context, id IdPath, params *AcceptOrder
 
 // CancelOrderWithBody Cancel (after acceptance) — money-reversing
 //
-// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
 //
 // Takes any type of body and a specified content type.
 //
@@ -7434,7 +7497,7 @@ func (c *Client) CancelOrderWithBody(ctx context.Context, id IdPath, params *Can
 
 // CancelOrder Cancel (after acceptance) — money-reversing
 //
-// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
 //
 // Takes a body of the `application/json` content type.
 //
@@ -7453,7 +7516,7 @@ func (c *Client) CancelOrder(ctx context.Context, id IdPath, params *CancelOrder
 
 // DeclineOrderWithBody Decline (before acceptance) — money-reversing
 //
-// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
+// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 //
 // Takes any type of body and a specified content type.
 //
@@ -7472,7 +7535,7 @@ func (c *Client) DeclineOrderWithBody(ctx context.Context, id IdPath, params *De
 
 // DeclineOrder Decline (before acceptance) — money-reversing
 //
-// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
+// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -7741,7 +7804,7 @@ func (c *Client) CreateProduct(ctx context.Context, params *CreateProductParams,
 
 // BatchProductsWithBody Batch create/update (async job)
 //
-// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 //
 // Takes any type of body and a specified content type.
 //
@@ -7760,7 +7823,7 @@ func (c *Client) BatchProductsWithBody(ctx context.Context, params *BatchProduct
 
 // BatchProducts Batch create/update (async job)
 //
-// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -7813,7 +7876,7 @@ func (c *Client) GetProduct(ctx context.Context, id IdPath, params *GetProductPa
 
 // UpdateProductWithBody Update a product
 //
-// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 //
 // Takes any type of body and a specified content type.
 //
@@ -7832,7 +7895,7 @@ func (c *Client) UpdateProductWithBody(ctx context.Context, id IdPath, params *U
 
 // UpdateProduct Update a product
 //
-// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -7970,7 +8033,7 @@ func (c *Client) ListStock(ctx context.Context, params *ListStockParams, reqEdit
 
 // SetStockWithBody Set absolute stock (≤ 1 000 lines)
 //
-// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 //
 // Takes any type of body and a specified content type.
 //
@@ -7989,7 +8052,7 @@ func (c *Client) SetStockWithBody(ctx context.Context, params *SetStockParams, c
 
 // SetStock Set absolute stock (≤ 1 000 lines)
 //
-// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -14557,7 +14620,7 @@ type ClientWithResponsesInterface interface {
 
 	// CancelOrderWithBodyWithResponse Cancel (after acceptance) — money-reversing
 	//
-	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14566,7 +14629,7 @@ type ClientWithResponsesInterface interface {
 
 	// CancelOrderWithResponse Cancel (after acceptance) — money-reversing
 	//
-	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+	// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14575,7 +14638,7 @@ type ClientWithResponsesInterface interface {
 
 	// DeclineOrderWithBodyWithResponse Decline (before acceptance) — money-reversing
 	//
-	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
+	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14584,7 +14647,7 @@ type ClientWithResponsesInterface interface {
 
 	// DeclineOrderWithResponse Decline (before acceptance) — money-reversing
 	//
-	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
+	// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14719,7 +14782,7 @@ type ClientWithResponsesInterface interface {
 
 	// BatchProductsWithBodyWithResponse Batch create/update (async job)
 	//
-	// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+	// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14728,7 +14791,7 @@ type ClientWithResponsesInterface interface {
 
 	// BatchProductsWithResponse Batch create/update (async job)
 	//
-	// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+	// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14755,7 +14818,7 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateProductWithBodyWithResponse Update a product
 	//
-	// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+	// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14764,7 +14827,7 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateProductWithResponse Update a product
 	//
-	// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+	// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14836,7 +14899,7 @@ type ClientWithResponsesInterface interface {
 
 	// SetStockWithBodyWithResponse Set absolute stock (≤ 1 000 lines)
 	//
-	// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+	// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -14845,7 +14908,7 @@ type ClientWithResponsesInterface interface {
 
 	// SetStockWithResponse Set absolute stock (≤ 1 000 lines)
 	//
-	// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+	// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -25583,7 +25646,7 @@ func (c *ClientWithResponses) AcceptOrderWithResponse(ctx context.Context, id Id
 
 // CancelOrderWithBodyWithResponse Cancel (after acceptance) — money-reversing
 //
-// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -25598,7 +25661,7 @@ func (c *ClientWithResponses) CancelOrderWithBodyWithResponse(ctx context.Contex
 
 // CancelOrderWithResponse Cancel (after acceptance) — money-reversing
 //
-// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+// An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -25613,7 +25676,7 @@ func (c *ClientWithResponses) CancelOrderWithResponse(ctx context.Context, id Id
 
 // DeclineOrderWithBodyWithResponse Decline (before acceptance) — money-reversing
 //
-// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
+// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -25628,7 +25691,7 @@ func (c *ClientWithResponses) DeclineOrderWithBodyWithResponse(ctx context.Conte
 
 // DeclineOrderWithResponse Decline (before acceptance) — money-reversing
 //
-// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3).
+// An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -25853,7 +25916,7 @@ func (c *ClientWithResponses) CreateProductWithResponse(ctx context.Context, par
 
 // BatchProductsWithBodyWithResponse Batch create/update (async job)
 //
-// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -25868,7 +25931,7 @@ func (c *ClientWithResponses) BatchProductsWithBodyWithResponse(ctx context.Cont
 
 // BatchProductsWithResponse Batch create/update (async job)
 //
-// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: `writes_enabled`.
+// ≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as that line's `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -25913,7 +25976,7 @@ func (c *ClientWithResponses) GetProductWithResponse(ctx context.Context, id IdP
 
 // UpdateProductWithBodyWithResponse Update a product
 //
-// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -25928,7 +25991,7 @@ func (c *ClientWithResponses) UpdateProductWithBodyWithResponse(ctx context.Cont
 
 // UpdateProductWithResponse Update a product
 //
-// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch: `writes_enabled`.
+// `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: `writes_enabled`.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -26048,7 +26111,7 @@ func (c *ClientWithResponses) ListStockWithResponse(ctx context.Context, params 
 
 // SetStockWithBodyWithResponse Set absolute stock (≤ 1 000 lines)
 //
-// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -26063,7 +26126,7 @@ func (c *ClientWithResponses) SetStockWithBodyWithResponse(ctx context.Context, 
 
 // SetStockWithResponse Set absolute stock (≤ 1 000 lines)
 //
-// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.
+// Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and > 1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is that line's `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering stock is never refused. Kill switch: `writes_enabled`.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //

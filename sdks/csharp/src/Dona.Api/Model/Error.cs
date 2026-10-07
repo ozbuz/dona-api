@@ -43,9 +43,12 @@ namespace Dona.Api.Model
         /// <param name="acceptUrl">On &#x60;403 agreement_required&#x60;: the portal page where the shop owner accepts Annex 2.</param>
         /// <param name="suspendedUntil">On &#x60;403 key_suspended&#x60;.</param>
         /// <param name="reason">On &#x60;403 key_suspended&#x60; / &#x60;403 api_blocked&#x60;: why (&#x60;error_storm&#x60;, &#x60;unauthorized_storm&#x60;, &#x60;ip_blocked&#x60;, &#x60;credential_stuffing&#x60;, &#x60;leak_reported&#x60;, &#x60;staff&#x60;).</param>
+        /// <param name="lockedUntil">On &#x60;409 stock_locked&#x60;: when the product&#39;s 24-hour re-enable lock ends — RFC 3339, UTC (&#x60;…Z&#x60;), rounded UP to the whole second, never early. Retry the stock raise after it; a person at Dona can lift the lock sooner.</param>
+        /// <param name="productId">On &#x60;409 stock_locked&#x60;: the product the lock names — always for the database&#39;s refusal of one line of a non-atomic &#x60;POST /stock&#x60; (the whole request is that one 409), which is how you know which line it was.</param>
+        /// <param name="variantId">On &#x60;409 stock_locked&#x60;: the variation the lock names, when the lock is one variation&#39;s (absent: the whole product is locked).</param>
         /// <param name="meta">meta</param>
         [JsonConstructor]
-        public Error(string varError, string message, string requestId, List<ErrorDetail> details, string docUrl, Option<int?> retryAfterSeconds = default, Option<string?> requiredScope = default, Option<string?> rotateUrl = default, Option<string?> acceptUrl = default, Option<DateTimeOffset?> suspendedUntil = default, Option<string?> reason = default, Option<ErrorMeta?> meta = default)
+        public Error(string varError, string message, string requestId, List<ErrorDetail> details, string docUrl, Option<int?> retryAfterSeconds = default, Option<string?> requiredScope = default, Option<string?> rotateUrl = default, Option<string?> acceptUrl = default, Option<DateTimeOffset?> suspendedUntil = default, Option<string?> reason = default, Option<DateTimeOffset?> lockedUntil = default, Option<Guid?> productId = default, Option<Guid?> variantId = default, Option<ErrorMeta?> meta = default)
         {
             VarError = varError;
             Message = message;
@@ -58,6 +61,9 @@ namespace Dona.Api.Model
             AcceptUrlOption = acceptUrl;
             SuspendedUntilOption = suspendedUntil;
             ReasonOption = reason;
+            LockedUntilOption = lockedUntil;
+            ProductIdOption = productId;
+            VariantIdOption = variantId;
             MetaOption = meta;
             OnCreated();
         }
@@ -183,6 +189,48 @@ namespace Dona.Api.Model
         public string? Reason { get { return this.ReasonOption.Value; } set { this.ReasonOption = new(value); } }
 
         /// <summary>
+        /// Used to track the state of LockedUntil
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<DateTimeOffset?> LockedUntilOption { get; private set; }
+
+        /// <summary>
+        /// On &#x60;409 stock_locked&#x60;: when the product&#39;s 24-hour re-enable lock ends — RFC 3339, UTC (&#x60;…Z&#x60;), rounded UP to the whole second, never early. Retry the stock raise after it; a person at Dona can lift the lock sooner.
+        /// </summary>
+        /// <value>On &#x60;409 stock_locked&#x60;: when the product&#39;s 24-hour re-enable lock ends — RFC 3339, UTC (&#x60;…Z&#x60;), rounded UP to the whole second, never early. Retry the stock raise after it; a person at Dona can lift the lock sooner.</value>
+        [JsonPropertyName("locked_until")]
+        public DateTimeOffset? LockedUntil { get { return this.LockedUntilOption.Value; } set { this.LockedUntilOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of ProductId
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<Guid?> ProductIdOption { get; private set; }
+
+        /// <summary>
+        /// On &#x60;409 stock_locked&#x60;: the product the lock names — always for the database&#39;s refusal of one line of a non-atomic &#x60;POST /stock&#x60; (the whole request is that one 409), which is how you know which line it was.
+        /// </summary>
+        /// <value>On &#x60;409 stock_locked&#x60;: the product the lock names — always for the database&#39;s refusal of one line of a non-atomic &#x60;POST /stock&#x60; (the whole request is that one 409), which is how you know which line it was.</value>
+        [JsonPropertyName("product_id")]
+        public Guid? ProductId { get { return this.ProductIdOption.Value; } set { this.ProductIdOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of VariantId
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<Guid?> VariantIdOption { get; private set; }
+
+        /// <summary>
+        /// On &#x60;409 stock_locked&#x60;: the variation the lock names, when the lock is one variation&#39;s (absent: the whole product is locked).
+        /// </summary>
+        /// <value>On &#x60;409 stock_locked&#x60;: the variation the lock names, when the lock is one variation&#39;s (absent: the whole product is locked).</value>
+        [JsonPropertyName("variant_id")]
+        public Guid? VariantId { get { return this.VariantIdOption.Value; } set { this.VariantIdOption = new(value); } }
+
+        /// <summary>
         /// Used to track the state of Meta
         /// </summary>
         [JsonIgnore]
@@ -214,6 +262,9 @@ namespace Dona.Api.Model
             sb.Append("  AcceptUrl: ").Append(AcceptUrl).Append("\n");
             sb.Append("  SuspendedUntil: ").Append(SuspendedUntil).Append("\n");
             sb.Append("  Reason: ").Append(Reason).Append("\n");
+            sb.Append("  LockedUntil: ").Append(LockedUntil).Append("\n");
+            sb.Append("  ProductId: ").Append(ProductId).Append("\n");
+            sb.Append("  VariantId: ").Append(VariantId).Append("\n");
             sb.Append("  Meta: ").Append(Meta).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
@@ -239,6 +290,11 @@ namespace Dona.Api.Model
         /// The format to use to serialize SuspendedUntil
         /// </summary>
         public string SuspendedUntilFormat { get; private set; } = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK";
+
+        /// <summary>
+        /// The format to use to serialize LockedUntil
+        /// </summary>
+        public string LockedUntilFormat { get; private set; } = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK";
 
         /// <summary>
         /// Deserializes json to <see cref="Error" />
@@ -268,6 +324,9 @@ namespace Dona.Api.Model
             Option<string?> acceptUrl = default;
             Option<DateTimeOffset?> suspendedUntil = default;
             Option<string?> reason = default;
+            Option<DateTimeOffset?> lockedUntil = default;
+            Option<Guid?> productId = default;
+            Option<Guid?> variantId = default;
             Option<ErrorMeta?> meta = default;
 
             while (utf8JsonReader.Read())
@@ -317,6 +376,15 @@ namespace Dona.Api.Model
                             break;
                         case "reason":
                             reason = new Option<string?>(utf8JsonReader.GetString()!);
+                            break;
+                        case "locked_until":
+                            lockedUntil = new Option<DateTimeOffset?>(JsonSerializer.Deserialize<DateTimeOffset>(ref utf8JsonReader, jsonSerializerOptions));
+                            break;
+                        case "product_id":
+                            productId = new Option<Guid?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (Guid?)null : utf8JsonReader.GetGuid());
+                            break;
+                        case "variant_id":
+                            variantId = new Option<Guid?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (Guid?)null : utf8JsonReader.GetGuid());
                             break;
                         case "meta":
                             meta = new Option<ErrorMeta?>(JsonSerializer.Deserialize<ErrorMeta>(ref utf8JsonReader, jsonSerializerOptions)!);
@@ -375,10 +443,19 @@ namespace Dona.Api.Model
             if (reason.IsSet && reason.Value == null)
                 throw new ArgumentNullException(nameof(reason), "Property is not nullable for class Error.");
 
+            if (lockedUntil.IsSet && lockedUntil.Value == null)
+                throw new ArgumentNullException(nameof(lockedUntil), "Property is not nullable for class Error.");
+
+            if (productId.IsSet && productId.Value == null)
+                throw new ArgumentNullException(nameof(productId), "Property is not nullable for class Error.");
+
+            if (variantId.IsSet && variantId.Value == null)
+                throw new ArgumentNullException(nameof(variantId), "Property is not nullable for class Error.");
+
             if (meta.IsSet && meta.Value == null)
                 throw new ArgumentNullException(nameof(meta), "Property is not nullable for class Error.");
 
-            return new Error(varError.Value!, message.Value!, requestId.Value!, details.Value!, docUrl.Value!, retryAfterSeconds, requiredScope, rotateUrl, acceptUrl, suspendedUntil, reason, meta);
+            return new Error(varError.Value!, message.Value!, requestId.Value!, details.Value!, docUrl.Value!, retryAfterSeconds, requiredScope, rotateUrl, acceptUrl, suspendedUntil, reason, lockedUntil, productId, variantId, meta);
         }
 
         /// <summary>
@@ -462,6 +539,15 @@ namespace Dona.Api.Model
 
             if (error.ReasonOption.IsSet)
                 writer.WriteString("reason", error.Reason);
+
+            if (error.LockedUntilOption.IsSet)
+                writer.WriteString("locked_until", error.LockedUntilOption.Value!.Value.ToString(LockedUntilFormat));
+
+            if (error.ProductIdOption.IsSet)
+                writer.WriteString("product_id", error.ProductIdOption.Value!.Value);
+
+            if (error.VariantIdOption.IsSet)
+                writer.WriteString("variant_id", error.VariantIdOption.Value!.Value);
 
             if (error.MetaOption.IsSet)
             {

@@ -127,6 +127,7 @@ docs/models/OrderTimeline.md
 docs/models/OrderTimelineEntry.md
 docs/models/OrderTransition.md
 docs/models/OrderWithPii.md
+docs/models/OtherOpenOrder.md
 docs/models/Ping.md
 docs/models/PingEventData.md
 docs/models/PriceLine.md
@@ -152,6 +153,7 @@ docs/models/SettlementPage.md
 docs/models/Status.md
 docs/models/StatusComponents.md
 docs/models/StatusIncidentsInner.md
+docs/models/StockEffect.md
 docs/models/StockEventData.md
 docs/models/StockLine.md
 docs/models/StockLineView.md
@@ -324,6 +326,7 @@ src/Dona.Api/Model/OrderTimeline.cs
 src/Dona.Api/Model/OrderTimelineEntry.cs
 src/Dona.Api/Model/OrderTransition.cs
 src/Dona.Api/Model/OrderWithPii.cs
+src/Dona.Api/Model/OtherOpenOrder.cs
 src/Dona.Api/Model/Ping.cs
 src/Dona.Api/Model/PingEventData.cs
 src/Dona.Api/Model/PriceLine.cs
@@ -349,6 +352,7 @@ src/Dona.Api/Model/SettlementPage.cs
 src/Dona.Api/Model/Status.cs
 src/Dona.Api/Model/StatusComponents.cs
 src/Dona.Api/Model/StatusIncidentsInner.cs
+src/Dona.Api/Model/StockEffect.cs
 src/Dona.Api/Model/StockEventData.cs
 src/Dona.Api/Model/StockLine.cs
 src/Dona.Api/Model/StockLineView.cs

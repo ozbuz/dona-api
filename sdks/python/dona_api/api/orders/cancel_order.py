@@ -146,7 +146,12 @@ def sync_detailed(
     timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
     — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
     code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly
+    as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
+    `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a
+    SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come
+    back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else
+    changes).
 
     Args:
         id (UUID):
@@ -205,7 +210,12 @@ def sync(
     timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
     — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
     code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly
+    as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
+    `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a
+    SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come
+    back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else
+    changes).
 
     Args:
         id (UUID):
@@ -259,7 +269,12 @@ async def asyncio_detailed(
     timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
     — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
     code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly
+    as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
+    `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a
+    SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come
+    back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else
+    changes).
 
     Args:
         id (UUID):
@@ -316,7 +331,12 @@ async def asyncio(
     timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
     — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
     code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.
+    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly
+    as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
+    `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a
+    SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come
+    back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else
+    changes).
 
     Args:
         id (UUID):

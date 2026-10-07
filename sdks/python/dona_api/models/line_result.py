@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import Any, TypeVar, cast
 from uuid import UUID
@@ -29,9 +30,12 @@ class LineResult:
         compare_at_uzs (int | None | Unset):
         version (str | Unset): New version after an `ok` line.
         error (str | Unset): On `status=error`: `version_conflict`, `object_cooldown`, `not_found`,
-            `stock_not_editable`, `invalid_body`, …
+            `stock_not_editable`, `stock_locked` (+ `locked_until`), `invalid_body`, …
         message (str | Unset):
         retry_after_seconds (int | Unset): On `object_cooldown`.
+        locked_until (datetime.datetime | Unset): On `error: stock_locked` — the product (or variation) was declared out
+            of stock on an order and its stock cannot be raised until this instant (RFC 3339, UTC, rounded UP to the whole
+            second — never early). The other lines are unaffected.
         approval_id (UUID | Unset):
         rule (str | Unset): Known values (open set — tolerate new ones): `price_floor`, `drop_100x`, `stock_jump_10x`,
             `mass_zero_50pct`, `delist_30pct`, `confirmation_required`.
@@ -51,6 +55,7 @@ class LineResult:
     error: str | Unset = UNSET
     message: str | Unset = UNSET
     retry_after_seconds: int | Unset = UNSET
+    locked_until: datetime.datetime | Unset = UNSET
     approval_id: UUID | Unset = UNSET
     rule: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -92,6 +97,10 @@ class LineResult:
 
         retry_after_seconds = self.retry_after_seconds
 
+        locked_until: str | Unset = UNSET
+        if not isinstance(self.locked_until, Unset):
+            locked_until = self.locked_until.isoformat()
+
         approval_id: str | Unset = UNSET
         if not isinstance(self.approval_id, Unset):
             approval_id = str(self.approval_id)
@@ -130,6 +139,8 @@ class LineResult:
             field_dict["message"] = message
         if retry_after_seconds is not UNSET:
             field_dict["retry_after_seconds"] = retry_after_seconds
+        if locked_until is not UNSET:
+            field_dict["locked_until"] = locked_until
         if approval_id is not UNSET:
             field_dict["approval_id"] = approval_id
         if rule is not UNSET:
@@ -185,6 +196,13 @@ class LineResult:
 
         retry_after_seconds = d.pop("retry_after_seconds", UNSET)
 
+        _locked_until = d.pop("locked_until", UNSET)
+        locked_until: datetime.datetime | Unset
+        if isinstance(_locked_until, Unset):
+            locked_until = UNSET
+        else:
+            locked_until = datetime.datetime.fromisoformat(_locked_until)
+
         _approval_id = d.pop("approval_id", UNSET)
         approval_id: UUID | Unset
         if isinstance(_approval_id, Unset):
@@ -209,6 +227,7 @@ class LineResult:
             error=error,
             message=message,
             retry_after_seconds=retry_after_seconds,
+            locked_until=locked_until,
             approval_id=approval_id,
             rule=rule,
         )

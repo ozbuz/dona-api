@@ -147,7 +147,10 @@ def sync_detailed(
     """Update a product
 
      `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may
-    `202`). Kill switch: `writes_enabled`.
+    `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock
+    of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the
+    request is applied; lowering stock and every other field are unaffected. Kill switch:
+    `writes_enabled`.
 
     Args:
         id (UUID):
@@ -201,7 +204,10 @@ def sync(
     """Update a product
 
      `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may
-    `202`). Kill switch: `writes_enabled`.
+    `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock
+    of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the
+    request is applied; lowering stock and every other field are unaffected. Kill switch:
+    `writes_enabled`.
 
     Args:
         id (UUID):
@@ -250,7 +256,10 @@ async def asyncio_detailed(
     """Update a product
 
      `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may
-    `202`). Kill switch: `writes_enabled`.
+    `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock
+    of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the
+    request is applied; lowering stock and every other field are unaffected. Kill switch:
+    `writes_enabled`.
 
     Args:
         id (UUID):
@@ -302,7 +311,10 @@ async def asyncio(
     """Update a product
 
      `ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may
-    `202`). Kill switch: `writes_enabled`.
+    `202`). A `stock` that RAISES a product the shop declared out of stock on an order (the 24-hour lock
+    of `declineOrder` / `cancelOrder`) is `409 stock_locked` + `locked_until` — nothing else of the
+    request is applied; lowering stock and every other field are unaffected. Kill switch:
+    `writes_enabled`.
 
     Args:
         id (UUID):

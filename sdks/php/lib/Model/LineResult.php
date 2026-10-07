@@ -72,6 +72,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
         'error' => 'string',
         'message' => 'string',
         'retry_after_seconds' => 'int',
+        'locked_until' => '\DateTime',
         'approval_id' => 'string',
         'rule' => 'string'
     ];
@@ -98,6 +99,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
         'error' => null,
         'message' => null,
         'retry_after_seconds' => null,
+        'locked_until' => 'date-time',
         'approval_id' => 'uuid',
         'rule' => null
     ];
@@ -122,6 +124,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
         'error' => false,
         'message' => false,
         'retry_after_seconds' => false,
+        'locked_until' => false,
         'approval_id' => false,
         'rule' => false
     ];
@@ -226,6 +229,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
         'error' => 'error',
         'message' => 'message',
         'retry_after_seconds' => 'retry_after_seconds',
+        'locked_until' => 'locked_until',
         'approval_id' => 'approval_id',
         'rule' => 'rule'
     ];
@@ -250,6 +254,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
         'error' => 'setError',
         'message' => 'setMessage',
         'retry_after_seconds' => 'setRetryAfterSeconds',
+        'locked_until' => 'setLockedUntil',
         'approval_id' => 'setApprovalId',
         'rule' => 'setRule'
     ];
@@ -274,6 +279,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
         'error' => 'getError',
         'message' => 'getMessage',
         'retry_after_seconds' => 'getRetryAfterSeconds',
+        'locked_until' => 'getLockedUntil',
         'approval_id' => 'getApprovalId',
         'rule' => 'getRule'
     ];
@@ -349,6 +355,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
         $this->setIfExists('error', $data ?? [], null);
         $this->setIfExists('message', $data ?? [], null);
         $this->setIfExists('retry_after_seconds', $data ?? [], null);
+        $this->setIfExists('locked_until', $data ?? [], null);
         $this->setIfExists('approval_id', $data ?? [], null);
         $this->setIfExists('rule', $data ?? [], null);
     }
@@ -718,7 +725,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets error
      *
-     * @param string|null $error On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `invalid_body`, …
+     * @param string|null $error On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `stock_locked` (+ `locked_until`), `invalid_body`, …
      *
      * @return self
      */
@@ -782,6 +789,33 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
             throw new \InvalidArgumentException('non-nullable retry_after_seconds cannot be null');
         }
         $this->container['retry_after_seconds'] = $retry_after_seconds;
+
+        return $this;
+    }
+
+    /**
+     * Gets locked_until
+     *
+     * @return \DateTime|null
+     */
+    public function getLockedUntil()
+    {
+        return $this->container['locked_until'];
+    }
+
+    /**
+     * Sets locked_until
+     *
+     * @param \DateTime|null $locked_until On `error: stock_locked` — the product (or variation) was declared out of stock on an order and its stock cannot be raised until this instant (RFC 3339, UTC, rounded UP to the whole second — never early). The other lines are unaffected.
+     *
+     * @return self
+     */
+    public function setLockedUntil($locked_until)
+    {
+        if (is_null($locked_until)) {
+            throw new \InvalidArgumentException('non-nullable locked_until cannot be null');
+        }
+        $this->container['locked_until'] = $locked_until;
 
         return $this;
     }

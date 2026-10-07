@@ -42,7 +42,7 @@ namespace Dona.Api.Api
         /// Batch create/update (async job)
         /// </summary>
         /// <remarks>
-        /// ≤ 100 commands ⇒ &#x60;202&#x60; + a job; poll &#x60;GET /jobs/{id}&#x60; (≥ 5 s; &#x60;Retry-After&#x60; set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: &#x60;writes_enabled&#x60;.
+        /// ≤ 100 commands ⇒ &#x60;202&#x60; + a job; poll &#x60;GET /jobs/{id}&#x60; (≥ 5 s; &#x60;Retry-After&#x60; set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose &#x60;stock&#x60; raises a product under the 24-hour out-of-stock lock ends as that line&#39;s &#x60;error: stock_locked&#x60; + &#x60;locked_until&#x60;, and the other commands run. Kill switch: &#x60;writes_enabled&#x60;.
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
@@ -60,7 +60,7 @@ namespace Dona.Api.Api
         /// Batch create/update (async job)
         /// </summary>
         /// <remarks>
-        /// ≤ 100 commands ⇒ &#x60;202&#x60; + a job; poll &#x60;GET /jobs/{id}&#x60; (≥ 5 s; &#x60;Retry-After&#x60; set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: &#x60;writes_enabled&#x60;.
+        /// ≤ 100 commands ⇒ &#x60;202&#x60; + a job; poll &#x60;GET /jobs/{id}&#x60; (≥ 5 s; &#x60;Retry-After&#x60; set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose &#x60;stock&#x60; raises a product under the 24-hour out-of-stock lock ends as that line&#39;s &#x60;error: stock_locked&#x60; + &#x60;locked_until&#x60;, and the other commands run. Kill switch: &#x60;writes_enabled&#x60;.
         /// </remarks>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="batchRequest"></param>
@@ -347,7 +347,7 @@ namespace Dona.Api.Api
         /// Update a product
         /// </summary>
         /// <remarks>
-        /// &#x60;ApplyExternalFields&#x60; → &#x60;gateEditActivation&#x60;. A price change runs the plausibility guard (may &#x60;202&#x60;). Kill switch: &#x60;writes_enabled&#x60;.
+        /// &#x60;ApplyExternalFields&#x60; → &#x60;gateEditActivation&#x60;. A price change runs the plausibility guard (may &#x60;202&#x60;). A &#x60;stock&#x60; that RAISES a product the shop declared out of stock on an order (the 24-hour lock of &#x60;declineOrder&#x60; / &#x60;cancelOrder&#x60;) is &#x60;409 stock_locked&#x60; + &#x60;locked_until&#x60; — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: &#x60;writes_enabled&#x60;.
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
@@ -366,7 +366,7 @@ namespace Dona.Api.Api
         /// Update a product
         /// </summary>
         /// <remarks>
-        /// &#x60;ApplyExternalFields&#x60; → &#x60;gateEditActivation&#x60;. A price change runs the plausibility guard (may &#x60;202&#x60;). Kill switch: &#x60;writes_enabled&#x60;.
+        /// &#x60;ApplyExternalFields&#x60; → &#x60;gateEditActivation&#x60;. A price change runs the plausibility guard (may &#x60;202&#x60;). A &#x60;stock&#x60; that RAISES a product the shop declared out of stock on an order (the 24-hour lock of &#x60;declineOrder&#x60; / &#x60;cancelOrder&#x60;) is &#x60;409 stock_locked&#x60; + &#x60;locked_until&#x60; — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: &#x60;writes_enabled&#x60;.
         /// </remarks>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
@@ -1296,7 +1296,7 @@ namespace Dona.Api.Api
         partial void OnErrorBatchProducts(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, string idempotencyKey, BatchRequest batchRequest, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Batch create/update (async job) ≤ 100 commands ⇒ &#x60;202&#x60; + a job; poll &#x60;GET /jobs/{id}&#x60; (≥ 5 s; &#x60;Retry-After&#x60; set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: &#x60;writes_enabled&#x60;.
+        /// Batch create/update (async job) ≤ 100 commands ⇒ &#x60;202&#x60; + a job; poll &#x60;GET /jobs/{id}&#x60; (≥ 5 s; &#x60;Retry-After&#x60; set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose &#x60;stock&#x60; raises a product under the 24-hour out-of-stock lock ends as that line&#39;s &#x60;error: stock_locked&#x60; + &#x60;locked_until&#x60;, and the other commands run. Kill switch: &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
         /// <param name="batchRequest"></param>
@@ -1320,7 +1320,7 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Batch create/update (async job) ≤ 100 commands ⇒ &#x60;202&#x60; + a job; poll &#x60;GET /jobs/{id}&#x60; (≥ 5 s; &#x60;Retry-After&#x60; set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape. Kill switch: &#x60;writes_enabled&#x60;.
+        /// Batch create/update (async job) ≤ 100 commands ⇒ &#x60;202&#x60; + a job; poll &#x60;GET /jobs/{id}&#x60; (≥ 5 s; &#x60;Retry-After&#x60; set). ≤ 2 running jobs per key, ≤ 20/day per shop. Results use the per-line shape: a command whose &#x60;stock&#x60; raises a product under the 24-hour out-of-stock lock ends as that line&#39;s &#x60;error: stock_locked&#x60; + &#x60;locked_until&#x60;, and the other commands run. Kill switch: &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
@@ -7870,7 +7870,7 @@ namespace Dona.Api.Api
         partial void OnErrorUpdateProduct(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Guid id, string idempotencyKey, ProductUpdate productUpdate, Option<string> donaDryRun, Option<string> dryRun, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Update a product &#x60;ApplyExternalFields&#x60; → &#x60;gateEditActivation&#x60;. A price change runs the plausibility guard (may &#x60;202&#x60;). Kill switch: &#x60;writes_enabled&#x60;.
+        /// Update a product &#x60;ApplyExternalFields&#x60; → &#x60;gateEditActivation&#x60;. A price change runs the plausibility guard (may &#x60;202&#x60;). A &#x60;stock&#x60; that RAISES a product the shop declared out of stock on an order (the 24-hour lock of &#x60;declineOrder&#x60; / &#x60;cancelOrder&#x60;) is &#x60;409 stock_locked&#x60; + &#x60;locked_until&#x60; — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>
         /// <param name="idempotencyKey">1–255 chars. Scope &#x3D; this key × route. Terminal 2xx/4xx replayed byte-identical for 24 h; a 5xx is never stored. Missing ⇒ &#x60;400 invalid_body&#x60; with &#x60;details[{field:\&quot;Idempotency-Key\&quot;,code:\&quot;required\&quot;}]&#x60;.</param>
@@ -7895,7 +7895,7 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Update a product &#x60;ApplyExternalFields&#x60; → &#x60;gateEditActivation&#x60;. A price change runs the plausibility guard (may &#x60;202&#x60;). Kill switch: &#x60;writes_enabled&#x60;.
+        /// Update a product &#x60;ApplyExternalFields&#x60; → &#x60;gateEditActivation&#x60;. A price change runs the plausibility guard (may &#x60;202&#x60;). A &#x60;stock&#x60; that RAISES a product the shop declared out of stock on an order (the 24-hour lock of &#x60;declineOrder&#x60; / &#x60;cancelOrder&#x60;) is &#x60;409 stock_locked&#x60; + &#x60;locked_until&#x60; — nothing else of the request is applied; lowering stock and every other field are unaffected. Kill switch: &#x60;writes_enabled&#x60;.
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="id">Resource id (UUIDv7). A foreign or missing id is always &#x60;404 not_found&#x60;.</param>

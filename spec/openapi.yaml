@@ -15,12 +15,13 @@ info:
     | Auth | `Authorization: Bearer dona_sk_live_…` (bare `Authorization: dona_…` accepted). `X-Api-Key` or a key in the query ⇒ `401 use_authorization_header`. A seller/app/staff JWT on this tree ⇒ 401; a key on `/api/v1/*` ⇒ 401. Kinds: `sk` seller · `ak` agent (MCP only) · `it` vendor install (S6, + `Dona-Seller` header). |
     | Tenancy | The key IS the tenant. No tenant id in any path. A foreign or missing id is `404 not_found`, never 403. A vendor-app install key (`it`, S6) is bound to ONE shop too and must also NAME it in `Dona-Seller` on every request (every operation lists the parameter): missing ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"required"}]`; sent twice, or not ONE id in canonical form (lower-case, 36 characters) ⇒ `400 invalid_body` + `details[{field:"Dona-Seller", code:"invalid"}]`; another shop's id ⇒ `404 not_found`, nothing read. One vendor app's installs share its per-app bucket (`429 rate_limited` + `Dona-Rate-Limited-Reason: app-rate`); a frozen app ⇒ `403 app_frozen`; an uninstalled app's key ⇒ `401 api_key_revoked`. An install key can never hold `orders:pii`, `finance:read`, `mcp` or `webhooks:manage`, and it sees nothing of the shop's OTHER keys: their `key.*` events and the `attention.*` events and items about them are not in its feed, and another key's job is `404 not_found` at `GET /jobs/{id}` and its download. |
     | Body | JSON UTF-8. Money `*_uzs` integer soʻm. Times out: ISO 8601 with offset; in: ISO 8601 **or** epoch-ms. Titles are `{uz,ru,en}` objects. |
-    | Errors | `{error, message, request_id, details[], doc_url}` + optional `retry_after_seconds`, `required_scope`, `rotate_url`, `suspended_until`, `reason`, `meta`. Branch on `error`, never on `message`. |
+    | Errors | `{error, message, request_id, details[], doc_url}` + optional `retry_after_seconds`, `required_scope`, `rotate_url`, `suspended_until`, `reason`, `locked_until`, `meta`. Branch on `error`, never on `message`. |
     | `202 held_for_review` | A success envelope (`code`, no `error`): the plausibility guard held the write; nothing was written. |
     | Pagination | Keyset: `?cursor=&limit=` → `{items, next_cursor, has_more, meta?}`; `next_cursor` is `null` when `has_more` is false (on `/events` it is the last id seen). `limit` ≤ 100 (≤ 200 on `/events`), default 50. `page` (0-based) only on `/orders` and `/stock`. No `COUNT(*)`. |
     | Consistency | `updated_since` on every list; visible high-water mark capped at `now() − 10 s`; a key's reads pin to the primary for 10 s after its own write. |
     | Idempotency | `Idempotency-Key` REQUIRED on every POST/PATCH except the naturally idempotent/safe ones marked in each operation (`/attention/{id}/ack`, `/webhooks/{id}/ping`, `/media/upload-url`, `/orders/labels`). Scope = key × route; 24 h byte-identical replay of terminal 2xx/4xx; 5xx never stored; `409 idempotency_in_progress` / `idempotency_mismatch`. A replay never re-reveals a webhook secret. |
     | Dry run | `Dona-Dry-Run: true` or `?dry_run=true` on every write: validate + guard + effect, rolled back, zero side-effect rows. **Only the literal strings `true` and `false`** are read, in either place (S4, C51): `1`, `0`, `yes`, `on`, `TRUE`, an empty value ⇒ `400 invalid_body` + `details[{field:"dry_run"\|"Dona-Dry-Run", code:"invalid"}]` — never guessed at. Any one `true` wins. |
+    | Stock lock | A product — or one variation — the shop declared out of stock on an order (`out_of_stock` / `inventory_mismatch` on a decline or cancel, where Dona applies that rule: see `declineOrder`) cannot be put back on sale for **24 hours**. A write that RAISES its stock — `POST /stock`, `PATCH /products/{id}`, a `POST /products/batch` command, the MCP stock tool — is refused: `409 stock_locked` + `locked_until` (RFC 3339, UTC `…Z`, rounded UP to the whole second — never early), or that line's `error: stock_locked` + `locked_until` in a bulk result. Lowering stock, changing the status or any other field, and every other product stay writable; a person at Dona can lift a lock early. |
     | Limits | Five Valkey buckets keyed on the PROVEN key/seller (never IP). Every response carries `RateLimit-Policy`, `RateLimit`, `X-RateLimit-*`; every 429/503 adds `Retry-After` + `Dona-Rate-Limited-Reason`. Our own 429/503/5xx and `key_suspended` cost 0 and never feed the breaker. The breaker is the only automatic sanction: `403 key_suspended` (15 min → 1 h → 4 h … cap 24 h). |
     | Kill switches | `app_config.seller_api.enabled` (off ⇒ `503 limits_unavailable` everywhere), `writes_enabled` (seeded false; gates marketplace-mutating operations — each says so), `webhooks_enabled` (the `/webhooks` family + dispatch). |
     | Enums | Open: new values are additive. Clients MUST tolerate an unknown value. |
@@ -48,7 +49,7 @@ info:
     | `dona.catalog.update_stock` | `catalog:stock` | `request_id`, `product_id`, `variant_id?`, `delta` (non-zero, never absolute; its size is capped by `limits.mcp.stock_delta_max`), `dry_run?` | `POST /stock` |
     | `dona.catalog.update_price` | `catalog:stock` | `request_id`, `product_id`, `variant_id?`, `price_uzs` ≥ 1, `compare_at_uzs?`, `dry_run?` | `POST /prices` |
     | `dona.orders.ship` | `orders:write` | `request_id`, `order_id`, `dry_run?` | `POST /orders/{id}/ship` |
-    | `dona.orders.cancel` | `orders:cancel` | `request_id`, `order_id`, `reason` (a code, not `other`), `dry_run?` | `POST /orders/{id}/decline` before acceptance · `/cancel` after |
+    | `dona.orders.cancel` | `orders:cancel` | `request_id`, `order_id`, `reason` (a code, not `other`), `unavailable_item_ids?`, `dry_run?` | `POST /orders/{id}/decline` before acceptance · `/cancel` after |
 
     ⛔ Never an executed write on the first call. A client that declares form elicitation gets `input_required` + one confirmation
     form + a single-use `requestState` (HMAC, 5 min, ≤ 3 rounds); the confirmed re-call writes exactly once. Any other client gets
@@ -611,8 +612,10 @@ paths:
       summary: Update a product
       tags:
       - Catalog
-      description: '`ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). Kill switch:
-        `writes_enabled`.'
+      description: '`ApplyExternalFields` → `gateEditActivation`. A price change runs the plausibility guard (may `202`). A `stock`
+        that RAISES a product the shop declared out of stock on an order (the 24-hour lock of `declineOrder` / `cancelOrder`) is
+        `409 stock_locked` + `locked_until` — nothing else of the request is applied; lowering stock and every other field are
+        unaffected. Kill switch: `writes_enabled`.'
       parameters:
       - $ref: '#/components/parameters/IdPath'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1147,7 +1150,8 @@ paths:
       tags:
       - Catalog
       description: '≤ 100 commands ⇒ `202` + a job; poll `GET /jobs/{id}` (≥ 5 s; `Retry-After` set). ≤ 2 running jobs per key, ≤ 20/day
-        per shop. Results use the per-line shape. Kill switch: `writes_enabled`.'
+        per shop. Results use the per-line shape: a command whose `stock` raises a product under the 24-hour out-of-stock lock ends as
+        that line''s `error: stock_locked` + `locked_until`, and the other commands run. Kill switch: `writes_enabled`.'
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/DonaDryRun'
@@ -1385,7 +1389,13 @@ paths:
       - Stock & prices
       description: 'Synchronous, through `catalog.ApplyGuardedStockPrice`. `200` with per-line results — the request is refused whole
         only for shape/budget (400/413/422). `?atomic=true` = all-or-nothing (any held line ⇒ `202` for the batch). |Δ| > 10× and >
-        1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. Kill switch: `writes_enabled`.'
+        1 000, or zeroing > 50 % of lines ⇒ `held`. One object ≤ 1 write / 10 s ⇒ line `error: object_cooldown`. A line that RAISES a
+        product (or variation) the shop declared out of stock on an order — the 24-hour lock of `declineOrder` / `cancelOrder` — is
+        that line''s `error: stock_locked` + `locked_until` (RFC 3339, UTC, whole seconds); the other lines apply. A lock that lands while
+        the request runs, so the database refuses a line AFTER that check, makes the whole request ONE `409 stock_locked` with
+        `locked_until` and `product_id` (and `variant_id`) naming the line — nothing applied, the retry gets the per-line answers. With
+        `?atomic=true` the refused line is a `details[]` entry `code: stock_locked` + `locked_until` in the `400 invalid_body`. Lowering
+        stock is never refused. Kill switch: `writes_enabled`.'
       parameters:
       - name: atomic
         in: query
@@ -2345,7 +2355,15 @@ paths:
         `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one),
         `order_has_active_return`. Another shop''s order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process
         only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
-        the switch, the body and the idempotency claim — nothing changes; D3).'
+        the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock
+        rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`,
+        `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to
+        stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is
+        `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order
+        with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`,
+        `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any
+        other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged.
+        400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.'
       parameters:
       - $ref: '#/components/parameters/IdPath'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2390,15 +2408,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderTransition'
-              example:
-                id: 01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b
-                status: cancelled
-                payment_status: paid
-                accepted_at: null
-                shipped_at: null
-                cancelled_by: seller
-                decline_reason_code: out_of_stock
-                updated_at: '2026-09-24T14:05:12+05:00'
+              examples:
+                restocked:
+                  summary: A shop where the stock effect does not apply — the units go back on the shelf
+                  value:
+                    id: 01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b
+                    status: cancelled
+                    payment_status: paid
+                    accepted_at: null
+                    shipped_at: null
+                    cancelled_by: seller
+                    decline_reason_code: out_of_stock
+                    updated_at: '2026-09-24T14:05:12+05:00'
+                out_of_stock:
+                  summary: A shop where it applies — the marked product is taken to stock 0 and locked for 24 hours
+                  value:
+                    id: 01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b
+                    status: cancelled
+                    payment_status: paid
+                    accepted_at: null
+                    shipped_at: null
+                    cancelled_by: seller
+                    decline_reason_code: out_of_stock
+                    updated_at: '2026-10-07T14:05:12+05:00'
+                    refund_uzs: 259000
+                    stock_effects:
+                    - order_item_id: 01997b2e-52d1-7f80-9bac-1d2e3f4a5b6c
+                      product_id: 0199612e-8a0b-7c4d-b1e2-3f4a5b6c7d8e
+                      variant_id: 0199612e-8a0c-7d11-a0b2-9e8f7a6b5c4d
+                      variant_label: Qizil / M
+                      scope: variant
+                      result: zeroed
+                      why: null
+                      units_removed: 4
+                      locked_until: '2026-10-08T09:05:12Z'
+                    other_open_orders:
+                    - order_id: 01997b30-6e12-7a90-8c1d-2e3f4a5b6c7d
+                      order_code: AB1765543210XZ
+                      order_item_id: 01997b30-6e13-7b01-9d2e-3f4a5b6c7d8e
+                    marking_needed: false
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2432,7 +2480,10 @@ paths:
         `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer
         notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED
         (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-        `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`.'
+        `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same
+        reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and
+        `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods
+        come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).'
       parameters:
       - $ref: '#/components/parameters/IdPath'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2477,15 +2528,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderTransition'
-              example:
-                id: 01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b
-                status: cancelled
-                payment_status: paid
-                accepted_at: '2026-09-24T14:05:12+05:00'
-                shipped_at: null
-                cancelled_by: seller
-                decline_reason_code: null
-                updated_at: '2026-09-24T14:05:12+05:00'
+              examples:
+                restocked:
+                  summary: A shop where the stock effect does not apply — the units go back on the shelf
+                  value:
+                    id: 01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b
+                    status: cancelled
+                    payment_status: paid
+                    accepted_at: '2026-09-24T14:05:12+05:00'
+                    shipped_at: null
+                    cancelled_by: seller
+                    decline_reason_code: null
+                    updated_at: '2026-09-24T14:05:12+05:00'
+                out_of_stock:
+                  summary: A shop where it applies, on an order with several lines — two of them named
+                  value:
+                    id: 01997b2e-41c0-7e6f-8a9b-0c1d2e3f4a5b
+                    status: cancelled
+                    payment_status: paid
+                    accepted_at: '2026-10-07T13:40:00+05:00'
+                    shipped_at: null
+                    cancelled_by: seller
+                    decline_reason_code: null
+                    updated_at: '2026-10-07T14:05:12+05:00'
+                    refund_uzs: 0
+                    stock_effects:
+                    - order_item_id: 01997b2e-52d1-7f80-9bac-1d2e3f4a5b6c
+                      product_id: 0199612e-8a0b-7c4d-b1e2-3f4a5b6c7d8e
+                      variant_id: null
+                      variant_label: null
+                      scope: product
+                      result: zeroed
+                      why: null
+                      units_removed: 3
+                      locked_until: '2026-10-08T09:05:12Z'
+                    - order_item_id: 01997b2e-52d2-7a11-8bcd-2e3f4a5b6c7d
+                      product_id: 0199612e-8a0d-7e22-b3c4-5a6b7c8d9e0f
+                      variant_id: null
+                      variant_label: null
+                      scope: product
+                      result: already_zero
+                      why: null
+                      units_removed: 0
+                      locked_until: '2026-10-08T09:05:12Z'
+                    other_open_orders: []
+                    marking_needed: false
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -8075,7 +8162,7 @@ components:
                 details: []
                 doc_url: https://dona.uz/uz/developers/errors#not_found
     Conflict:
-      description: '`idempotency_in_progress` (+`Retry-After: 2`) · `idempotency_mismatch` · `version_conflict` · `ai_review_open` (publish of a product whose Dona AI review case is open — the review decides its status) · order codes `order_not_acceptable`,
+      description: '`idempotency_in_progress` (+`Retry-After: 2`) · `idempotency_mismatch` · `version_conflict` · `ai_review_open` (publish of a product whose Dona AI review case is open — the review decides its status) · `stock_locked` (a stock write that RAISES a product — or one variation — the shop declared out of stock on an order: refused for 24 hours; `locked_until` says when and `product_id` / `variant_id` name it; a person at Dona can lift the lock early) · order codes `order_not_acceptable`,
         `no_pickup_address`, `order_not_shippable`, `order_awaiting_courier`, `order_not_cancellable`, `order_has_active_return` ·
         document codes `no_tracking_number` (+`orders`), `no_items_selected`, `all_items_delayed` (S4, C53) · a replay of a rejected
         held write.'
@@ -8105,6 +8192,16 @@ components:
                 request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
                 details: []
                 doc_url: https://dona.uz/uz/developers/errors#order_not_shippable
+            stock_locked:
+              value:
+                error: stock_locked
+                message: 'Bu mahsulot buyurtmada «qolmagan» deb bekor qilingan: qulf tugaguncha (locked_until) qoldiqni oshirib boʻlmaydi.'
+                request_id: req_01997b2e-9a8b-7c6d-8e5f-4a3b2c1d0e9f
+                details: []
+                doc_url: https://dona.uz/uz/developers/errors#stock_locked
+                locked_until: '2026-10-08T09:05:12Z'
+                product_id: 0199612e-8a0b-7c4d-b1e2-3f4a5b6c7d8e
+                variant_id: 0199612e-8a0c-7d11-a0b2-9e8f7a6b5c4d
     PayloadTooLarge:
       description: '`payload_too_large` — body > 256 KiB (4 MiB on bulk stock/prices/batch), or > 1 000 lines.'
       headers:
@@ -8304,10 +8401,15 @@ components:
           description: Field or header name.
         code:
           type: string
-          description: Stable field-level code, e.g. `required`, `ikpu_required`, `cursor_expired`.
+          description: Stable field-level code, e.g. `required`, `ikpu_required`, `cursor_expired`, `stock_locked`.
         message:
           type: string
           description: Localised by `Accept-Language`.
+        locked_until:
+          type: string
+          format: date-time
+          description: 'With `code: stock_locked` — the line of an atomic `POST /stock` that the 24-hour out-of-stock lock refused: when that
+            lock ends (the same wire shape as `Error.locked_until`).'
       required:
       - code
       - message
@@ -8355,6 +8457,20 @@ components:
           type: string
           description: 'On `403 key_suspended` / `403 api_blocked`: why (`error_storm`, `unauthorized_storm`, `ip_blocked`, `credential_stuffing`,
             `leak_reported`, `staff`).'
+        locked_until:
+          type: string
+          format: date-time
+          description: 'On `409 stock_locked`: when the product''s 24-hour re-enable lock ends — RFC 3339, UTC (`…Z`), rounded UP to the whole
+            second, never early. Retry the stock raise after it; a person at Dona can lift the lock sooner.'
+        product_id:
+          type: string
+          format: uuid
+          description: 'On `409 stock_locked`: the product the lock names — always for the database''s refusal of one line of a non-atomic
+            `POST /stock` (the whole request is that one 409), which is how you know which line it was.'
+        variant_id:
+          type: string
+          format: uuid
+          description: 'On `409 stock_locked`: the variation the lock names, when the lock is one variation''s (absent: the whole product is locked).'
         meta:
           type: object
           properties:
@@ -9233,13 +9349,18 @@ components:
           description: New version after an `ok` line.
         error:
           type: string
-          description: 'On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `invalid_body`,
-            …'
+          description: 'On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `stock_locked` (+
+            `locked_until`), `invalid_body`, …'
         message:
           type: string
         retry_after_seconds:
           type: integer
           description: On `object_cooldown`.
+        locked_until:
+          type: string
+          format: date-time
+          description: 'On `error: stock_locked` — the product (or variation) was declared out of stock on an order and its stock cannot be
+            raised until this instant (RFC 3339, UTC, rounded UP to the whole second — never early). The other lines are unaffected.'
         approval_id:
           type: string
           format: uuid
@@ -9632,6 +9753,30 @@ components:
           type: string
           format: date-time
           description: ISO 8601 with offset (Tashkent `+05:00` on output).
+        refund_uzs:
+          type: integer
+          format: int64
+          minimum: 0
+          description: 'Only on a decline / cancel, only where the stock effect applies to the shop (it comes with the three keys below): the
+            integer soʻm the buyer gets back — 0 for a cash-on-delivery or unpaid order, never null.'
+        stock_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockEffect'
+          description: 'Only on a decline / cancel, only where the stock effect applies to the shop: one entry per line the move was about
+            (`unavailable_item_ids`, or the one live line) — what became of its product. `[]` for a reason that takes nothing off sale.'
+        other_open_orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OtherOpenOrder'
+          description: 'The shop''s OTHER open orders (not cancelled, shipped or delivered; at most 50) holding a product or variation the
+            move took off sale — to review; nothing cancels them. Read right AFTER the commit: if that read fails the key is absent, which
+            means "not known", never "none". Absent on a dry run.'
+        marking_needed:
+          type: boolean
+          description: 'true when the reason takes stock off sale, the order had SEVERAL live lines and `unavailable_item_ids` was not sent:
+            no product was taken off sale (the units went back on the shelf as before) and the question "which line was it?" stays open for
+            24 hours on Dona''s side. Send `unavailable_item_ids` with the call to name the lines.'
       required:
       - id
       - status
@@ -9641,6 +9786,93 @@ components:
       - cancelled_by
       - decline_reason_code
       - updated_at
+      description: 'The order as a decline / cancel left it. `refund_uzs`, `stock_effects`, `other_open_orders` and `marking_needed` are
+        optional and additive: they appear only for a shop where Dona applies the out-of-stock rule (see `declineOrder`) — every other
+        shop gets exactly the eight required keys.'
+    StockEffect:
+      type: object
+      properties:
+        order_item_id:
+          type: string
+          format: uuid
+          description: The order line (`items[].id`) the entry is about.
+        product_id:
+          type: string
+          format: uuid
+        variant_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: 'The variation the line resolved to when the lock is one variation''s (`scope: variant`), else `null`.'
+        variant_label:
+          type:
+          - string
+          - 'null'
+        scope:
+          type: string
+          enum:
+          - variant
+          - product
+          description: '`variant`: one variation is out of stock and locked; `product`: the whole product is (it has no variations, or only
+            one active variation).'
+        result:
+          type: string
+          enum:
+          - zeroed
+          - already_zero
+          - variant_not_found
+          - not_applied
+          description: '`zeroed` — taken to stock 0 and locked; `already_zero` — it was at 0, now locked; `variant_not_found` — no variation of
+            this shop matched the line, nothing zeroed or locked; `not_applied` — see `why`.'
+        why:
+          type:
+          - string
+          - 'null'
+          enum:
+          - shipped
+          - legacy_multi_line
+          - null
+          description: 'Only with `result: not_applied`: `shipped` (a shipped order — the goods come back) or `legacy_multi_line` (an order with
+            several lines and no `unavailable_item_ids`).'
+        units_removed:
+          type: integer
+          minimum: 0
+          description: Units taken off sale by this entry.
+        locked_until:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: 'When the product (or variation) may be put back on sale: RFC 3339, UTC (`…Z`), whole seconds. `null` when nothing was
+            locked.'
+      required:
+      - order_item_id
+      - product_id
+      - variant_id
+      - variant_label
+      - scope
+      - result
+      - why
+      - units_removed
+      - locked_until
+      description: What a decline / cancel did to one line's product, under the 24-hour out-of-stock rule.
+    OtherOpenOrder:
+      type: object
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        order_code:
+          type: string
+        order_item_id:
+          type: string
+          format: uuid
+      required:
+      - order_id
+      - order_code
+      - order_item_id
+      description: Another open order of the shop with a live line on a product or variation the move took off sale.
     DeclineRequest:
       type: object
       properties:
@@ -9658,12 +9890,28 @@ components:
           - cannot_fulfill_in_time
           - duplicate_order
           - fraud_suspected
+          - buyer_requested
           - other
-          description: Uzum subset (`OUT_OF_STOCK`, `OUT_OF_PACKAGE`, `OUT_OF_TIME`, `OTHER`) mapped onto the native `declineReasons`,
-            OR a native lowercase code. `OTHER`/`other` needs `comment`. Unknown ⇒ `400 invalid_decline_reason`.
+          description: 'The seller vocabulary — `out_of_stock`, `inventory_mismatch`, `product_damaged`, `store_unavailable`,
+            `cannot_fulfill_in_time`, `duplicate_order`, `fraud_suspected`, `buyer_requested` (the buyer asked), `other` — OR Uzum''s four
+            (`OUT_OF_STOCK`, `OUT_OF_PACKAGE`, `OUT_OF_TIME`, `OTHER`) mapped onto them (`OUT_OF_PACKAGE` is stored as `other`). `OTHER`/`other`
+            needs `comment`. Unknown ⇒ `400 invalid_decline_reason`. **Only `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` carry
+            the stock effect** (see `declineOrder`); every other reason cancels and the units go back on the shelf.'
         comment:
           type: string
           maxLength: 500
+        unavailable_item_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: 'Which lines of the order are out of stock — `items[].id` of `GET /orders/{id}` (a line is live while
+            `quantity − cancelled_quantity > 0`). Read only with `out_of_stock`, `inventory_mismatch` or `OUT_OF_STOCK`, and only where Dona
+            applies the stock effect to the shop — for any other shop it is accepted and ignored, even malformed. An order with ONE live line
+            needs none (that line is the line). With several: send the ids that are out of stock — an empty list ⇒ `400
+            unavailable_items_required`; an id that is not a live line of this order, or not an array of ids ⇒ `400
+            invalid_unavailable_items`; any id with a reason that takes nothing off sale ⇒ `400 unavailable_items_not_allowed`. Leaving the
+            field out on a multi-line order changes no stock and answers `marking_needed: true`.'
       required:
       - reason
     NoteRequest:

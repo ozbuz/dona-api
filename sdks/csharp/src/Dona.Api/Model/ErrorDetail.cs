@@ -32,26 +32,28 @@ namespace Dona.Api.Model
         /// <summary>
         /// Initializes a new instance of the <see cref="ErrorDetail" /> class.
         /// </summary>
-        /// <param name="code">Stable field-level code, e.g. &#x60;required&#x60;, &#x60;ikpu_required&#x60;, &#x60;cursor_expired&#x60;.</param>
+        /// <param name="code">Stable field-level code, e.g. &#x60;required&#x60;, &#x60;ikpu_required&#x60;, &#x60;cursor_expired&#x60;, &#x60;stock_locked&#x60;.</param>
         /// <param name="message">Localised by &#x60;Accept-Language&#x60;.</param>
         /// <param name="index">Line index in a bulk body.</param>
         /// <param name="field">Field or header name.</param>
+        /// <param name="lockedUntil">With &#x60;code: stock_locked&#x60; — the line of an atomic &#x60;POST /stock&#x60; that the 24-hour out-of-stock lock refused: when that lock ends (the same wire shape as &#x60;Error.locked_until&#x60;).</param>
         [JsonConstructor]
-        public ErrorDetail(string code, string message, Option<int?> index = default, Option<string?> field = default)
+        public ErrorDetail(string code, string message, Option<int?> index = default, Option<string?> field = default, Option<DateTimeOffset?> lockedUntil = default)
         {
             Code = code;
             Message = message;
             IndexOption = index;
             FieldOption = field;
+            LockedUntilOption = lockedUntil;
             OnCreated();
         }
 
         partial void OnCreated();
 
         /// <summary>
-        /// Stable field-level code, e.g. &#x60;required&#x60;, &#x60;ikpu_required&#x60;, &#x60;cursor_expired&#x60;.
+        /// Stable field-level code, e.g. &#x60;required&#x60;, &#x60;ikpu_required&#x60;, &#x60;cursor_expired&#x60;, &#x60;stock_locked&#x60;.
         /// </summary>
-        /// <value>Stable field-level code, e.g. &#x60;required&#x60;, &#x60;ikpu_required&#x60;, &#x60;cursor_expired&#x60;.</value>
+        /// <value>Stable field-level code, e.g. &#x60;required&#x60;, &#x60;ikpu_required&#x60;, &#x60;cursor_expired&#x60;, &#x60;stock_locked&#x60;.</value>
         [JsonPropertyName("code")]
         public string Code { get; set; }
 
@@ -91,6 +93,20 @@ namespace Dona.Api.Model
         public string? Field { get { return this.FieldOption.Value; } set { this.FieldOption = new(value); } }
 
         /// <summary>
+        /// Used to track the state of LockedUntil
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<DateTimeOffset?> LockedUntilOption { get; private set; }
+
+        /// <summary>
+        /// With &#x60;code: stock_locked&#x60; — the line of an atomic &#x60;POST /stock&#x60; that the 24-hour out-of-stock lock refused: when that lock ends (the same wire shape as &#x60;Error.locked_until&#x60;).
+        /// </summary>
+        /// <value>With &#x60;code: stock_locked&#x60; — the line of an atomic &#x60;POST /stock&#x60; that the 24-hour out-of-stock lock refused: when that lock ends (the same wire shape as &#x60;Error.locked_until&#x60;).</value>
+        [JsonPropertyName("locked_until")]
+        public DateTimeOffset? LockedUntil { get { return this.LockedUntilOption.Value; } set { this.LockedUntilOption = new(value); } }
+
+        /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
         /// <returns>String presentation of the object</returns>
@@ -102,6 +118,7 @@ namespace Dona.Api.Model
             sb.Append("  Message: ").Append(Message).Append("\n");
             sb.Append("  Index: ").Append(Index).Append("\n");
             sb.Append("  Field: ").Append(Field).Append("\n");
+            sb.Append("  LockedUntil: ").Append(LockedUntil).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -121,6 +138,11 @@ namespace Dona.Api.Model
         {
             OnCreated();
         }
+
+        /// <summary>
+        /// The format to use to serialize LockedUntil
+        /// </summary>
+        public string LockedUntilFormat { get; private set; } = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK";
 
         /// <summary>
         /// Deserializes json to <see cref="ErrorDetail" />
@@ -143,6 +165,7 @@ namespace Dona.Api.Model
             Option<string?> message = default;
             Option<int?> index = default;
             Option<string?> field = default;
+            Option<DateTimeOffset?> lockedUntil = default;
 
             while (utf8JsonReader.Read())
             {
@@ -171,6 +194,9 @@ namespace Dona.Api.Model
                         case "field":
                             field = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
+                        case "locked_until":
+                            lockedUntil = new Option<DateTimeOffset?>(JsonSerializer.Deserialize<DateTimeOffset>(ref utf8JsonReader, jsonSerializerOptions));
+                            break;
                         default:
                             break;
                     }
@@ -195,7 +221,10 @@ namespace Dona.Api.Model
             if (field.IsSet && field.Value == null)
                 throw new ArgumentNullException(nameof(field), "Property is not nullable for class ErrorDetail.");
 
-            return new ErrorDetail(code.Value!, message.Value!, index, field);
+            if (lockedUntil.IsSet && lockedUntil.Value == null)
+                throw new ArgumentNullException(nameof(lockedUntil), "Property is not nullable for class ErrorDetail.");
+
+            return new ErrorDetail(code.Value!, message.Value!, index, field, lockedUntil);
         }
 
         /// <summary>
@@ -240,6 +269,9 @@ namespace Dona.Api.Model
 
             if (errorDetail.FieldOption.IsSet)
                 writer.WriteString("field", errorDetail.Field);
+
+            if (errorDetail.LockedUntilOption.IsSet)
+                writer.WriteString("locked_until", errorDetail.LockedUntilOption.Value!.Value.ToString(LockedUntilFormat));
         }
     }
 }

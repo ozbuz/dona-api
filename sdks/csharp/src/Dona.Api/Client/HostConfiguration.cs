@@ -154,6 +154,7 @@ namespace Dona.Api.Client
             _jsonOptions.Converters.Add(new OrderTimelineEntryJsonConverter());
             _jsonOptions.Converters.Add(new OrderTransitionJsonConverter());
             _jsonOptions.Converters.Add(new OrderWithPiiJsonConverter());
+            _jsonOptions.Converters.Add(new OtherOpenOrderJsonConverter());
             _jsonOptions.Converters.Add(new PingJsonConverter());
             _jsonOptions.Converters.Add(new PingEventDataJsonConverter());
             _jsonOptions.Converters.Add(new PriceLineJsonConverter());
@@ -179,6 +180,7 @@ namespace Dona.Api.Client
             _jsonOptions.Converters.Add(new StatusJsonConverter());
             _jsonOptions.Converters.Add(new StatusComponentsJsonConverter());
             _jsonOptions.Converters.Add(new StatusIncidentsInnerJsonConverter());
+            _jsonOptions.Converters.Add(new StockEffectJsonConverter());
             _jsonOptions.Converters.Add(new StockEventDataJsonConverter());
             _jsonOptions.Converters.Add(new StockLineJsonConverter());
             _jsonOptions.Converters.Add(new StockLineViewJsonConverter());

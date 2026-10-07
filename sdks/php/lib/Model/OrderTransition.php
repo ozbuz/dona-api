@@ -35,6 +35,7 @@ use \Dona\Api\ObjectSerializer;
  * OrderTransition Class Doc Comment
  *
  * @category Class
+ * @description The order as a decline / cancel left it. &#x60;refund_uzs&#x60;, &#x60;stock_effects&#x60;, &#x60;other_open_orders&#x60; and &#x60;marking_needed&#x60; are optional and additive: they appear only for a shop where Dona applies the out-of-stock rule (see &#x60;declineOrder&#x60;) — every other shop gets exactly the eight required keys.
  * @package  Dona\Api
  * @author   OpenAPI Generator team
  * @link     https://openapi-generator.tech
@@ -64,7 +65,11 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
         'shipped_at' => '\DateTime',
         'cancelled_by' => 'string',
         'decline_reason_code' => 'string',
-        'updated_at' => '\DateTime'
+        'updated_at' => '\DateTime',
+        'refund_uzs' => 'int',
+        'stock_effects' => '\Dona\Api\Model\StockEffect[]',
+        'other_open_orders' => '\Dona\Api\Model\OtherOpenOrder[]',
+        'marking_needed' => 'bool'
     ];
 
     /**
@@ -82,7 +87,11 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
         'shipped_at' => 'date-time',
         'cancelled_by' => null,
         'decline_reason_code' => null,
-        'updated_at' => 'date-time'
+        'updated_at' => 'date-time',
+        'refund_uzs' => 'int64',
+        'stock_effects' => null,
+        'other_open_orders' => null,
+        'marking_needed' => null
     ];
 
     /**
@@ -98,7 +107,11 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
         'shipped_at' => true,
         'cancelled_by' => true,
         'decline_reason_code' => true,
-        'updated_at' => false
+        'updated_at' => false,
+        'refund_uzs' => false,
+        'stock_effects' => false,
+        'other_open_orders' => false,
+        'marking_needed' => false
     ];
 
     /**
@@ -194,7 +207,11 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
         'shipped_at' => 'shipped_at',
         'cancelled_by' => 'cancelled_by',
         'decline_reason_code' => 'decline_reason_code',
-        'updated_at' => 'updated_at'
+        'updated_at' => 'updated_at',
+        'refund_uzs' => 'refund_uzs',
+        'stock_effects' => 'stock_effects',
+        'other_open_orders' => 'other_open_orders',
+        'marking_needed' => 'marking_needed'
     ];
 
     /**
@@ -210,7 +227,11 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
         'shipped_at' => 'setShippedAt',
         'cancelled_by' => 'setCancelledBy',
         'decline_reason_code' => 'setDeclineReasonCode',
-        'updated_at' => 'setUpdatedAt'
+        'updated_at' => 'setUpdatedAt',
+        'refund_uzs' => 'setRefundUzs',
+        'stock_effects' => 'setStockEffects',
+        'other_open_orders' => 'setOtherOpenOrders',
+        'marking_needed' => 'setMarkingNeeded'
     ];
 
     /**
@@ -226,7 +247,11 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
         'shipped_at' => 'getShippedAt',
         'cancelled_by' => 'getCancelledBy',
         'decline_reason_code' => 'getDeclineReasonCode',
-        'updated_at' => 'getUpdatedAt'
+        'updated_at' => 'getUpdatedAt',
+        'refund_uzs' => 'getRefundUzs',
+        'stock_effects' => 'getStockEffects',
+        'other_open_orders' => 'getOtherOpenOrders',
+        'marking_needed' => 'getMarkingNeeded'
     ];
 
     /**
@@ -294,6 +319,10 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
         $this->setIfExists('cancelled_by', $data ?? [], null);
         $this->setIfExists('decline_reason_code', $data ?? [], null);
         $this->setIfExists('updated_at', $data ?? [], null);
+        $this->setIfExists('refund_uzs', $data ?? [], null);
+        $this->setIfExists('stock_effects', $data ?? [], null);
+        $this->setIfExists('other_open_orders', $data ?? [], null);
+        $this->setIfExists('marking_needed', $data ?? [], null);
     }
 
     /**
@@ -347,6 +376,10 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
         if ($this->container['updated_at'] === null) {
             $invalidProperties[] = "'updated_at' can't be null";
         }
+        if (!is_null($this->container['refund_uzs']) && ($this->container['refund_uzs'] < 0)) {
+            $invalidProperties[] = "invalid value for 'refund_uzs', must be bigger than or equal to 0.";
+        }
+
         return $invalidProperties;
     }
 
@@ -602,6 +635,118 @@ class OrderTransition implements ModelInterface, ArrayAccess, \JsonSerializable
             throw new \InvalidArgumentException('non-nullable updated_at cannot be null');
         }
         $this->container['updated_at'] = $updated_at;
+
+        return $this;
+    }
+
+    /**
+     * Gets refund_uzs
+     *
+     * @return int|null
+     */
+    public function getRefundUzs()
+    {
+        return $this->container['refund_uzs'];
+    }
+
+    /**
+     * Sets refund_uzs
+     *
+     * @param int|null $refund_uzs Only on a decline / cancel, only where the stock effect applies to the shop (it comes with the three keys below): the integer soʻm the buyer gets back — 0 for a cash-on-delivery or unpaid order, never null.
+     *
+     * @return self
+     */
+    public function setRefundUzs($refund_uzs)
+    {
+        if (is_null($refund_uzs)) {
+            throw new \InvalidArgumentException('non-nullable refund_uzs cannot be null');
+        }
+        if (($refund_uzs < 0)) {
+            throw new \InvalidArgumentException('invalid value for $refund_uzs when calling OrderTransition., must be bigger than or equal to 0.');
+        }
+
+        $this->container['refund_uzs'] = $refund_uzs;
+
+        return $this;
+    }
+
+    /**
+     * Gets stock_effects
+     *
+     * @return \Dona\Api\Model\StockEffect[]|null
+     */
+    public function getStockEffects()
+    {
+        return $this->container['stock_effects'];
+    }
+
+    /**
+     * Sets stock_effects
+     *
+     * @param \Dona\Api\Model\StockEffect[]|null $stock_effects Only on a decline / cancel, only where the stock effect applies to the shop: one entry per line the move was about (`unavailable_item_ids`, or the one live line) — what became of its product. `[]` for a reason that takes nothing off sale.
+     *
+     * @return self
+     */
+    public function setStockEffects($stock_effects)
+    {
+        if (is_null($stock_effects)) {
+            throw new \InvalidArgumentException('non-nullable stock_effects cannot be null');
+        }
+        $this->container['stock_effects'] = $stock_effects;
+
+        return $this;
+    }
+
+    /**
+     * Gets other_open_orders
+     *
+     * @return \Dona\Api\Model\OtherOpenOrder[]|null
+     */
+    public function getOtherOpenOrders()
+    {
+        return $this->container['other_open_orders'];
+    }
+
+    /**
+     * Sets other_open_orders
+     *
+     * @param \Dona\Api\Model\OtherOpenOrder[]|null $other_open_orders The shop's OTHER open orders (not cancelled, shipped or delivered; at most 50) holding a product or variation the move took off sale — to review; nothing cancels them. Read right AFTER the commit: if that read fails the key is absent, which means \"not known\", never \"none\". Absent on a dry run.
+     *
+     * @return self
+     */
+    public function setOtherOpenOrders($other_open_orders)
+    {
+        if (is_null($other_open_orders)) {
+            throw new \InvalidArgumentException('non-nullable other_open_orders cannot be null');
+        }
+        $this->container['other_open_orders'] = $other_open_orders;
+
+        return $this;
+    }
+
+    /**
+     * Gets marking_needed
+     *
+     * @return bool|null
+     */
+    public function getMarkingNeeded()
+    {
+        return $this->container['marking_needed'];
+    }
+
+    /**
+     * Sets marking_needed
+     *
+     * @param bool|null $marking_needed true when the reason takes stock off sale, the order had SEVERAL live lines and `unavailable_item_ids` was not sent: no product was taken off sale (the units went back on the shelf as before) and the question \"which line was it?\" stays open for 24 hours on Dona's side. Send `unavailable_item_ids` with the call to name the lines.
+     *
+     * @return self
+     */
+    public function setMarkingNeeded($marking_needed)
+    {
+        if (is_null($marking_needed)) {
+            throw new \InvalidArgumentException('non-nullable marking_needed cannot be null');
+        }
+        $this->container['marking_needed'] = $marking_needed;
 
         return $this;
     }
