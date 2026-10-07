@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar
+from uuid import UUID
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -40,6 +41,14 @@ class Error:
             suspended_until (datetime.datetime | Unset): On `403 key_suspended`.
             reason (str | Unset): On `403 key_suspended` / `403 api_blocked`: why (`error_storm`, `unauthorized_storm`,
                 `ip_blocked`, `credential_stuffing`, `leak_reported`, `staff`).
+            locked_until (datetime.datetime | Unset): On `409 stock_locked`: when the product's 24-hour re-enable lock ends
+                — RFC 3339, UTC (`…Z`), rounded UP to the whole second, never early. Retry the stock raise after it; a person at
+                Dona can lift the lock sooner.
+            product_id (UUID | Unset): On `409 stock_locked`: the product the lock names — always for the database's refusal
+                of one line of a non-atomic `POST /stock` (the whole request is that one 409), which is how you know which line
+                it was.
+            variant_id (UUID | Unset): On `409 stock_locked`: the variation the lock names, when the lock is one variation's
+                (absent: the whole product is locked).
             meta (ErrorMeta | Unset): Code-specific facts, e.g. `oldest_event_id` with `cursor_expired`.
     """
 
@@ -54,6 +63,9 @@ class Error:
     accept_url: str | Unset = UNSET
     suspended_until: datetime.datetime | Unset = UNSET
     reason: str | Unset = UNSET
+    locked_until: datetime.datetime | Unset = UNSET
+    product_id: UUID | Unset = UNSET
+    variant_id: UUID | Unset = UNSET
     meta: ErrorMeta | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -85,6 +97,18 @@ class Error:
 
         reason = self.reason
 
+        locked_until: str | Unset = UNSET
+        if not isinstance(self.locked_until, Unset):
+            locked_until = self.locked_until.isoformat()
+
+        product_id: str | Unset = UNSET
+        if not isinstance(self.product_id, Unset):
+            product_id = str(self.product_id)
+
+        variant_id: str | Unset = UNSET
+        if not isinstance(self.variant_id, Unset):
+            variant_id = str(self.variant_id)
+
         meta: dict[str, Any] | Unset = UNSET
         if not isinstance(self.meta, Unset):
             meta = self.meta.to_dict()
@@ -112,6 +136,12 @@ class Error:
             field_dict["suspended_until"] = suspended_until
         if reason is not UNSET:
             field_dict["reason"] = reason
+        if locked_until is not UNSET:
+            field_dict["locked_until"] = locked_until
+        if product_id is not UNSET:
+            field_dict["product_id"] = product_id
+        if variant_id is not UNSET:
+            field_dict["variant_id"] = variant_id
         if meta is not UNSET:
             field_dict["meta"] = meta
 
@@ -155,6 +185,27 @@ class Error:
 
         reason = d.pop("reason", UNSET)
 
+        _locked_until = d.pop("locked_until", UNSET)
+        locked_until: datetime.datetime | Unset
+        if isinstance(_locked_until, Unset):
+            locked_until = UNSET
+        else:
+            locked_until = datetime.datetime.fromisoformat(_locked_until)
+
+        _product_id = d.pop("product_id", UNSET)
+        product_id: UUID | Unset
+        if isinstance(_product_id, Unset):
+            product_id = UNSET
+        else:
+            product_id = UUID(_product_id)
+
+        _variant_id = d.pop("variant_id", UNSET)
+        variant_id: UUID | Unset
+        if isinstance(_variant_id, Unset):
+            variant_id = UNSET
+        else:
+            variant_id = UUID(_variant_id)
+
         _meta = d.pop("meta", UNSET)
         meta: ErrorMeta | Unset
         if isinstance(_meta, Unset):
@@ -174,6 +225,9 @@ class Error:
             accept_url=accept_url,
             suspended_until=suspended_until,
             reason=reason,
+            locked_until=locked_until,
+            product_id=product_id,
+            variant_id=variant_id,
             meta=meta,
         )
 

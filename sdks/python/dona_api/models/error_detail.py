@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import Any, TypeVar
 
@@ -15,16 +16,19 @@ T = TypeVar("T", bound="ErrorDetail")
 class ErrorDetail:
     """
     Attributes:
-        code (str): Stable field-level code, e.g. `required`, `ikpu_required`, `cursor_expired`.
+        code (str): Stable field-level code, e.g. `required`, `ikpu_required`, `cursor_expired`, `stock_locked`.
         message (str): Localised by `Accept-Language`.
         index (int | Unset): Line index in a bulk body.
         field (str | Unset): Field or header name.
+        locked_until (datetime.datetime | Unset): With `code: stock_locked` — the line of an atomic `POST /stock` that
+            the 24-hour out-of-stock lock refused: when that lock ends (the same wire shape as `Error.locked_until`).
     """
 
     code: str
     message: str
     index: int | Unset = UNSET
     field: str | Unset = UNSET
+    locked_until: datetime.datetime | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -35,6 +39,10 @@ class ErrorDetail:
         index = self.index
 
         field = self.field
+
+        locked_until: str | Unset = UNSET
+        if not isinstance(self.locked_until, Unset):
+            locked_until = self.locked_until.isoformat()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -48,6 +56,8 @@ class ErrorDetail:
             field_dict["index"] = index
         if field is not UNSET:
             field_dict["field"] = field
+        if locked_until is not UNSET:
+            field_dict["locked_until"] = locked_until
 
         return field_dict
 
@@ -62,11 +72,19 @@ class ErrorDetail:
 
         field = d.pop("field", UNSET)
 
+        _locked_until = d.pop("locked_until", UNSET)
+        locked_until: datetime.datetime | Unset
+        if isinstance(_locked_until, Unset):
+            locked_until = UNSET
+        else:
+            locked_until = datetime.datetime.fromisoformat(_locked_until)
+
         error_detail = cls(
             code=code,
             message=message,
             index=index,
             field=field,
+            locked_until=locked_until,
         )
 
         error_detail.additional_properties = d

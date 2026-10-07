@@ -92,6 +92,7 @@ from .order_timeline import OrderTimeline
 from .order_timeline_entry import OrderTimelineEntry
 from .order_transition import OrderTransition
 from .order_with_pii import OrderWithPii
+from .other_open_order import OtherOpenOrder
 from .page_meta import PageMeta
 from .ping import Ping
 from .ping_event_data import PingEventData
@@ -122,6 +123,7 @@ from .settlement_page import SettlementPage
 from .status import Status
 from .status_components import StatusComponents
 from .status_incidents_item import StatusIncidentsItem
+from .stock_effect import StockEffect
 from .stock_event_data import StockEventData
 from .stock_line import StockLine
 from .stock_line_view import StockLineView
@@ -236,6 +238,7 @@ __all__ = (
     "OrderTimelineEntry",
     "OrderTransition",
     "OrderWithPii",
+    "OtherOpenOrder",
     "PageMeta",
     "Ping",
     "PingEventData",
@@ -266,6 +269,7 @@ __all__ = (
     "Status",
     "StatusComponents",
     "StatusIncidentsItem",
+    "StockEffect",
     "StockEventData",
     "StockLine",
     "StockLineView",
