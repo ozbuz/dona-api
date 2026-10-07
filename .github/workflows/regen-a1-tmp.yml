@@ -53,6 +53,7 @@ jobs:
         with:
           name: sdks-regenerated
           path: sdks
+          include-hidden-files: true
           retention-days: 3
 
       - name: Committed sdks/ == fresh generation
