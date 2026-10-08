@@ -1,5 +1,13 @@
 # dona-api — working guide (AI + humans)
 
+> ⛔ **OZB WORKSPACE RULES APPLY HERE — read `/Users/bekyu/GitHub/OZB/CLAUDE.md` first, in full, and follow ONLY it**
+> (partition · git · definition of done · 🧠 agents · tokens · coordination · IaC-only · credentials). This file is the repo's working
+> guide, never a substitute. The committed `.claude/settings.json` + `.codex/hooks.json` load OZB's gates by absolute path, so a session
+> opened here **or on a `.wt-*` worktree** is gated like one opened on OZB: claim before you edit (`ozbq claim`), `ci-green --gate` after
+> the review gate and the coordinator merges, no `git push` while this branch's CI runs, no CI polling, `model` + `effort` on every agent,
+> research once. Codex: `AGENTS.md` here points the same way. `[Bek 2026-10-08]`
+
+
 Generated **Dona API SDKs** (TypeScript · Python · Go · PHP · C#) and runnable examples. **Public**
 since 2026-09-26 (Bek's approval); `.github/workflows/publish.yml` exists but every registry job
 skips until Bek adds that registry's token secret — nothing has been published to a registry yet.

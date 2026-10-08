@@ -1,0 +1,5 @@
+# OZB workspace (Bek 2026-10-07/08): Codex subagents default to the cheapest rung; a spawn names its rung explicitly.
+# Rules: /Users/bekyu/GitHub/OZB/AGENTS.md -> /Users/bekyu/GitHub/OZB/CLAUDE.md. Hooks: .codex/hooks.json (OZB's gates by absolute path).
+[agents]
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "low"

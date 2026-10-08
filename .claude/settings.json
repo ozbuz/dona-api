@@ -1,0 +1,151 @@
+{
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "/Users/bekyu/GitHub/OZB/orchestration/bin/statusline.sh",
+    "padding": 0
+  },
+  "permissions": {
+    "allow": [
+      "Read(//Users/bekyu/GitHub/OZB/**)",
+      "Read(//Users/bekyu/GitHub/ozbuz/**)"
+    ],
+    "deny": [
+      "mcp__kubernetes__resources_delete",
+      "mcp__kubernetes__pods_delete",
+      "mcp__kubernetes__resources_create_or_update",
+      "mcp__kubernetes__resources_scale",
+      "mcp__kubernetes__pods_run",
+      "mcp__aws-eks__apply_yaml",
+      "mcp__aws-eks__manage_k8s_resource",
+      "mcp__aws-eks__manage_eks_stacks",
+      "mcp__aws-eks__add_inline_policy",
+      "Write(//Users/bekyu/GitHub/OZB/.claude/settings.json)",
+      "Edit(//Users/bekyu/GitHub/OZB/.claude/settings.json)",
+      "Write(//Users/bekyu/GitHub/OZB/.codex/hooks.json)",
+      "Edit(//Users/bekyu/GitHub/OZB/.codex/hooks.json)",
+      "Write(//Users/bekyu/GitHub/OZB/orchestration/board/GATE-OFF)",
+      "Edit(//Users/bekyu/GitHub/OZB/orchestration/board/GATE-OFF)",
+      "Write(/.claude/settings.json)",
+      "Edit(/.claude/settings.json)",
+      "Write(/.codex/hooks.json)",
+      "Edit(/.codex/hooks.json)",
+      "Write(/.codex/config.toml)",
+      "Edit(/.codex/config.toml)"
+    ],
+    "ask": [],
+    "additionalDirectories": []
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/orchestration/hooks/session-start.sh",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/orchestration/hooks/prompt-gauge.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit|MultiEdit|ApplyPatch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/orchestration/hooks/claim-gate.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/orchestration/hooks/iac-gate.py",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/orchestration/hooks/bash-write-gate.py",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Agent|Workflow|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/orchestration/hooks/budget-gate.py",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "WebSearch|WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/orchestration/hooks/research-gate.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/.claude/hooks/memory-index-build.py --hook",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Agent|Workflow",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/orchestration/hooks/post-agent-gauge.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/.claude/hooks/ozb-history-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "/Users/bekyu/GitHub/OZB/.claude/hooks/memory-index-build.py --hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
