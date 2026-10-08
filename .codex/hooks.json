@@ -1,0 +1,49 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/bekyu/GitHub/OZB/orchestration/hooks/session-start.sh'"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/bekyu/GitHub/OZB/orchestration/hooks/prompt-gauge.sh'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit|MultiEdit|ApplyPatch|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/bekyu/GitHub/OZB/orchestration/hooks/claim-gate.sh'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|shell|local_shell|exec_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/bekyu/GitHub/OZB/orchestration/hooks/iac-gate.py'"
+          },
+          {
+            "type": "command",
+            "command": "'/Users/bekyu/GitHub/OZB/orchestration/hooks/bash-write-gate.py'"
+          }
+        ]
+      }
+    ]
+  }
+}
