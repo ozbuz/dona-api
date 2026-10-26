@@ -78,6 +78,7 @@ namespace Dona.Api.Client
             _jsonOptions.Converters.Add(new DeclineRequestJsonConverter());
             _jsonOptions.Converters.Add(new DeliveryJsonConverter());
             _jsonOptions.Converters.Add(new DeliveryPageJsonConverter());
+            _jsonOptions.Converters.Add(new DonaRemovalJsonConverter());
             _jsonOptions.Converters.Add(new ErrorJsonConverter());
             _jsonOptions.Converters.Add(new ErrorDetailJsonConverter());
             _jsonOptions.Converters.Add(new ErrorMetaJsonConverter());

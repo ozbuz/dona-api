@@ -29,6 +29,7 @@ Name | Type | Description | Notes
 **PackageCode** | **string** |  | 
 **VideoUrl** | **string** |  | 
 **Hold** | [**ProductHold**](ProductHold.md) |  | 
+**RemovedByDona** | [**DonaRemoval**](DonaRemoval.md) | «Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26). | [optional] 
 
 [[Back to Model list]](../../README.md#documentation-for-models) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to README]](../../README.md)
 

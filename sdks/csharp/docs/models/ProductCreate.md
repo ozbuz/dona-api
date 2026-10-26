@@ -5,11 +5,11 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Title** | [**LocalizedText**](LocalizedText.md) |  | 
-**CategoryId** | **Guid** |  | 
 **SellerSku** | **string** |  | 
 **PriceUzs** | **long** |  | 
 **Stock** | **int** |  | 
 **Description** | [**LocalizedText**](LocalizedText.md) |  | [optional] 
+**CategoryId** | **Guid** | Optional. If omitted, Dona AI assigns a category; until then the product has no category. | [optional] 
 **Brand** | **string** |  | [optional] 
 **Barcode** | **string** |  | [optional] 
 **ExternalId** | **string** | Your system&#39;s id, e.g. &#x60;1c:0f2a…&#x60;. | [optional] 

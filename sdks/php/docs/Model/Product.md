@@ -26,6 +26,7 @@ Name | Type | Description | Notes
 **created_via** | **string** | &#x60;manual&#x60;, &#x60;mass_upload&#x60;, &#x60;api&#x60;, … (products_created_via_check). |
 **hold** | [**\Dona\Api\Model\ProductHold**](ProductHold.md) |  |
 **open_issues** | **int** | Open &#x60;listing_issues&#x60; + &#x60;product_violations&#x60;. |
+**removed_by_dona** | [**\Dona\Api\Model\DonaRemoval**](DonaRemoval.md) | «Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26). | [optional]
 **version** | **string** | Opaque (today the full-precision &#x60;updated_at&#x60;); echo verbatim. |
 **created_at** | **\DateTime** | ISO 8601 with offset (Tashkent &#x60;+05:00&#x60; on output). |
 **updated_at** | **\DateTime** | ISO 8601 with offset (Tashkent &#x60;+05:00&#x60; on output). |

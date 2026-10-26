@@ -57,8 +57,9 @@ namespace Dona.Api.Model
         /// <param name="packageCode">packageCode</param>
         /// <param name="videoUrl">videoUrl</param>
         /// <param name="hold">hold</param>
+        /// <param name="removedByDona">«Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26).</param>
         [JsonConstructor]
-        public Product(Guid id, LocalizedText title, string status, long priceUzs, int stock, bool hasVariants, List<Variant> variants, List<string> imageUrls, Dictionary<string, Object> attributes, string createdVia, int openIssues, string varVersion, DateTimeOffset createdAt, DateTimeOffset updatedAt, LocalizedText? description = default, Guid? categoryId = default, string? brand = default, string? sellerSku = default, string? barcode = default, string? externalId = default, long? compareAtUzs = default, string? ikpu = default, string? packageCode = default, string? videoUrl = default, ProductHold? hold = default)
+        public Product(Guid id, LocalizedText title, string status, long priceUzs, int stock, bool hasVariants, List<Variant> variants, List<string> imageUrls, Dictionary<string, Object> attributes, string createdVia, int openIssues, string varVersion, DateTimeOffset createdAt, DateTimeOffset updatedAt, LocalizedText? description = default, Guid? categoryId = default, string? brand = default, string? sellerSku = default, string? barcode = default, string? externalId = default, long? compareAtUzs = default, string? ikpu = default, string? packageCode = default, string? videoUrl = default, ProductHold? hold = default, Option<DonaRemoval?> removedByDona = default)
         {
             Id = id;
             Title = title;
@@ -85,6 +86,7 @@ namespace Dona.Api.Model
             PackageCode = packageCode;
             VideoUrl = videoUrl;
             Hold = hold;
+            RemovedByDonaOption = removedByDona;
             OnCreated();
         }
 
@@ -250,6 +252,20 @@ namespace Dona.Api.Model
         public ProductHold? Hold { get; set; }
 
         /// <summary>
+        /// Used to track the state of RemovedByDona
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<DonaRemoval?> RemovedByDonaOption { get; private set; }
+
+        /// <summary>
+        /// «Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26).
+        /// </summary>
+        /// <value>«Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26).</value>
+        [JsonPropertyName("removed_by_dona")]
+        public DonaRemoval? RemovedByDona { get { return this.RemovedByDonaOption.Value; } set { this.RemovedByDonaOption = new(value); } }
+
+        /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
         /// <returns>String presentation of the object</returns>
@@ -282,6 +298,7 @@ namespace Dona.Api.Model
             sb.Append("  PackageCode: ").Append(PackageCode).Append("\n");
             sb.Append("  VideoUrl: ").Append(VideoUrl).Append("\n");
             sb.Append("  Hold: ").Append(Hold).Append("\n");
+            sb.Append("  RemovedByDona: ").Append(RemovedByDona).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -354,6 +371,7 @@ namespace Dona.Api.Model
             Option<string?> packageCode = default;
             Option<string?> videoUrl = default;
             Option<ProductHold?> hold = default;
+            Option<DonaRemoval?> removedByDona = default;
 
             while (utf8JsonReader.Read())
             {
@@ -444,6 +462,9 @@ namespace Dona.Api.Model
                             break;
                         case "hold":
                             hold = new Option<ProductHold?>(JsonSerializer.Deserialize<ProductHold>(ref utf8JsonReader, jsonSerializerOptions));
+                            break;
+                        case "removed_by_dona":
+                            removedByDona = new Option<DonaRemoval?>(JsonSerializer.Deserialize<DonaRemoval>(ref utf8JsonReader, jsonSerializerOptions));
                             break;
                         default:
                             break;
@@ -568,7 +589,7 @@ namespace Dona.Api.Model
             if (updatedAt.IsSet && updatedAt.Value == null)
                 throw new ArgumentNullException(nameof(updatedAt), "Property is not nullable for class Product.");
 
-            return new Product(id.Value!.Value!, title.Value!, status.Value!, priceUzs.Value!.Value!, stock.Value!.Value!, hasVariants.Value!.Value!, variants.Value!, imageUrls.Value!, attributes.Value!, createdVia.Value!, openIssues.Value!.Value!, varVersion.Value!, createdAt.Value!.Value!, updatedAt.Value!.Value!, description.Value!, categoryId.Value!, brand.Value!, sellerSku.Value!, barcode.Value!, externalId.Value!, compareAtUzs.Value!, ikpu.Value!, packageCode.Value!, videoUrl.Value!, hold.Value!);
+            return new Product(id.Value!.Value!, title.Value!, status.Value!, priceUzs.Value!.Value!, stock.Value!.Value!, hasVariants.Value!.Value!, variants.Value!, imageUrls.Value!, attributes.Value!, createdVia.Value!, openIssues.Value!.Value!, varVersion.Value!, createdAt.Value!.Value!, updatedAt.Value!.Value!, description.Value!, categoryId.Value!, brand.Value!, sellerSku.Value!, barcode.Value!, externalId.Value!, compareAtUzs.Value!, ikpu.Value!, packageCode.Value!, videoUrl.Value!, hold.Value!, removedByDona);
         }
 
         /// <summary>
@@ -703,6 +724,14 @@ namespace Dona.Api.Model
             }
             else
                 writer.WriteNull("hold");
+            if (product.RemovedByDonaOption.IsSet)
+                if (product.RemovedByDonaOption.Value != null)
+                {
+                    writer.WritePropertyName("removed_by_dona");
+                    JsonSerializer.Serialize(writer, product.RemovedByDona, jsonSerializerOptions);
+                }
+                else
+                    writer.WriteNull("removed_by_dona");
         }
     }
 }

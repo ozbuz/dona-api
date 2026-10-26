@@ -178,6 +178,7 @@ Class | Method | HTTP request | Description
 - [DeclineRequest](docs/Model/DeclineRequest.md)
 - [Delivery](docs/Model/Delivery.md)
 - [DeliveryPage](docs/Model/DeliveryPage.md)
+- [DonaRemoval](docs/Model/DonaRemoval.md)
 - [Error](docs/Model/Error.md)
 - [ErrorDetail](docs/Model/ErrorDetail.md)
 - [ErrorMeta](docs/Model/ErrorMeta.md)

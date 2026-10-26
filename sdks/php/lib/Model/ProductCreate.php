@@ -389,9 +389,6 @@ class ProductCreate implements ModelInterface, ArrayAccess, \JsonSerializable
         if ($this->container['title'] === null) {
             $invalidProperties[] = "'title' can't be null";
         }
-        if ($this->container['category_id'] === null) {
-            $invalidProperties[] = "'category_id' can't be null";
-        }
         if ($this->container['seller_sku'] === null) {
             $invalidProperties[] = "'seller_sku' can't be null";
         }
@@ -497,7 +494,7 @@ class ProductCreate implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Gets category_id
      *
-     * @return string
+     * @return string|null
      */
     public function getCategoryId()
     {
@@ -507,7 +504,7 @@ class ProductCreate implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets category_id
      *
-     * @param string $category_id category_id
+     * @param string|null $category_id Optional. If omitted, Dona AI assigns a category; until then the product has no category.
      *
      * @return self
      */

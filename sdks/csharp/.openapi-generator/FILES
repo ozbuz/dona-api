@@ -51,6 +51,7 @@ docs/models/CommissionRoot.md
 docs/models/DeclineRequest.md
 docs/models/Delivery.md
 docs/models/DeliveryPage.md
+docs/models/DonaRemoval.md
 docs/models/Error.md
 docs/models/ErrorDetail.md
 docs/models/ErrorMeta.md
@@ -250,6 +251,7 @@ src/Dona.Api/Model/CommissionRoot.cs
 src/Dona.Api/Model/DeclineRequest.cs
 src/Dona.Api/Model/Delivery.cs
 src/Dona.Api/Model/DeliveryPage.cs
+src/Dona.Api/Model/DonaRemoval.cs
 src/Dona.Api/Model/Error.cs
 src/Dona.Api/Model/ErrorDetail.cs
 src/Dona.Api/Model/ErrorMeta.cs

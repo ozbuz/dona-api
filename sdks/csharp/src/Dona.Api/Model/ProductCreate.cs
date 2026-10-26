@@ -33,11 +33,11 @@ namespace Dona.Api.Model
         /// Initializes a new instance of the <see cref="ProductCreate" /> class.
         /// </summary>
         /// <param name="title">title</param>
-        /// <param name="categoryId">categoryId</param>
         /// <param name="sellerSku">sellerSku</param>
         /// <param name="priceUzs">priceUzs</param>
         /// <param name="stock">stock</param>
         /// <param name="description">description</param>
+        /// <param name="categoryId">Optional. If omitted, Dona AI assigns a category; until then the product has no category.</param>
         /// <param name="brand">brand</param>
         /// <param name="barcode">barcode</param>
         /// <param name="externalId">Your system&#39;s id, e.g. &#x60;1c:0f2a…&#x60;.</param>
@@ -50,14 +50,14 @@ namespace Dona.Api.Model
         /// <param name="variants">variants</param>
         /// <param name="publish">Ask to publish after create; a pending shop&#39;s product is held until documents approval.</param>
         [JsonConstructor]
-        public ProductCreate(LocalizedText title, Guid categoryId, string sellerSku, long priceUzs, int stock, Option<LocalizedText?> description = default, Option<string?> brand = default, Option<string?> barcode = default, Option<string?> externalId = default, Option<long?> compareAtUzs = default, Option<string?> ikpu = default, Option<string?> packageCode = default, Option<List<string>?> imageUrls = default, Option<string?> videoUrl = default, Option<Dictionary<string, Object>?> attributes = default, Option<List<VariantInput>?> variants = default, Option<bool?> publish = default)
+        public ProductCreate(LocalizedText title, string sellerSku, long priceUzs, int stock, Option<LocalizedText?> description = default, Option<Guid?> categoryId = default, Option<string?> brand = default, Option<string?> barcode = default, Option<string?> externalId = default, Option<long?> compareAtUzs = default, Option<string?> ikpu = default, Option<string?> packageCode = default, Option<List<string>?> imageUrls = default, Option<string?> videoUrl = default, Option<Dictionary<string, Object>?> attributes = default, Option<List<VariantInput>?> variants = default, Option<bool?> publish = default)
         {
             Title = title;
-            CategoryId = categoryId;
             SellerSku = sellerSku;
             PriceUzs = priceUzs;
             Stock = stock;
             DescriptionOption = description;
+            CategoryIdOption = categoryId;
             BrandOption = brand;
             BarcodeOption = barcode;
             ExternalIdOption = externalId;
@@ -79,12 +79,6 @@ namespace Dona.Api.Model
         /// </summary>
         [JsonPropertyName("title")]
         public LocalizedText Title { get; set; }
-
-        /// <summary>
-        /// Gets or Sets CategoryId
-        /// </summary>
-        [JsonPropertyName("category_id")]
-        public Guid CategoryId { get; set; }
 
         /// <summary>
         /// Gets or Sets SellerSku
@@ -116,6 +110,20 @@ namespace Dona.Api.Model
         /// </summary>
         [JsonPropertyName("description")]
         public LocalizedText? Description { get { return this.DescriptionOption.Value; } set { this.DescriptionOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of CategoryId
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<Guid?> CategoryIdOption { get; private set; }
+
+        /// <summary>
+        /// Optional. If omitted, Dona AI assigns a category; until then the product has no category.
+        /// </summary>
+        /// <value>Optional. If omitted, Dona AI assigns a category; until then the product has no category.</value>
+        [JsonPropertyName("category_id")]
+        public Guid? CategoryId { get { return this.CategoryIdOption.Value; } set { this.CategoryIdOption = new(value); } }
 
         /// <summary>
         /// Used to track the state of Brand
@@ -271,11 +279,11 @@ namespace Dona.Api.Model
             StringBuilder sb = new StringBuilder();
             sb.Append("class ProductCreate {\n");
             sb.Append("  Title: ").Append(Title).Append("\n");
-            sb.Append("  CategoryId: ").Append(CategoryId).Append("\n");
             sb.Append("  SellerSku: ").Append(SellerSku).Append("\n");
             sb.Append("  PriceUzs: ").Append(PriceUzs).Append("\n");
             sb.Append("  Stock: ").Append(Stock).Append("\n");
             sb.Append("  Description: ").Append(Description).Append("\n");
+            sb.Append("  CategoryId: ").Append(CategoryId).Append("\n");
             sb.Append("  Brand: ").Append(Brand).Append("\n");
             sb.Append("  Barcode: ").Append(Barcode).Append("\n");
             sb.Append("  ExternalId: ").Append(ExternalId).Append("\n");
@@ -325,11 +333,11 @@ namespace Dona.Api.Model
             JsonTokenType startingTokenType = utf8JsonReader.TokenType;
 
             Option<LocalizedText?> title = default;
-            Option<Guid?> categoryId = default;
             Option<string?> sellerSku = default;
             Option<long?> priceUzs = default;
             Option<int?> stock = default;
             Option<LocalizedText?> description = default;
+            Option<Guid?> categoryId = default;
             Option<string?> brand = default;
             Option<string?> barcode = default;
             Option<string?> externalId = default;
@@ -360,9 +368,6 @@ namespace Dona.Api.Model
                         case "title":
                             title = new Option<LocalizedText?>(JsonSerializer.Deserialize<LocalizedText>(ref utf8JsonReader, jsonSerializerOptions)!);
                             break;
-                        case "category_id":
-                            categoryId = new Option<Guid?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (Guid?)null : utf8JsonReader.GetGuid());
-                            break;
                         case "seller_sku":
                             sellerSku = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
@@ -374,6 +379,9 @@ namespace Dona.Api.Model
                             break;
                         case "description":
                             description = new Option<LocalizedText?>(JsonSerializer.Deserialize<LocalizedText>(ref utf8JsonReader, jsonSerializerOptions)!);
+                            break;
+                        case "category_id":
+                            categoryId = new Option<Guid?>(utf8JsonReader.TokenType == JsonTokenType.Null ? (Guid?)null : utf8JsonReader.GetGuid());
                             break;
                         case "brand":
                             brand = new Option<string?>(utf8JsonReader.GetString()!);
@@ -417,9 +425,6 @@ namespace Dona.Api.Model
             if (!title.IsSet)
                 throw new ArgumentException("Property is required for class ProductCreate.", nameof(title));
 
-            if (!categoryId.IsSet)
-                throw new ArgumentException("Property is required for class ProductCreate.", nameof(categoryId));
-
             if (!sellerSku.IsSet)
                 throw new ArgumentException("Property is required for class ProductCreate.", nameof(sellerSku));
 
@@ -432,9 +437,6 @@ namespace Dona.Api.Model
             if (title.IsSet && title.Value == null)
                 throw new ArgumentNullException(nameof(title), "Property is not nullable for class ProductCreate.");
 
-            if (categoryId.IsSet && categoryId.Value == null)
-                throw new ArgumentNullException(nameof(categoryId), "Property is not nullable for class ProductCreate.");
-
             if (sellerSku.IsSet && sellerSku.Value == null)
                 throw new ArgumentNullException(nameof(sellerSku), "Property is not nullable for class ProductCreate.");
 
@@ -446,6 +448,9 @@ namespace Dona.Api.Model
 
             if (description.IsSet && description.Value == null)
                 throw new ArgumentNullException(nameof(description), "Property is not nullable for class ProductCreate.");
+
+            if (categoryId.IsSet && categoryId.Value == null)
+                throw new ArgumentNullException(nameof(categoryId), "Property is not nullable for class ProductCreate.");
 
             if (brand.IsSet && brand.Value == null)
                 throw new ArgumentNullException(nameof(brand), "Property is not nullable for class ProductCreate.");
@@ -477,7 +482,7 @@ namespace Dona.Api.Model
             if (publish.IsSet && publish.Value == null)
                 throw new ArgumentNullException(nameof(publish), "Property is not nullable for class ProductCreate.");
 
-            return new ProductCreate(title.Value!, categoryId.Value!.Value!, sellerSku.Value!, priceUzs.Value!.Value!, stock.Value!.Value!, description, brand, barcode, externalId, compareAtUzs, ikpu, packageCode, imageUrls, videoUrl, attributes, variants, publish);
+            return new ProductCreate(title.Value!, sellerSku.Value!, priceUzs.Value!.Value!, stock.Value!.Value!, description, categoryId, brand, barcode, externalId, compareAtUzs, ikpu, packageCode, imageUrls, videoUrl, attributes, variants, publish);
         }
 
         /// <summary>
@@ -542,8 +547,6 @@ namespace Dona.Api.Model
 
             writer.WritePropertyName("title");
             JsonSerializer.Serialize(writer, productCreate.Title, jsonSerializerOptions);
-            writer.WriteString("category_id", productCreate.CategoryId);
-
             writer.WriteString("seller_sku", productCreate.SellerSku);
 
             writer.WriteNumber("price_uzs", productCreate.PriceUzs);
@@ -555,6 +558,9 @@ namespace Dona.Api.Model
                 writer.WritePropertyName("description");
                 JsonSerializer.Serialize(writer, productCreate.Description, jsonSerializerOptions);
             }
+            if (productCreate.CategoryIdOption.IsSet)
+                writer.WriteString("category_id", productCreate.CategoryIdOption.Value!.Value);
+
             if (productCreate.BrandOption.IsSet)
                 writer.WriteString("brand", productCreate.Brand);
 

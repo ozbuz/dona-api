@@ -79,6 +79,7 @@ class Product implements ModelInterface, ArrayAccess, \JsonSerializable
         'created_via' => 'string',
         'hold' => '\Dona\Api\Model\ProductHold',
         'open_issues' => 'int',
+        'removed_by_dona' => '\Dona\Api\Model\DonaRemoval',
         'version' => 'string',
         'created_at' => '\DateTime',
         'updated_at' => '\DateTime'
@@ -114,6 +115,7 @@ class Product implements ModelInterface, ArrayAccess, \JsonSerializable
         'created_via' => null,
         'hold' => null,
         'open_issues' => null,
+        'removed_by_dona' => null,
         'version' => null,
         'created_at' => 'date-time',
         'updated_at' => 'date-time'
@@ -147,6 +149,7 @@ class Product implements ModelInterface, ArrayAccess, \JsonSerializable
         'created_via' => false,
         'hold' => true,
         'open_issues' => false,
+        'removed_by_dona' => true,
         'version' => false,
         'created_at' => false,
         'updated_at' => false
@@ -260,6 +263,7 @@ class Product implements ModelInterface, ArrayAccess, \JsonSerializable
         'created_via' => 'created_via',
         'hold' => 'hold',
         'open_issues' => 'open_issues',
+        'removed_by_dona' => 'removed_by_dona',
         'version' => 'version',
         'created_at' => 'created_at',
         'updated_at' => 'updated_at'
@@ -293,6 +297,7 @@ class Product implements ModelInterface, ArrayAccess, \JsonSerializable
         'created_via' => 'setCreatedVia',
         'hold' => 'setHold',
         'open_issues' => 'setOpenIssues',
+        'removed_by_dona' => 'setRemovedByDona',
         'version' => 'setVersion',
         'created_at' => 'setCreatedAt',
         'updated_at' => 'setUpdatedAt'
@@ -326,6 +331,7 @@ class Product implements ModelInterface, ArrayAccess, \JsonSerializable
         'created_via' => 'getCreatedVia',
         'hold' => 'getHold',
         'open_issues' => 'getOpenIssues',
+        'removed_by_dona' => 'getRemovedByDona',
         'version' => 'getVersion',
         'created_at' => 'getCreatedAt',
         'updated_at' => 'getUpdatedAt'
@@ -410,6 +416,7 @@ class Product implements ModelInterface, ArrayAccess, \JsonSerializable
         $this->setIfExists('created_via', $data ?? [], null);
         $this->setIfExists('hold', $data ?? [], null);
         $this->setIfExists('open_issues', $data ?? [], null);
+        $this->setIfExists('removed_by_dona', $data ?? [], null);
         $this->setIfExists('version', $data ?? [], null);
         $this->setIfExists('created_at', $data ?? [], null);
         $this->setIfExists('updated_at', $data ?? [], null);
@@ -1207,6 +1214,40 @@ class Product implements ModelInterface, ArrayAccess, \JsonSerializable
             throw new \InvalidArgumentException('non-nullable open_issues cannot be null');
         }
         $this->container['open_issues'] = $open_issues;
+
+        return $this;
+    }
+
+    /**
+     * Gets removed_by_dona
+     *
+     * @return \Dona\Api\Model\DonaRemoval|null
+     */
+    public function getRemovedByDona()
+    {
+        return $this->container['removed_by_dona'];
+    }
+
+    /**
+     * Sets removed_by_dona
+     *
+     * @param \Dona\Api\Model\DonaRemoval|null $removed_by_dona «Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26).
+     *
+     * @return self
+     */
+    public function setRemovedByDona($removed_by_dona)
+    {
+        if (is_null($removed_by_dona)) {
+            array_push($this->openAPINullablesSetToNull, 'removed_by_dona');
+        } else {
+            $nullablesSetToNull = $this->getOpenAPINullablesSetToNull();
+            $index = array_search('removed_by_dona', $nullablesSetToNull);
+            if ($index !== FALSE) {
+                unset($nullablesSetToNull[$index]);
+                $this->setOpenAPINullablesSetToNull($nullablesSetToNull);
+            }
+        }
+        $this->container['removed_by_dona'] = $removed_by_dona;
 
         return $this;
     }

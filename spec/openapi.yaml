@@ -8877,6 +8877,11 @@ components:
         open_issues:
           type: integer
           description: Open `listing_issues` + `product_violations`.
+        removed_by_dona:
+          description: '«Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26).'
+          anyOf:
+          - $ref: '#/components/schemas/DonaRemoval'
+          - type: 'null'
         version:
           type: string
           description: Opaque (today the full-precision `updated_at`); echo verbatim.
@@ -8914,6 +8919,63 @@ components:
       - version
       - created_at
       - updated_at
+    DonaRemoval:
+      type: object
+      description: Why Dona keeps a product off sale and what clears it (OZB architecture/DB/catalog/removed-by-dona-marker.md). Tolerate new values in every enum-like field.
+      properties:
+        source:
+          type: string
+          description: '`moderation_ban` · `ip_notice` · `staff_delist` · `staff_hide` · `ai_review`.'
+        by:
+          type: string
+          description: '`dona_team` · `dona_ai`.'
+        reason_code:
+          type: string
+          description: '`prohibited_goods` · `unsafe_product` · `adult_content` · `violence_hate` · `misleading_listing` · `intellectual_property` · `duplicate_spam` · `other` · `shop_closing` · `listing_review`.'
+        reason:
+          $ref: '#/components/schemas/LocalizedText'
+        title:
+          $ref: '#/components/schemas/LocalizedText'
+        note:
+          type:
+          - string
+          - 'null'
+          description: The Dona team's explanation to the seller (a ban, a staff removal); null otherwise.
+        since:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: ISO 8601 with offset (Tashkent `+05:00`); null when nothing recorded the start.
+        state:
+          type:
+          - string
+          - 'null'
+          description: The ban notice's state or the listing review's state; null otherwise.
+        clears_by:
+          type: string
+          description: '`staff` · `seller`.'
+        action:
+          type: string
+          description: '`contact_support` · `dispute` · `wait` · `fix_review`.'
+        ref:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: The ban / review case / staff removal id; null for an IP notice.
+      required:
+      - source
+      - by
+      - reason_code
+      - reason
+      - title
+      - note
+      - since
+      - state
+      - clears_by
+      - action
+      - ref
     VariantInput:
       type: object
       properties:
@@ -8952,6 +9014,7 @@ components:
         category_id:
           type: string
           format: uuid
+          description: Optional. If omitted, Dona AI assigns a category; until then the product has no category.
         brand:
           type: string
         seller_sku:
@@ -9002,7 +9065,6 @@ components:
           description: Ask to publish after create; a pending shop's product is held until documents approval.
       required:
       - title
-      - category_id
       - seller_sku
       - price_uzs
       - stock
