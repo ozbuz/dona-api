@@ -2230,6 +2230,8 @@ export interface components {
             } | null;
             /** @description Open `listing_issues` + `product_violations`. */
             open_issues: number;
+            /** @description «Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26). */
+            removed_by_dona?: components["schemas"]["DonaRemoval"] | null;
             /** @description Opaque (today the full-precision `updated_at`); echo verbatim. */
             version: string;
             /**
@@ -2242,6 +2244,35 @@ export interface components {
              * @description ISO 8601 with offset (Tashkent `+05:00` on output).
              */
             updated_at: string;
+        };
+        /** @description Why Dona keeps a product off sale and what clears it (OZB architecture/DB/catalog/removed-by-dona-marker.md). Tolerate new values in every enum-like field. */
+        DonaRemoval: {
+            /** @description `moderation_ban` · `ip_notice` · `staff_delist` · `staff_hide` · `ai_review`. */
+            source: string;
+            /** @description `dona_team` · `dona_ai`. */
+            by: string;
+            /** @description `prohibited_goods` · `unsafe_product` · `adult_content` · `violence_hate` · `misleading_listing` · `intellectual_property` · `duplicate_spam` · `other` · `shop_closing` · `listing_review`. */
+            reason_code: string;
+            reason: components["schemas"]["LocalizedText"];
+            title: components["schemas"]["LocalizedText"];
+            /** @description The Dona team's explanation to the seller (a ban, a staff removal); null otherwise. */
+            note: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 with offset (Tashkent `+05:00`); null when nothing recorded the start.
+             */
+            since: string | null;
+            /** @description The ban notice's state or the listing review's state; null otherwise. */
+            state: string | null;
+            /** @description `staff` · `seller`. */
+            clears_by: string;
+            /** @description `contact_support` · `dispute` · `wait` · `fix_review`. */
+            action: string;
+            /**
+             * Format: uuid
+             * @description The ban / review case / staff removal id; null for an IP notice.
+             */
+            ref: string | null;
         };
         VariantInput: {
             options: {
@@ -2258,8 +2289,11 @@ export interface components {
         ProductCreate: {
             title: components["schemas"]["LocalizedText"];
             description?: components["schemas"]["LocalizedText"];
-            /** Format: uuid */
-            category_id: string;
+            /**
+             * Format: uuid
+             * @description Optional. If omitted, Dona AI assigns a category; until then the product has no category.
+             */
+            category_id?: string;
             brand?: string;
             seller_sku: string;
             barcode?: string;

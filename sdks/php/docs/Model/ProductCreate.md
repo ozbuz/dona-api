@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **title** | [**\Dona\Api\Model\LocalizedText**](LocalizedText.md) |  |
 **description** | [**\Dona\Api\Model\LocalizedText**](LocalizedText.md) |  | [optional]
-**category_id** | **string** |  |
+**category_id** | **string** | Optional. If omitted, Dona AI assigns a category; until then the product has no category. | [optional]
 **brand** | **string** |  | [optional]
 **seller_sku** | **string** |  |
 **barcode** | **string** |  | [optional]

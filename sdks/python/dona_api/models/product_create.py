@@ -23,11 +23,12 @@ class ProductCreate:
     """
     Attributes:
         title (LocalizedText): `jsonb {uz,ru,en}`; readers fall back uz → ru → en.
-        category_id (UUID):
         seller_sku (str):
         price_uzs (int):
         stock (int):
         description (LocalizedText | Unset): `jsonb {uz,ru,en}`; readers fall back uz → ru → en.
+        category_id (UUID | Unset): Optional. If omitted, Dona AI assigns a category; until then the product has no
+            category.
         brand (str | Unset):
         barcode (str | Unset):
         external_id (str | Unset): Your system's id, e.g. `1c:0f2a…`.
@@ -42,11 +43,11 @@ class ProductCreate:
     """
 
     title: LocalizedText
-    category_id: UUID
     seller_sku: str
     price_uzs: int
     stock: int
     description: LocalizedText | Unset = UNSET
+    category_id: UUID | Unset = UNSET
     brand: str | Unset = UNSET
     barcode: str | Unset = UNSET
     external_id: str | Unset = UNSET
@@ -63,8 +64,6 @@ class ProductCreate:
     def to_dict(self) -> dict[str, Any]:
         title = self.title.to_dict()
 
-        category_id = str(self.category_id)
-
         seller_sku = self.seller_sku
 
         price_uzs = self.price_uzs
@@ -74,6 +73,10 @@ class ProductCreate:
         description: dict[str, Any] | Unset = UNSET
         if not isinstance(self.description, Unset):
             description = self.description.to_dict()
+
+        category_id: str | Unset = UNSET
+        if not isinstance(self.category_id, Unset):
+            category_id = str(self.category_id)
 
         brand = self.brand
 
@@ -115,7 +118,6 @@ class ProductCreate:
         field_dict.update(
             {
                 "title": title,
-                "category_id": category_id,
                 "seller_sku": seller_sku,
                 "price_uzs": price_uzs,
                 "stock": stock,
@@ -123,6 +125,8 @@ class ProductCreate:
         )
         if description is not UNSET:
             field_dict["description"] = description
+        if category_id is not UNSET:
+            field_dict["category_id"] = category_id
         if brand is not UNSET:
             field_dict["brand"] = brand
         if barcode is not UNSET:
@@ -157,8 +161,6 @@ class ProductCreate:
         d = dict(src_dict)
         title = LocalizedText.from_dict(d.pop("title"))
 
-        category_id = UUID(d.pop("category_id"))
-
         seller_sku = d.pop("seller_sku")
 
         price_uzs = d.pop("price_uzs")
@@ -171,6 +173,13 @@ class ProductCreate:
             description = UNSET
         else:
             description = LocalizedText.from_dict(_description)
+
+        _category_id = d.pop("category_id", UNSET)
+        category_id: UUID | Unset
+        if isinstance(_category_id, Unset):
+            category_id = UNSET
+        else:
+            category_id = UUID(_category_id)
 
         brand = d.pop("brand", UNSET)
 
@@ -215,11 +224,11 @@ class ProductCreate:
 
         product_create = cls(
             title=title,
-            category_id=category_id,
             seller_sku=seller_sku,
             price_uzs=price_uzs,
             stock=stock,
             description=description,
+            category_id=category_id,
             brand=brand,
             barcode=barcode,
             external_id=external_id,

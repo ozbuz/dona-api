@@ -1835,6 +1835,42 @@ type DeliveryPage struct {
 	NextCursor *string `json:"next_cursor"`
 }
 
+// DonaRemoval Why Dona keeps a product off sale and what clears it (OZB architecture/DB/catalog/removed-by-dona-marker.md). Tolerate new values in every enum-like field.
+type DonaRemoval struct {
+	// Action `contact_support` · `dispute` · `wait` · `fix_review`.
+	Action string `json:"action"`
+
+	// By `dona_team` · `dona_ai`.
+	By string `json:"by"`
+
+	// ClearsBy `staff` · `seller`.
+	ClearsBy string `json:"clears_by"`
+
+	// Note The Dona team's explanation to the seller (a ban, a staff removal); null otherwise.
+	Note *string `json:"note"`
+
+	// Reason `jsonb {uz,ru,en}`; readers fall back uz → ru → en.
+	Reason LocalizedText `json:"reason"`
+
+	// ReasonCode `prohibited_goods` · `unsafe_product` · `adult_content` · `violence_hate` · `misleading_listing` · `intellectual_property` · `duplicate_spam` · `other` · `shop_closing` · `listing_review`.
+	ReasonCode string `json:"reason_code"`
+
+	// Ref The ban / review case / staff removal id; null for an IP notice.
+	Ref *openapi_types.UUID `json:"ref"`
+
+	// Since ISO 8601 with offset (Tashkent `+05:00`); null when nothing recorded the start.
+	Since *time.Time `json:"since"`
+
+	// Source `moderation_ban` · `ip_notice` · `staff_delist` · `staff_hide` · `ai_review`.
+	Source string `json:"source"`
+
+	// State The ban notice's state or the listing review's state; null otherwise.
+	State *string `json:"state"`
+
+	// Title `jsonb {uz,ru,en}`; readers fall back uz → ru → en.
+	Title LocalizedText `json:"title"`
+}
+
 // Error The estate `{"error":"<code>"}` envelope (`internal/platform/web/respond.go` `WriteErrorWith`) plus the Dona API fields. Provider/DB detail never leaves; it goes to the redacted error copy.
 type Error struct {
 	// AcceptUrl On `403 agreement_required`: the portal page where the shop owner accepts Annex 2.
@@ -2651,8 +2687,11 @@ type Product struct {
 	PackageCode *string `json:"package_code"`
 
 	// PriceUzs Integer soʻm (no decimals).
-	PriceUzs  int64   `json:"price_uzs"`
-	SellerSku *string `json:"seller_sku"`
+	PriceUzs int64 `json:"price_uzs"`
+
+	// RemovedByDona «Dona tomonidan sotuvdan olindi» — set while Dona keeps the product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A seller pause, a sold-out or a draft is never marked. Additive (2026-10-26).
+	RemovedByDona *DonaRemoval `json:"removed_by_dona,omitempty"`
+	SellerSku     *string      `json:"seller_sku"`
 
 	// Status `draft`, `ai_review`, `active`, `hidden` today; tolerate new values.
 	Status string `json:"status"`
@@ -2674,11 +2713,13 @@ type Product struct {
 
 // ProductCreate defines model for ProductCreate.
 type ProductCreate struct {
-	Attributes   *map[string]interface{} `json:"attributes,omitempty"`
-	Barcode      *string                 `json:"barcode,omitempty"`
-	Brand        *string                 `json:"brand,omitempty"`
-	CategoryId   openapi_types.UUID      `json:"category_id"`
-	CompareAtUzs *int64                  `json:"compare_at_uzs,omitempty"`
+	Attributes *map[string]interface{} `json:"attributes,omitempty"`
+	Barcode    *string                 `json:"barcode,omitempty"`
+	Brand      *string                 `json:"brand,omitempty"`
+
+	// CategoryId Optional. If omitted, Dona AI assigns a category; until then the product has no category.
+	CategoryId   *openapi_types.UUID `json:"category_id,omitempty"`
+	CompareAtUzs *int64              `json:"compare_at_uzs,omitempty"`
 
 	// Description `jsonb {uz,ru,en}`; readers fall back uz → ru → en.
 	Description *LocalizedText `json:"description,omitempty"`

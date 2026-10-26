@@ -8,7 +8,10 @@ from uuid import UUID
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 if TYPE_CHECKING:
+    from ..models.dona_removal import DonaRemoval
     from ..models.localized_text import LocalizedText
     from ..models.product_attributes import ProductAttributes
     from ..models.product_hold_type_0 import ProductHoldType0
@@ -47,6 +50,9 @@ class Product:
         version (str): Opaque (today the full-precision `updated_at`); echo verbatim.
         created_at (datetime.datetime): ISO 8601 with offset (Tashkent `+05:00` on output).
         updated_at (datetime.datetime): ISO 8601 with offset (Tashkent `+05:00` on output).
+        removed_by_dona (DonaRemoval | None | Unset): «Dona tomonidan sotuvdan olindi» — set while Dona keeps the
+            product off sale (a moderation ban, an IP notice, a staff removal, an open listing review); null otherwise. A
+            seller pause, a sold-out or a draft is never marked. Additive (2026-10-26).
     """
 
     id: UUID
@@ -74,9 +80,11 @@ class Product:
     version: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    removed_by_dona: DonaRemoval | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.dona_removal import DonaRemoval  # noqa: PLC0415
         from ..models.localized_text import LocalizedText  # noqa: PLC0415
         from ..models.product_hold_type_0 import ProductHoldType0  # noqa: PLC0415
 
@@ -153,6 +161,14 @@ class Product:
 
         updated_at = self.updated_at.isoformat()
 
+        removed_by_dona: dict[str, Any] | None | Unset
+        if isinstance(self.removed_by_dona, Unset):
+            removed_by_dona = UNSET
+        elif isinstance(self.removed_by_dona, DonaRemoval):
+            removed_by_dona = self.removed_by_dona.to_dict()
+        else:
+            removed_by_dona = self.removed_by_dona
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -184,11 +200,14 @@ class Product:
                 "updated_at": updated_at,
             }
         )
+        if removed_by_dona is not UNSET:
+            field_dict["removed_by_dona"] = removed_by_dona
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.dona_removal import DonaRemoval  # noqa: PLC0415
         from ..models.localized_text import LocalizedText  # noqa: PLC0415
         from ..models.product_attributes import ProductAttributes  # noqa: PLC0415
         from ..models.product_hold_type_0 import ProductHoldType0  # noqa: PLC0415
@@ -329,6 +348,23 @@ class Product:
 
         updated_at = datetime.datetime.fromisoformat(d.pop("updated_at"))
 
+        def _parse_removed_by_dona(data: object) -> DonaRemoval | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                removed_by_dona_type_0 = DonaRemoval.from_dict(data)
+
+                return removed_by_dona_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(DonaRemoval | None | Unset, data)
+
+        removed_by_dona = _parse_removed_by_dona(d.pop("removed_by_dona", UNSET))
+
         product = cls(
             id=id,
             title=title,
@@ -355,6 +391,7 @@ class Product:
             version=version,
             created_at=created_at,
             updated_at=updated_at,
+            removed_by_dona=removed_by_dona,
         )
 
         product.additional_properties = d

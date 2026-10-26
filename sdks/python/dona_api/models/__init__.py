@@ -36,6 +36,7 @@ from .commission_root import CommissionRoot
 from .decline_request import DeclineRequest
 from .delivery import Delivery
 from .delivery_page import DeliveryPage
+from .dona_removal import DonaRemoval
 from .error import Error
 from .error_detail import ErrorDetail
 from .error_meta import ErrorMeta
@@ -182,6 +183,7 @@ __all__ = (
     "DeclineRequest",
     "Delivery",
     "DeliveryPage",
+    "DonaRemoval",
     "Error",
     "ErrorDetail",
     "ErrorMeta",
