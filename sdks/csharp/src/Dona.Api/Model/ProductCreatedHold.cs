@@ -32,21 +32,54 @@ namespace Dona.Api.Model
         /// <summary>
         /// Initializes a new instance of the <see cref="ProductCreatedHold" /> class.
         /// </summary>
-        /// <param name="reason">reason</param>
+        /// <param name="reason">&#x60;shop_not_activated&#x60; · a category requirement · &#x60;unfulfilled_order&#x60; (a fulfilment hold keeps it off sale: the write succeeded; release at &#x60;ack_url&#x60;).</param>
+        /// <param name="ackUrl">With &#x60;reason&#x3D;unfulfilled_order&#x60; only: the seller portal page that releases the product (&#x60;https://seller.dona.uz/products/{id}?release&#x3D;1&#x60;). The API never releases a fulfilment hold — the seller acknowledges in the portal or the app.</param>
+        /// <param name="since">With &#x60;reason&#x3D;unfulfilled_order&#x60; on a product read: when the fulfilment hold began (ISO 8601, Tashkent &#x60;+05:00&#x60;).</param>
         [JsonConstructor]
-        public ProductCreatedHold(string reason)
+        public ProductCreatedHold(string reason, Option<string?> ackUrl = default, Option<DateTimeOffset?> since = default)
         {
             Reason = reason;
+            AckUrlOption = ackUrl;
+            SinceOption = since;
             OnCreated();
         }
 
         partial void OnCreated();
 
         /// <summary>
-        /// Gets or Sets Reason
+        /// &#x60;shop_not_activated&#x60; · a category requirement · &#x60;unfulfilled_order&#x60; (a fulfilment hold keeps it off sale: the write succeeded; release at &#x60;ack_url&#x60;).
         /// </summary>
+        /// <value>&#x60;shop_not_activated&#x60; · a category requirement · &#x60;unfulfilled_order&#x60; (a fulfilment hold keeps it off sale: the write succeeded; release at &#x60;ack_url&#x60;).</value>
         [JsonPropertyName("reason")]
         public string Reason { get; set; }
+
+        /// <summary>
+        /// Used to track the state of AckUrl
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<string?> AckUrlOption { get; private set; }
+
+        /// <summary>
+        /// With &#x60;reason&#x3D;unfulfilled_order&#x60; only: the seller portal page that releases the product (&#x60;https://seller.dona.uz/products/{id}?release&#x3D;1&#x60;). The API never releases a fulfilment hold — the seller acknowledges in the portal or the app.
+        /// </summary>
+        /// <value>With &#x60;reason&#x3D;unfulfilled_order&#x60; only: the seller portal page that releases the product (&#x60;https://seller.dona.uz/products/{id}?release&#x3D;1&#x60;). The API never releases a fulfilment hold — the seller acknowledges in the portal or the app.</value>
+        [JsonPropertyName("ack_url")]
+        public string? AckUrl { get { return this.AckUrlOption.Value; } set { this.AckUrlOption = new(value); } }
+
+        /// <summary>
+        /// Used to track the state of Since
+        /// </summary>
+        [JsonIgnore]
+        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+        public Option<DateTimeOffset?> SinceOption { get; private set; }
+
+        /// <summary>
+        /// With &#x60;reason&#x3D;unfulfilled_order&#x60; on a product read: when the fulfilment hold began (ISO 8601, Tashkent &#x60;+05:00&#x60;).
+        /// </summary>
+        /// <value>With &#x60;reason&#x3D;unfulfilled_order&#x60; on a product read: when the fulfilment hold began (ISO 8601, Tashkent &#x60;+05:00&#x60;).</value>
+        [JsonPropertyName("since")]
+        public DateTimeOffset? Since { get { return this.SinceOption.Value; } set { this.SinceOption = new(value); } }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -57,6 +90,8 @@ namespace Dona.Api.Model
             StringBuilder sb = new StringBuilder();
             sb.Append("class ProductCreatedHold {\n");
             sb.Append("  Reason: ").Append(Reason).Append("\n");
+            sb.Append("  AckUrl: ").Append(AckUrl).Append("\n");
+            sb.Append("  Since: ").Append(Since).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -78,6 +113,11 @@ namespace Dona.Api.Model
         }
 
         /// <summary>
+        /// The format to use to serialize Since
+        /// </summary>
+        public string SinceFormat { get; private set; } = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffffffK";
+
+        /// <summary>
         /// Deserializes json to <see cref="ProductCreatedHold" />
         /// </summary>
         /// <param name="utf8JsonReader"></param>
@@ -95,6 +135,8 @@ namespace Dona.Api.Model
             JsonTokenType startingTokenType = utf8JsonReader.TokenType;
 
             Option<string?> reason = default;
+            Option<string?> ackUrl = default;
+            Option<DateTimeOffset?> since = default;
 
             while (utf8JsonReader.Read())
             {
@@ -114,6 +156,12 @@ namespace Dona.Api.Model
                         case "reason":
                             reason = new Option<string?>(utf8JsonReader.GetString()!);
                             break;
+                        case "ack_url":
+                            ackUrl = new Option<string?>(utf8JsonReader.GetString()!);
+                            break;
+                        case "since":
+                            since = new Option<DateTimeOffset?>(JsonSerializer.Deserialize<DateTimeOffset>(ref utf8JsonReader, jsonSerializerOptions));
+                            break;
                         default:
                             break;
                     }
@@ -126,7 +174,13 @@ namespace Dona.Api.Model
             if (reason.IsSet && reason.Value == null)
                 throw new ArgumentNullException(nameof(reason), "Property is not nullable for class ProductCreatedHold.");
 
-            return new ProductCreatedHold(reason.Value!);
+            if (ackUrl.IsSet && ackUrl.Value == null)
+                throw new ArgumentNullException(nameof(ackUrl), "Property is not nullable for class ProductCreatedHold.");
+
+            if (since.IsSet && since.Value == null)
+                throw new ArgumentNullException(nameof(since), "Property is not nullable for class ProductCreatedHold.");
+
+            return new ProductCreatedHold(reason.Value!, ackUrl, since);
         }
 
         /// <summary>
@@ -156,7 +210,16 @@ namespace Dona.Api.Model
             if (productCreatedHold.Reason == null)
                 throw new ArgumentNullException(nameof(productCreatedHold.Reason), "Property is required for class ProductCreatedHold.");
 
+            if (productCreatedHold.AckUrlOption.IsSet && productCreatedHold.AckUrl == null)
+                throw new ArgumentNullException(nameof(productCreatedHold.AckUrl), "Property is required for class ProductCreatedHold.");
+
             writer.WriteString("reason", productCreatedHold.Reason);
+
+            if (productCreatedHold.AckUrlOption.IsSet)
+                writer.WriteString("ack_url", productCreatedHold.AckUrl);
+
+            if (productCreatedHold.SinceOption.IsSet)
+                writer.WriteString("since", productCreatedHold.SinceOption.Value!.Value.ToString(SinceFormat));
         }
     }
 }

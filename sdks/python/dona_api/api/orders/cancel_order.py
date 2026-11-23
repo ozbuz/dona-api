@@ -145,13 +145,14 @@ def sync_detailed(
     (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller`
     timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
     — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
-    code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly
-    as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
+    code:"not_accepted"}]`: decline it) —, `order_has_active_return` and `reason_unverified` (a reason
+    that blames the buyer without its proof, as `decline`). Kill switch: `writes_enabled`. `503
+    role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as
+    `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
     `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a
     SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come
-    back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else
-    changes).
+    back). `buyer_requested` is accepted by both routes when the buyer asked in Dona chat after ordering
+    (else `409 reason_unverified`): the shop cancels (nothing else changes).
 
     Args:
         id (UUID):
@@ -209,13 +210,14 @@ def sync(
     (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller`
     timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
     — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
-    code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly
-    as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
+    code:"not_accepted"}]`: decline it) —, `order_has_active_return` and `reason_unverified` (a reason
+    that blames the buyer without its proof, as `decline`). Kill switch: `writes_enabled`. `503
+    role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as
+    `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
     `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a
     SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come
-    back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else
-    changes).
+    back). `buyer_requested` is accepted by both routes when the buyer asked in Dona chat after ordering
+    (else `409 reason_unverified`): the shop cancels (nothing else changes).
 
     Args:
         id (UUID):
@@ -268,13 +270,14 @@ async def asyncio_detailed(
     (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller`
     timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
     — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
-    code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly
-    as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
+    code:"not_accepted"}]`: decline it) —, `order_has_active_return` and `reason_unverified` (a reason
+    that blames the buyer without its proof, as `decline`). Kill switch: `writes_enabled`. `503
+    role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as
+    `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
     `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a
     SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come
-    back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else
-    changes).
+    back). `buyer_requested` is accepted by both routes when the buyer asked in Dona chat after ordering
+    (else `409 reason_unverified`): the shop cancels (nothing else changes).
 
     Args:
         id (UUID):
@@ -330,13 +333,14 @@ async def asyncio(
     (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller`
     timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable`
     — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status",
-    code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`.
-    `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly
-    as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
+    code:"not_accepted"}]`: decline it) —, `order_has_active_return` and `reason_unverified` (a reason
+    that blames the buyer without its proof, as `decline`). Kill switch: `writes_enabled`. `503
+    role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as
+    `decline` — the same reasons, the same 24-hour stock effect where Dona applies it,
     `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a
     SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come
-    back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else
-    changes).
+    back). `buyer_requested` is accepted by both routes when the buyer asked in Dona chat after ordering
+    (else `409 reason_unverified`): the shop cancels (nothing else changes).
 
     Args:
         id (UUID):

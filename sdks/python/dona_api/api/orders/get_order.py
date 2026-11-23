@@ -126,7 +126,9 @@ def sync_detailed(
     `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door
     would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7)
     the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld:
-    <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
+    <tier_required|pii_third_party_pending_counsel|…>` says why (C59). `recipient.phone` is always null
+    and the answer carries `Dona-API-Warn: recipient phone withheld`: the buyer's phone is never shared
+    with a seller.
 
     Args:
         id (UUID):
@@ -171,7 +173,9 @@ def sync(
     `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door
     would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7)
     the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld:
-    <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
+    <tier_required|pii_third_party_pending_counsel|…>` says why (C59). `recipient.phone` is always null
+    and the answer carries `Dona-API-Warn: recipient phone withheld`: the buyer's phone is never shared
+    with a seller.
 
     Args:
         id (UUID):
@@ -211,7 +215,9 @@ async def asyncio_detailed(
     `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door
     would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7)
     the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld:
-    <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
+    <tier_required|pii_third_party_pending_counsel|…>` says why (C59). `recipient.phone` is always null
+    and the answer carries `Dona-API-Warn: recipient phone withheld`: the buyer's phone is never shared
+    with a seller.
 
     Args:
         id (UUID):
@@ -254,7 +260,9 @@ async def asyncio(
     `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door
     would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7)
     the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld:
-    <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
+    <tier_required|pii_third_party_pending_counsel|…>` says why (C59). `recipient.phone` is always null
+    and the answer carries `Dona-API-Warn: recipient phone withheld`: the buyer's phone is never shared
+    with a seller.
 
     Args:
         id (UUID):

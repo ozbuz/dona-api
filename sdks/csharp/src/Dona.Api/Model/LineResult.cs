@@ -43,7 +43,7 @@ namespace Dona.Api.Model
         /// <param name="priceUzs">priceUzs</param>
         /// <param name="compareAtUzs">compareAtUzs</param>
         /// <param name="varVersion">New version after an &#x60;ok&#x60; line.</param>
-        /// <param name="error">On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;invalid_body&#x60;, …</param>
+        /// <param name="error">On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;variant_inactive&#x60; (the line names — by &#x60;variant_id&#x60;, or by a sku no on-sale variation carries — a variation made inactive because it has orders: nothing is written; put it back on sale in the Dona app or on seller.dona.uz, or — the product has no variations any more — send the product&#39;s own SKU or &#x60;product_id&#x60;), &#x60;invalid_body&#x60;, …</param>
         /// <param name="message">message</param>
         /// <param name="retryAfterSeconds">On &#x60;object_cooldown&#x60;.</param>
         /// <param name="lockedUntil">On &#x60;error: stock_locked&#x60; — the product (or variation) was declared out of stock on an order and its stock cannot be raised until this instant (RFC 3339, UTC, rounded UP to the whole second — never early). The other lines are unaffected.</param>
@@ -213,9 +213,9 @@ namespace Dona.Api.Model
         public Option<string?> ErrorOption { get; private set; }
 
         /// <summary>
-        /// On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;invalid_body&#x60;, …
+        /// On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;variant_inactive&#x60; (the line names — by &#x60;variant_id&#x60;, or by a sku no on-sale variation carries — a variation made inactive because it has orders: nothing is written; put it back on sale in the Dona app or on seller.dona.uz, or — the product has no variations any more — send the product&#39;s own SKU or &#x60;product_id&#x60;), &#x60;invalid_body&#x60;, …
         /// </summary>
-        /// <value>On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;invalid_body&#x60;, …</value>
+        /// <value>On &#x60;status&#x3D;error&#x60;: &#x60;version_conflict&#x60;, &#x60;object_cooldown&#x60;, &#x60;not_found&#x60;, &#x60;stock_not_editable&#x60;, &#x60;stock_locked&#x60; (+ &#x60;locked_until&#x60;), &#x60;variant_inactive&#x60; (the line names — by &#x60;variant_id&#x60;, or by a sku no on-sale variation carries — a variation made inactive because it has orders: nothing is written; put it back on sale in the Dona app or on seller.dona.uz, or — the product has no variations any more — send the product&#39;s own SKU or &#x60;product_id&#x60;), &#x60;invalid_body&#x60;, …</value>
         [JsonPropertyName("error")]
         public string? Error { get { return this.ErrorOption.Value; } set { this.ErrorOption = new(value); } }
 

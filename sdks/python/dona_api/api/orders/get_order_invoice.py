@@ -105,10 +105,11 @@ def sync_detailed(
     """Invoice (PDF, contains PII)
 
      The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one
-    loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than
-    the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer
-    who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block
-    name (Form A Q12 states both).
+    loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ Like the portal's
+    invoice it names the PURCHASER (the buyer who is invoiced), never their phone — on a gift order that
+    is not the recipient the label and the `recipient` block name (Form A Q12 states both). An order
+    that sold nothing — fully cancelled, or every unit returned — has no invoice: `409 nothing_sold`
+    (the order exists and is the shop's; there is no sale to invoice).
 
     Args:
         id (UUID):
@@ -150,10 +151,11 @@ def sync(
     """Invoice (PDF, contains PII)
 
      The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one
-    loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than
-    the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer
-    who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block
-    name (Form A Q12 states both).
+    loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ Like the portal's
+    invoice it names the PURCHASER (the buyer who is invoiced), never their phone — on a gift order that
+    is not the recipient the label and the `recipient` block name (Form A Q12 states both). An order
+    that sold nothing — fully cancelled, or every unit returned — has no invoice: `409 nothing_sold`
+    (the order exists and is the shop's; there is no sale to invoice).
 
     Args:
         id (UUID):
@@ -190,10 +192,11 @@ async def asyncio_detailed(
     """Invoice (PDF, contains PII)
 
      The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one
-    loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than
-    the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer
-    who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block
-    name (Form A Q12 states both).
+    loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ Like the portal's
+    invoice it names the PURCHASER (the buyer who is invoiced), never their phone — on a gift order that
+    is not the recipient the label and the `recipient` block name (Form A Q12 states both). An order
+    that sold nothing — fully cancelled, or every unit returned — has no invoice: `409 nothing_sold`
+    (the order exists and is the shop's; there is no sale to invoice).
 
     Args:
         id (UUID):
@@ -233,10 +236,11 @@ async def asyncio(
     """Invoice (PDF, contains PII)
 
      The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one
-    loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than
-    the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer
-    who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block
-    name (Form A Q12 states both).
+    loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ Like the portal's
+    invoice it names the PURCHASER (the buyer who is invoiced), never their phone — on a gift order that
+    is not the recipient the label and the `recipient` block name (Form A Q12 states both). An order
+    that sold nothing — fully cancelled, or every unit returned — has no invoice: `409 nothing_sold`
+    (the order exists and is the shop's; there is no sale to invoice).
 
     Args:
         id (UUID):

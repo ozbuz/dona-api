@@ -42,7 +42,7 @@ namespace Dona.Api.Api
         /// Stock, SKU-level
         /// </summary>
         /// <remarks>
-        /// One row per product without variants, one per variant otherwise. &#x60;cursor&#x60; or 0-based &#x60;page&#x60; (slower).
+        /// One row per product without variants, one per variant otherwise. A variation made inactive because it has orders is not listed (a write to it is refused &#x60;variant_inactive&#x60;); &#x60;GET /products&#x60; still shows it with its &#x60;status&#x60;. &#x60;cursor&#x60; or 0-based &#x60;page&#x60; (slower).
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
@@ -62,7 +62,7 @@ namespace Dona.Api.Api
         /// Stock, SKU-level
         /// </summary>
         /// <remarks>
-        /// One row per product without variants, one per variant otherwise. &#x60;cursor&#x60; or 0-based &#x60;page&#x60; (slower).
+        /// One row per product without variants, one per variant otherwise. A variation made inactive because it has orders is not listed (a write to it is refused &#x60;variant_inactive&#x60;); &#x60;GET /products&#x60; still shows it with its &#x60;status&#x60;. &#x60;cursor&#x60; or 0-based &#x60;page&#x60; (slower).
         /// </remarks>
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="page">0-based page alias (Uzum parity) — slower than &#x60;cursor&#x60;, ≤ 1 000 pages; mutually exclusive with &#x60;cursor&#x60;. (optional)</param>
@@ -569,7 +569,7 @@ namespace Dona.Api.Api
         partial void OnErrorListStock(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> cursor, Option<int> page, Option<int> limit, Option<string> updatedSince, Option<string> sellerSku, Option<string> ifNoneMatch, Option<string> acceptLanguage, Option<Guid> donaSeller, Option<string> xDonaIntegration);
 
         /// <summary>
-        /// Stock, SKU-level One row per product without variants, one per variant otherwise. &#x60;cursor&#x60; or 0-based &#x60;page&#x60; (slower).
+        /// Stock, SKU-level One row per product without variants, one per variant otherwise. A variation made inactive because it has orders is not listed (a write to it is refused &#x60;variant_inactive&#x60;); &#x60;GET /products&#x60; still shows it with its &#x60;status&#x60;. &#x60;cursor&#x60; or 0-based &#x60;page&#x60; (slower).
         /// </summary>
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>
         /// <param name="page">0-based page alias (Uzum parity) — slower than &#x60;cursor&#x60;, ≤ 1 000 pages; mutually exclusive with &#x60;cursor&#x60;. (optional)</param>
@@ -595,7 +595,7 @@ namespace Dona.Api.Api
         }
 
         /// <summary>
-        /// Stock, SKU-level One row per product without variants, one per variant otherwise. &#x60;cursor&#x60; or 0-based &#x60;page&#x60; (slower).
+        /// Stock, SKU-level One row per product without variants, one per variant otherwise. A variation made inactive because it has orders is not listed (a write to it is refused &#x60;variant_inactive&#x60;); &#x60;GET /products&#x60; still shows it with its &#x60;status&#x60;. &#x60;cursor&#x60; or 0-based &#x60;page&#x60; (slower).
         /// </summary>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="cursor">Opaque keyset cursor from &#x60;next_cursor&#x60;. (optional)</param>

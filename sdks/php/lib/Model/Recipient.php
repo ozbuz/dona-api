@@ -82,7 +82,7 @@ class Recipient implements ModelInterface, ArrayAccess, \JsonSerializable
      */
     protected static array $openAPINullables = [
         'name' => false,
-        'phone' => false,
+        'phone' => true,
         'address' => false
     ];
 
@@ -291,8 +291,8 @@ class Recipient implements ModelInterface, ArrayAccess, \JsonSerializable
         if ($this->container['name'] === null) {
             $invalidProperties[] = "'name' can't be null";
         }
-        if ($this->container['phone'] === null) {
-            $invalidProperties[] = "'phone' can't be null";
+        if ($this->container['phone'] === null && !$this->isNullableSetToNull('phone')) {
+            $invalidProperties[] = "'phone' is required";
         }
         if ($this->container['address'] === null) {
             $invalidProperties[] = "'address' can't be null";
@@ -342,7 +342,7 @@ class Recipient implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Gets phone
      *
-     * @return string
+     * @return string|null
      */
     public function getPhone()
     {
@@ -352,14 +352,21 @@ class Recipient implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets phone
      *
-     * @param string $phone E.164
+     * @param string|null $phone Always null: the buyer's phone is never shared with a seller. Kept so integrations reading the key do not break.
      *
      * @return self
      */
     public function setPhone($phone)
     {
         if (is_null($phone)) {
-            throw new \InvalidArgumentException('non-nullable phone cannot be null');
+            array_push($this->openAPINullablesSetToNull, 'phone');
+        } else {
+            $nullablesSetToNull = $this->getOpenAPINullablesSetToNull();
+            $index = array_search('phone', $nullablesSetToNull);
+            if ($index !== FALSE) {
+                unset($nullablesSetToNull[$index]);
+                $this->setOpenAPINullablesSetToNull($nullablesSetToNull);
+            }
         }
         $this->container['phone'] = $phone;
 

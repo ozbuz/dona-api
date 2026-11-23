@@ -725,7 +725,7 @@ class LineResult implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets error
      *
-     * @param string|null $error On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `stock_locked` (+ `locked_until`), `invalid_body`, …
+     * @param string|null $error On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `stock_locked` (+ `locked_until`), `variant_inactive` (the line names — by `variant_id`, or by a sku no on-sale variation carries — a variation made inactive because it has orders: nothing is written; put it back on sale in the Dona app or on seller.dona.uz, or — the product has no variations any more — send the product's own SKU or `product_id`), `invalid_body`, …
      *
      * @return self
      */
