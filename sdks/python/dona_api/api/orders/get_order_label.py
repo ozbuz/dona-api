@@ -104,15 +104,16 @@ def sync_detailed(
 ) -> Response[Error | str]:
     """Shipping label (PDF, contains PII)
 
-     The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only
-    (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`);
-    ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` +
-    `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled,
-    never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+
-    `orders`: the order codes without a carrier number yet — print later), `no_items_selected`,
-    `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at
-    once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any
-    read, and a batch is not charged.
+     The portal's sticker for one order: prints the buyer's name and address, never the phone. `sk` keys
+    only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` +
+    `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a
+    THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient:
+    pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never
+    stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order
+    codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing
+    left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429
+    api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not
+    charged.
 
     Args:
         id (UUID):
@@ -153,15 +154,16 @@ def sync(
 ) -> Error | str | None:
     """Shipping label (PDF, contains PII)
 
-     The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only
-    (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`);
-    ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` +
-    `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled,
-    never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+
-    `orders`: the order codes without a carrier number yet — print later), `no_items_selected`,
-    `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at
-    once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any
-    read, and a batch is not charged.
+     The portal's sticker for one order: prints the buyer's name and address, never the phone. `sk` keys
+    only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` +
+    `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a
+    THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient:
+    pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never
+    stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order
+    codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing
+    left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429
+    api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not
+    charged.
 
     Args:
         id (UUID):
@@ -197,15 +199,16 @@ async def asyncio_detailed(
 ) -> Response[Error | str]:
     """Shipping label (PDF, contains PII)
 
-     The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only
-    (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`);
-    ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` +
-    `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled,
-    never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+
-    `orders`: the order codes without a carrier number yet — print later), `no_items_selected`,
-    `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at
-    once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any
-    read, and a batch is not charged.
+     The portal's sticker for one order: prints the buyer's name and address, never the phone. `sk` keys
+    only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` +
+    `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a
+    THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient:
+    pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never
+    stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order
+    codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing
+    left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429
+    api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not
+    charged.
 
     Args:
         id (UUID):
@@ -244,15 +247,16 @@ async def asyncio(
 ) -> Error | str | None:
     """Shipping label (PDF, contains PII)
 
-     The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only
-    (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`);
-    ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` +
-    `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled,
-    never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+
-    `orders`: the order codes without a carrier number yet — print later), `no_items_selected`,
-    `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at
-    once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any
-    read, and a batch is not charged.
+     The portal's sticker for one order: prints the buyer's name and address, never the phone. `sk` keys
+    only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` +
+    `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a
+    THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient:
+    pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never
+    stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order
+    codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing
+    left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429
+    api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not
+    charged.
 
     Args:
         id (UUID):

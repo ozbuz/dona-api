@@ -134,8 +134,9 @@ def sync_detailed(
 ) -> Response[Any | Error | StockLineViewPage]:
     """Stock, SKU-level
 
-     One row per product without variants, one per variant otherwise. `cursor` or 0-based `page`
-    (slower).
+     One row per product without variants, one per variant otherwise. A variation made inactive because
+    it has orders is not listed (a write to it is refused `variant_inactive`); `GET /products` still
+    shows it with its `status`. `cursor` or 0-based `page` (slower).
 
     Args:
         cursor (str | Unset):
@@ -191,8 +192,9 @@ def sync(
 ) -> Any | Error | StockLineViewPage | None:
     """Stock, SKU-level
 
-     One row per product without variants, one per variant otherwise. `cursor` or 0-based `page`
-    (slower).
+     One row per product without variants, one per variant otherwise. A variation made inactive because
+    it has orders is not listed (a write to it is refused `variant_inactive`); `GET /products` still
+    shows it with its `status`. `cursor` or 0-based `page` (slower).
 
     Args:
         cursor (str | Unset):
@@ -243,8 +245,9 @@ async def asyncio_detailed(
 ) -> Response[Any | Error | StockLineViewPage]:
     """Stock, SKU-level
 
-     One row per product without variants, one per variant otherwise. `cursor` or 0-based `page`
-    (slower).
+     One row per product without variants, one per variant otherwise. A variation made inactive because
+    it has orders is not listed (a write to it is refused `variant_inactive`); `GET /products` still
+    shows it with its `status`. `cursor` or 0-based `page` (slower).
 
     Args:
         cursor (str | Unset):
@@ -298,8 +301,9 @@ async def asyncio(
 ) -> Any | Error | StockLineViewPage | None:
     """Stock, SKU-level
 
-     One row per product without variants, one per variant otherwise. `cursor` or 0-based `page`
-    (slower).
+     One row per product without variants, one per variant otherwise. A variation made inactive because
+    it has orders is not listed (a write to it is refused `variant_inactive`); `GET /products` still
+    shows it with its `status`. `cursor` or 0-based `page` (slower).
 
     Args:
         cursor (str | Unset):

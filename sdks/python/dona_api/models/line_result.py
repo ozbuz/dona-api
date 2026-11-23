@@ -30,7 +30,10 @@ class LineResult:
         compare_at_uzs (int | None | Unset):
         version (str | Unset): New version after an `ok` line.
         error (str | Unset): On `status=error`: `version_conflict`, `object_cooldown`, `not_found`,
-            `stock_not_editable`, `stock_locked` (+ `locked_until`), `invalid_body`, …
+            `stock_not_editable`, `stock_locked` (+ `locked_until`), `variant_inactive` (the line names — by `variant_id`,
+            or by a sku no on-sale variation carries — a variation made inactive because it has orders: nothing is written;
+            put it back on sale in the Dona app or on seller.dona.uz, or — the product has no variations any more — send the
+            product's own SKU or `product_id`), `invalid_body`, …
         message (str | Unset):
         retry_after_seconds (int | Unset): On `object_cooldown`.
         locked_until (datetime.datetime | Unset): On `error: stock_locked` — the product (or variation) was declared out

@@ -57,7 +57,9 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var string[]
      */
     protected static $openAPITypes = [
-        'reason' => 'string'
+        'reason' => 'string',
+        'ack_url' => 'string',
+        'since' => '\DateTime'
     ];
 
     /**
@@ -68,7 +70,9 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
      * @psalm-var array<string, string|null>
      */
     protected static $openAPIFormats = [
-        'reason' => null
+        'reason' => null,
+        'ack_url' => 'uri',
+        'since' => 'date-time'
     ];
 
     /**
@@ -77,7 +81,9 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var boolean[]
      */
     protected static array $openAPINullables = [
-        'reason' => false
+        'reason' => false,
+        'ack_url' => false,
+        'since' => false
     ];
 
     /**
@@ -166,7 +172,9 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var string[]
      */
     protected static $attributeMap = [
-        'reason' => 'reason'
+        'reason' => 'reason',
+        'ack_url' => 'ack_url',
+        'since' => 'since'
     ];
 
     /**
@@ -175,7 +183,9 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var string[]
      */
     protected static $setters = [
-        'reason' => 'setReason'
+        'reason' => 'setReason',
+        'ack_url' => 'setAckUrl',
+        'since' => 'setSince'
     ];
 
     /**
@@ -184,7 +194,9 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
      * @var string[]
      */
     protected static $getters = [
-        'reason' => 'getReason'
+        'reason' => 'getReason',
+        'ack_url' => 'getAckUrl',
+        'since' => 'getSince'
     ];
 
     /**
@@ -245,6 +257,8 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
     public function __construct(?array $data = null)
     {
         $this->setIfExists('reason', $data ?? [], null);
+        $this->setIfExists('ack_url', $data ?? [], null);
+        $this->setIfExists('since', $data ?? [], null);
     }
 
     /**
@@ -305,7 +319,7 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
     /**
      * Sets reason
      *
-     * @param string $reason `shop_not_activated` — a pending shop's publish waits in `product_shop_holds`.
+     * @param string $reason `shop_not_activated` — a pending shop's publish waits in `product_shop_holds`. `unfulfilled_order` — an order the shop did not fulfil took the product off sale (fulfilment holds); it stays off sale whatever its status until the seller re-enables it at `ack_url`.
      *
      * @return self
      */
@@ -315,6 +329,60 @@ class ProductHold implements ModelInterface, ArrayAccess, \JsonSerializable
             throw new \InvalidArgumentException('non-nullable reason cannot be null');
         }
         $this->container['reason'] = $reason;
+
+        return $this;
+    }
+
+    /**
+     * Gets ack_url
+     *
+     * @return string|null
+     */
+    public function getAckUrl()
+    {
+        return $this->container['ack_url'];
+    }
+
+    /**
+     * Sets ack_url
+     *
+     * @param string|null $ack_url With `reason=unfulfilled_order` only: the seller portal page that releases the product (`https://seller.dona.uz/products/{id}?release=1`). The API never releases a fulfilment hold — the seller acknowledges in the portal or the app.
+     *
+     * @return self
+     */
+    public function setAckUrl($ack_url)
+    {
+        if (is_null($ack_url)) {
+            throw new \InvalidArgumentException('non-nullable ack_url cannot be null');
+        }
+        $this->container['ack_url'] = $ack_url;
+
+        return $this;
+    }
+
+    /**
+     * Gets since
+     *
+     * @return \DateTime|null
+     */
+    public function getSince()
+    {
+        return $this->container['since'];
+    }
+
+    /**
+     * Sets since
+     *
+     * @param \DateTime|null $since With `reason=unfulfilled_order` on a product read: when the fulfilment hold began (ISO 8601, Tashkent `+05:00`).
+     *
+     * @return self
+     */
+    public function setSince($since)
+    {
+        if (is_null($since)) {
+            throw new \InvalidArgumentException('non-nullable since cannot be null');
+        }
+        $this->container['since'] = $since;
 
         return $this;
     }

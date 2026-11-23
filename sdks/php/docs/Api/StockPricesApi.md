@@ -19,7 +19,7 @@ listStock($cursor, $page, $limit, $updated_since, $seller_sku, $if_none_match, $
 
 Stock, SKU-level
 
-One row per product without variants, one per variant otherwise. `cursor` or 0-based `page` (slower).
+One row per product without variants, one per variant otherwise. A variation made inactive because it has orders is not listed (a write to it is refused `variant_inactive`); `GET /products` still shows it with its `status`. `cursor` or 0-based `page` (slower).
 
 ### Example
 

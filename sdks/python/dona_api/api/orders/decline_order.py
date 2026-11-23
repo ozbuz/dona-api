@@ -147,20 +147,24 @@ def sync_detailed(
     `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is
     `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without
     words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it
-    `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒
-    `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-
-    api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
-    the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona
-    applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries
-    `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the
-    units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same
-    transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409
-    stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids`
-    names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE
-    live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and
-    `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop,
-    or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400
-    `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
+    `order_not_decidable`; cancel an accepted one), `order_has_active_return`, `reason_unverified` (a
+    reason that blames the buyer, without its proof — `duplicate_order` needs another live order of the
+    same buyer at this shop with the same product and variation within 72 h, `buyer_requested` needs a
+    message the buyer typed to the shop in Dona chat after ordering; `details[{field:"reason",
+    code:"twin_order"|"buyer_message"}]`, nothing changes). Another shop's order ⇒ `404`. Kill switch:
+    `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers
+    `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body
+    and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-
+    stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the
+    reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the
+    unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the
+    money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` +
+    `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on
+    an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none.
+    The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add
+    `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the
+    stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`,
+    400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 
     Args:
         id (UUID):
@@ -220,20 +224,24 @@ def sync(
     `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is
     `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without
     words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it
-    `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒
-    `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-
-    api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
-    the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona
-    applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries
-    `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the
-    units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same
-    transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409
-    stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids`
-    names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE
-    live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and
-    `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop,
-    or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400
-    `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
+    `order_not_decidable`; cancel an accepted one), `order_has_active_return`, `reason_unverified` (a
+    reason that blames the buyer, without its proof — `duplicate_order` needs another live order of the
+    same buyer at this shop with the same product and variation within 72 h, `buyer_requested` needs a
+    message the buyer typed to the shop in Dona chat after ordering; `details[{field:"reason",
+    code:"twin_order"|"buyer_message"}]`, nothing changes). Another shop's order ⇒ `404`. Kill switch:
+    `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers
+    `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body
+    and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-
+    stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the
+    reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the
+    unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the
+    money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` +
+    `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on
+    an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none.
+    The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add
+    `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the
+    stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`,
+    400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 
     Args:
         id (UUID):
@@ -288,20 +296,24 @@ async def asyncio_detailed(
     `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is
     `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without
     words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it
-    `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒
-    `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-
-    api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
-    the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona
-    applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries
-    `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the
-    units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same
-    transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409
-    stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids`
-    names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE
-    live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and
-    `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop,
-    or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400
-    `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
+    `order_not_decidable`; cancel an accepted one), `order_has_active_return`, `reason_unverified` (a
+    reason that blames the buyer, without its proof — `duplicate_order` needs another live order of the
+    same buyer at this shop with the same product and variation within 72 h, `buyer_requested` needs a
+    message the buyer typed to the shop in Dona chat after ordering; `details[{field:"reason",
+    code:"twin_order"|"buyer_message"}]`, nothing changes). Another shop's order ⇒ `404`. Kill switch:
+    `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers
+    `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body
+    and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-
+    stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the
+    reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the
+    unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the
+    money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` +
+    `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on
+    an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none.
+    The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add
+    `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the
+    stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`,
+    400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 
     Args:
         id (UUID):
@@ -359,20 +371,24 @@ async def asyncio(
     `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is
     `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without
     words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it
-    `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒
-    `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-
-    api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag,
-    the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona
-    applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries
-    `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the
-    units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same
-    transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409
-    stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids`
-    names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE
-    live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and
-    `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop,
-    or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400
-    `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
+    `order_not_decidable`; cancel an accepted one), `order_has_active_return`, `reason_unverified` (a
+    reason that blames the buyer, without its proof — `duplicate_order` needs another live order of the
+    same buyer at this shop with the same product and variation within 72 h, `buyer_requested` needs a
+    message the buyer typed to the shop in Dona chat after ordering; `details[{field:"reason",
+    code:"twin_order"|"buyer_message"}]`, nothing changes). Another shop's order ⇒ `404`. Kill switch:
+    `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers
+    `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body
+    and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-
+    stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the
+    reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the
+    unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the
+    money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` +
+    `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on
+    an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none.
+    The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add
+    `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the
+    stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`,
+    400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
 
     Args:
         id (UUID):

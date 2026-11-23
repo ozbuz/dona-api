@@ -222,7 +222,7 @@ export interface paths {
         };
         /**
          * Stock, SKU-level
-         * @description One row per product without variants, one per variant otherwise. `cursor` or 0-based `page` (slower).
+         * @description One row per product without variants, one per variant otherwise. A variation made inactive because it has orders is not listed (a write to it is refused `variant_inactive`); `GET /products` still shows it with its `status`. `cursor` or 0-based `page` (slower).
          */
         get: operations["listStock"];
         put?: never;
@@ -286,7 +286,7 @@ export interface paths {
         };
         /**
          * Get an order (PII only with orders:pii)
-         * @description `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7) the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld: <tier_required|pii_third_party_pending_counsel|…>` says why (C59).
+         * @description `orders:read` ⇒ `Order`. A key that ALSO holds `orders:pii` (ADVANCED, `sk` only, S4) gets `OrderWithPii` (adds `recipient`) and the call is logged `pii=true`. When the `orders:pii` door would refuse this request (the shop is not ADVANCED now, or the key's recipient is third-party — D7) the ORDER is still answered, without `recipient`, and `Dona-API-Warn: recipient withheld: <tier_required|pii_third_party_pending_counsel|…>` says why (C59). `recipient.phone` is always null and the answer carries `Dona-API-Warn: recipient phone withheld`: the buyer's phone is never shared with a seller.
          */
         get: operations["getOrder"];
         put?: never;
@@ -428,7 +428,7 @@ export interface paths {
         put?: never;
         /**
          * Decline (before acceptance) — money-reversing
-         * @description An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`. Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
+         * @description An order NOT YET ACCEPTED. The portal decline's own body (`order.DeclineOrderInTx`) on the marketplace pool, in the write pipeline (stamped transaction, wallet-cutover fence): restock, the buyer's kiwi/vouchers/delivery money back, the `declined`/`seller` timeline row; the card refund at the provider and the buyer notice run after the commit (never on a dry run). The reason is stored in `decline_reason_code`. ADVANCED, derived on THIS request (a documents-waived or downgraded shop is `403 tier_required`). 400 `invalid_decline_reason` (`details[comment: required]` for `other` without words); 409 `order_not_acceptable` (an accepted or closed order — the portal names it `order_not_decidable`; cancel an accepted one), `order_has_active_return`, `reason_unverified` (a reason that blames the buyer, without its proof — `duplicate_order` needs another live order of the same buyer at this shop with the same product and variation within 72 h, `buyer_requested` needs a message the buyer typed to the shop in Dona chat after ordering; `details[{field:"reason", code:"twin_order"|"buyer_message"}]`, nothing changes). Another shop's order ⇒ `404`. Kill switch: `writes_enabled`. Served by the marketplace process only: a SERVER_ROLE=seller-api server answers `503 role_unavailable` (after the key, scope and tier; before the dry-run flag, the switch, the body and the idempotency claim — nothing changes; D3). **Out of stock.** Where Dona applies its out-of-stock rule to the shop (announced in the changelog; the answer then carries `stock_effects`), the reasons `out_of_stock`, `inventory_mismatch` and `OUT_OF_STOCK` do not put the units back: the unavailable product — or its one variation — goes to stock 0 at once, in the same transaction as the money, and cannot be put back on sale for 24 hours (a stock raise is `409 stock_locked` + `locked_until`; a person at Dona can lift the lock early). `unavailable_item_ids` names the lines on an order with several (`items[].id` of `GET /orders/{id}`); an order with ONE live line needs none. The answer then adds `refund_uzs`, `stock_effects`, `marking_needed` and `other_open_orders` — add `?dry_run=true` to see them without changing anything. For any other shop, or any other reason, the stock goes back on the shelf as before and the answer is unchanged. 400 `invalid_unavailable_items`, 400 `unavailable_items_required`, 400 `unavailable_items_not_allowed`.
          */
         post: operations["declineOrder"];
         delete?: never;
@@ -448,7 +448,7 @@ export interface paths {
         put?: never;
         /**
          * Cancel (after acceptance) — money-reversing
-         * @description An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) — and `order_has_active_return`. Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes: the buyer asked, the shop cancels (nothing else changes).
+         * @description An ACCEPTED order: the portal seller-cancel's own statements (`order.SellerCancelOrderTx`) — same reasons (C15) and money effects as `decline`. The reason is stored in the order's `cancel_reason` (with the comment), NOT in `decline_reason_code`, which stays `null` (C52); the `cancelled`/`seller` timeline row, the card refund and the buyer notice run after the commit. 409 `order_not_cancellable` — a delivered or cancelled order, or one NOT YET ACCEPTED (`details[{field:"status", code:"not_accepted"}]`: decline it) —, `order_has_active_return` and `reason_unverified` (a reason that blames the buyer without its proof, as `decline`). Kill switch: `writes_enabled`. `503 role_unavailable` from a SERVER_ROLE=seller-api server, as `decline`. **Out of stock:** exactly as `decline` — the same reasons, the same 24-hour stock effect where Dona applies it, `unavailable_item_ids`, the extra answer keys, the three 400s and `?dry_run=true` as the preview; a SHIPPED order stores the reason and applies nothing (`stock_effects[].why: shipped` — the goods come back). `buyer_requested` is accepted by both routes when the buyer asked in Dona chat after ordering (else `409 reason_unverified`): the shop cancels (nothing else changes).
          */
         post: operations["cancelOrder"];
         delete?: never;
@@ -466,7 +466,7 @@ export interface paths {
         };
         /**
          * Shipping label (PDF, contains PII)
-         * @description The portal's sticker for one order: prints the buyer's name, phone and address. `sk` keys only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not charged.
+         * @description The portal's sticker for one order: prints the buyer's name and address, never the phone. `sk` keys only (`orders:pii` on any other kind ⇒ `403 insufficient_scope` + `details[scope_not_allowed_for_kind]`); ADVANCED now (`403 tier_required`); a key minted for a THIRD-PARTY recipient ⇒ `403 tier_required` + `details[pii_recipient: pii_third_party_pending_counsel]` (D7). Logged `pii=true` (always journaled, never sampled); never stored by the API. Normal key-rate bucket (C54). 409 `no_tracking_number` (+ `orders`: the order codes without a carrier number yet — print later), `no_items_selected`, `all_items_delayed` (nothing left to put in the parcel) (C53). A server draws at most 2 documents at once: past that `429 api_busy` (`Dona-Rate-Limited-Reason: global`, `Retry-After: 2`) before any read, and a batch is not charged.
          */
         get: operations["getOrderLabel"];
         put?: never;
@@ -486,7 +486,7 @@ export interface paths {
         };
         /**
          * Invoice (PDF, contains PII)
-         * @description The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ PII set WIDER than the label's: like the portal's invoice it prints the PURCHASER's account name and phone (the buyer who is invoiced) — on a gift order that is not the recipient the label and the `recipient` block name (Form A Q12 states both).
+         * @description The invoice for one order, drawn as a PDF from the SAME figures as the portal's invoice page (one loader). Doors, 409s and the `429 api_busy` bound as `label.pdf` (C53, C54). ⚠ Like the portal's invoice it names the PURCHASER (the buyer who is invoiced), never their phone — on a gift order that is not the recipient the label and the `recipient` block name (Form A Q12 states both). An order that sold nothing — fully cancelled, or every unit returned — has no invoice: `409 nothing_sold` (the order exists and is the shop's; there is no sale to invoice).
          */
         get: operations["getOrderInvoice"];
         put?: never;
@@ -2225,8 +2225,18 @@ export interface components {
             /** @description `manual`, `mass_upload`, `api`, … (products_created_via_check). */
             created_via: string;
             hold: {
-                /** @description `shop_not_activated` — a pending shop's publish waits in `product_shop_holds`. */
+                /** @description `shop_not_activated` — a pending shop's publish waits in `product_shop_holds`. `unfulfilled_order` — an order the shop did not fulfil took the product off sale (fulfilment holds); it stays off sale whatever its status until the seller re-enables it at `ack_url`. */
                 reason: string;
+                /**
+                 * Format: uri
+                 * @description With `reason=unfulfilled_order` only: the seller portal page that releases the product (`https://seller.dona.uz/products/{id}?release=1`). The API never releases a fulfilment hold — the seller acknowledges in the portal or the app.
+                 */
+                ack_url?: string;
+                /**
+                 * Format: date-time
+                 * @description With `reason=unfulfilled_order` on a product read: when the fulfilment hold began (ISO 8601, Tashkent `+05:00`).
+                 */
+                since?: string;
             } | null;
             /** @description Open `listing_issues` + `product_violations`. */
             open_issues: number;
@@ -2368,7 +2378,18 @@ export interface components {
             id: string;
             status: string;
             hold: {
+                /** @description `shop_not_activated` · a category requirement · `unfulfilled_order` (a fulfilment hold keeps it off sale: the write succeeded; release at `ack_url`). */
                 reason: string;
+                /**
+                 * Format: uri
+                 * @description With `reason=unfulfilled_order` only: the seller portal page that releases the product (`https://seller.dona.uz/products/{id}?release=1`). The API never releases a fulfilment hold — the seller acknowledges in the portal or the app.
+                 */
+                ack_url?: string;
+                /**
+                 * Format: date-time
+                 * @description With `reason=unfulfilled_order` on a product read: when the fulfilment hold began (ISO 8601, Tashkent `+05:00`).
+                 */
+                since?: string;
             } | null;
             issues: components["schemas"]["Issue"][];
             /** @constant */
@@ -2379,7 +2400,18 @@ export interface components {
             id: string;
             status: string;
             hold: {
+                /** @description `shop_not_activated` · a category requirement · `unfulfilled_order` (a fulfilment hold keeps it off sale: the write succeeded; release at `ack_url`). */
                 reason: string;
+                /**
+                 * Format: uri
+                 * @description With `reason=unfulfilled_order` only: the seller portal page that releases the product (`https://seller.dona.uz/products/{id}?release=1`). The API never releases a fulfilment hold — the seller acknowledges in the portal or the app.
+                 */
+                ack_url?: string;
+                /**
+                 * Format: date-time
+                 * @description With `reason=unfulfilled_order` on a product read: when the fulfilment hold began (ISO 8601, Tashkent `+05:00`).
+                 */
+                since?: string;
             } | null;
             /**
              * Format: date-time
@@ -2470,7 +2502,7 @@ export interface components {
             compare_at_uzs?: number | null;
             /** @description New version after an `ok` line. */
             version?: string;
-            /** @description On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `stock_locked` (+ `locked_until`), `invalid_body`, … */
+            /** @description On `status=error`: `version_conflict`, `object_cooldown`, `not_found`, `stock_not_editable`, `stock_locked` (+ `locked_until`), `variant_inactive` (the line names — by `variant_id`, or by a sku no on-sale variation carries — a variation made inactive because it has orders: nothing is written; put it back on sale in the Dona app or on seller.dona.uz, or — the product has no variations any more — send the product's own SKU or `product_id`), `invalid_body`, … */
             error?: string;
             message?: string;
             /** @description On `object_cooldown`. */
@@ -2605,8 +2637,8 @@ export interface components {
         };
         Recipient: {
             name: string;
-            /** @description E.164 */
-            phone: string;
+            /** @description Always null: the buyer's phone is never shared with a seller. Kept so integrations reading the key do not break. */
+            phone: string | null;
             /** @description The formatted label address (what `labels.go` prints). */
             address: string;
         };
@@ -3688,7 +3720,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `idempotency_in_progress` (+`Retry-After: 2`) · `idempotency_mismatch` · `version_conflict` · `ai_review_open` (publish of a product whose Dona AI review case is open — the review decides its status) · `stock_locked` (a stock write that RAISES a product — or one variation — the shop declared out of stock on an order: refused for 24 hours; `locked_until` says when and `product_id` / `variant_id` name it; a person at Dona can lift the lock early) · order codes `order_not_acceptable`, `no_pickup_address`, `order_not_shippable`, `order_awaiting_courier`, `order_not_cancellable`, `order_has_active_return` · document codes `no_tracking_number` (+`orders`), `no_items_selected`, `all_items_delayed` (S4, C53) · a replay of a rejected held write. */
+        /** @description `idempotency_in_progress` (+`Retry-After: 2`) · `idempotency_mismatch` · `version_conflict` · `ai_review_open` (publish of a product whose Dona AI review case is open — the review decides its status) · `stock_locked` (a stock write that RAISES a product — or one variation — the shop declared out of stock on an order: refused for 24 hours; `locked_until` says when and `product_id` / `variant_id` name it; a person at Dona can lift the lock early) · order codes `order_not_acceptable`, `no_pickup_address`, `order_not_shippable`, `order_awaiting_courier`, `order_not_cancellable`, `order_has_active_return`, `reason_unverified` (decline / cancel with `duplicate_order` or `buyer_requested` and no proof: `details[{field:"reason", code:"twin_order"|"buyer_message"}]`) · document codes `no_tracking_number` (+`orders`), `no_items_selected`, `all_items_delayed` (S4, C53), `nothing_sold` (`invoice.pdf` of an order that sold nothing — fully cancelled or fully returned) · a replay of a rejected held write. */
         Conflict: {
             headers: {
                 "Dona-Request-Id": components["headers"]["Dona-Request-Id"];
@@ -5515,7 +5547,7 @@ export interface operations {
                      *       "updated_at": "2026-09-24T09:12:31+05:00",
                      *       "recipient": {
                      *         "name": "Dilnoza K.",
-                     *         "phone": "+998901234567",
+                     *         "phone": null,
                      *         "address": "Toshkent sh., Yunusobod t., 11-kvartal, 5-uy, 23-xonadon"
                      *       }
                      *     }

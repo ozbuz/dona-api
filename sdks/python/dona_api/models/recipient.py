@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,18 +14,20 @@ class Recipient:
     """
     Attributes:
         name (str):
-        phone (str): E.164
+        phone (None | str): Always null: the buyer's phone is never shared with a seller. Kept so integrations reading
+            the key do not break.
         address (str): The formatted label address (what `labels.go` prints).
     """
 
     name: str
-    phone: str
+    phone: None | str
     address: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
 
+        phone: None | str
         phone = self.phone
 
         address = self.address
@@ -47,7 +49,12 @@ class Recipient:
         d = dict(src_dict)
         name = d.pop("name")
 
-        phone = d.pop("phone")
+        def _parse_phone(data: object) -> None | str:
+            if data is None:
+                return data
+            return cast(None | str, data)
+
+        phone = _parse_phone(d.pop("phone"))
 
         address = d.pop("address")
 
